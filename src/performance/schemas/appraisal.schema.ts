@@ -1,11 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { DisputeStatus } from '../enums/dispute-status.enum';
-import { AppraisalStatus } from '../enums/appraisal-status.enum';
+import { DisputeStatus } from '../enum/dispute-status.enum';
+import { AppraisalStatus } from '../enum/appraisal-status.enum';
 
 export type AppraisalDocument = HydratedDocument<Appraisal>;
 
-@Schema({ _id: false })
+@Schema()
 export class CriteriaRating {
   @Prop({ required: true })
   criteriaName: string;

@@ -1,41 +1,27 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export type PerformanceTemplateDocument = HydratedDocument<PerformanceTemplate>;
+import { RatingScaleItem } from './rating-scale-item.schema';
+import { CriteriaItem } from './criteria-item.schema';
+import { PerformanceTemplateType } from '../enum/performance-template-type.enum';
 
-@Schema({ _id: false })
-export class RatingScaleItem {
-  @Prop({ required: true })
-  label: string; // e.g. "Exceeds Expectations"
-
-  @Prop({ required: true })
-  value: number; // e.g. 5
-}
-
-@Schema({ _id: false })
-export class CriteriaItem {
-  @Prop({ required: true })
-  name: string; // e.g. "Teamwork"
-
-  @Prop()
-  description?: string;
-
-  @Prop()
-  weight: number; // percentage 0–100
-}
+export type PerformanceTemplateDocument =
+  HydratedDocument<PerformanceTemplate>;
 
 @Schema({ timestamps: true })
 export class PerformanceTemplate {
-  _id: Types.ObjectId;
-
   @Prop({ required: true, unique: true })
-  code: string; // e.g. "ANNUAL_STD_2025"
+  code: string;
 
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: String, enum: ['ANNUAL', 'PROBATION', 'MID_YEAR'], required: true })
-  type: 'ANNUAL' | 'PROBATION' | 'MID_YEAR';
+  @Prop({
+    type: String,
+    enum: PerformanceTemplateType,
+    required: true,
+  })
+  type: PerformanceTemplateType;
 
   @Prop({ type: [RatingScaleItem], default: [] })
   ratingScale: RatingScaleItem[];
