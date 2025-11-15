@@ -1,34 +1,28 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
 
 export type DepartmentDocument = HydratedDocument<Department>;
 
-export enum DepartmentStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-}
-
 @Schema({ timestamps: true })
 export class Department {
-  _id: Types.ObjectId;
-
   @Prop({ required: true, unique: true })
-  code: string; // HR, IT, FIN...
+  code: string; // "IT", "HR", "FIN"
 
   @Prop({ required: true })
-  name: string;
+  name: string; // "Information Technology"
 
-  @Prop({ type: Types.ObjectId, ref: 'Department', default: null })
-  parentDepartmentId?: Types.ObjectId;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Department' })
+  parentDepartment?: mongoose.Types.ObjectId;
 
-  @Prop({ enum: DepartmentStatus, default: DepartmentStatus.ACTIVE })
-  status: DepartmentStatus;
+  @Prop({ default: true })
+  isActive: boolean;
 
-  @Prop()
-  effectiveFrom?: Date;
+  // delimiting (history)
+  @Prop({ type: Date })
+  validFrom?: Date;
 
-  @Prop()
-  effectiveTo?: Date;
+  @Prop({ type: Date })
+  validTo?: Date; // when closed/merged
 }
 
 export const DepartmentSchema = SchemaFactory.createForClass(Department);
