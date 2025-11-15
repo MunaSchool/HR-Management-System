@@ -1,0 +1,12 @@
+// src/employee/enums/role.enum.ts
+
+export enum Role {
+  EMPLOYEE = 'EMPLOYEE',
+  MANAGER = 'MANAGER',
+  HR_EMPLOYEE = 'HR_EMPLOYEE',
+  HR_MANAGER = 'HR_MANAGER',
+  SYSTEM_ADMIN = 'SYSTEM_ADMIN',
+  FINANCE = 'FINANCE',
+  FACILITIES = 'FACILITIES',
+  INTERVIEWER = 'INTERVIEWER',
+}

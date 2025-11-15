@@ -1,63 +1,29 @@
+// src/employee/schemas/employee.schema.ts
+
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+import { Role } from '../enums/role.enum';
+import { EmploymentStatus } from '../enums/employment-status.enum';
 
 export type EmployeeDocument = HydratedDocument<Employee>;
 
-export enum EmployeeStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-  TERMINATED = 'TERMINATED',
-  ON_LEAVE = 'ON_LEAVE',
-}
-
-export enum EmployeeRole {
-  EMPLOYEE = 'EMPLOYEE',
-  MANAGER = 'MANAGER',
-  HR_EMPLOYEE = 'HR_EMPLOYEE',
-  HR_MANAGER = 'HR_MANAGER',
-  SYSTEM_ADMIN = 'SYSTEM_ADMIN',
-  RECRUITER = 'RECRUITER',
-  PAYROLL_OFFICER = 'PAYROLL_OFFICER',
-  FINANCE_STAFF = 'FINANCE_STAFF',
-  IT_STAFF = 'IT_STAFF',
-  FACILITIES_STAFF = 'FACILITIES_STAFF',
-  PERFORMANCE_REVIEWER = 'PERFORMANCE_REVIEWER',
-  AUDITOR = 'AUDITOR',
-}
-
-@Schema({ _id: false })
-export class ChangeRequestItem {
-  @Prop({ required: true })
-  field: string; // e.g. "phone", "personalEmail"
-
-  @Prop()
-  oldValue?: string;
-
-  @Prop({ required: true })
-  newValue: string;
+@Schema()
+export class Employee {
+  // ========= AUTH / ACCOUNT =========
+  @Prop({ required: true, unique: true })
+  workEmail: string; // main company email (can also be used for login)
 
   @Prop({
-    type: String,
-    enum: ['PENDING', 'APPROVED', 'REJECTED'],
-    default: 'PENDING',
+    required: true,
+    enum: Role,
+    default: Role.EMPLOYEE,
   })
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  role: Role;
 
-  @Prop({ default: () => new Date() })
-  requestedAt: Date;
+  @Prop({ required: true })
+  password: string; // store hashed password
 
-  @Prop()
-  reviewedAt?: Date;
-
-  @Prop({ type: Types.ObjectId, ref: 'Employee' })
-  reviewedBy?: Types.ObjectId;
-}
-
-@Schema({ timestamps: true })
-export class Employee {
-  _id: Types.ObjectId;
-
-  // ---- Personal info ----
+  // ========= PERSONAL INFO (governed) =========
   @Prop({ required: true })
   firstName: string;
 
@@ -68,78 +34,72 @@ export class Employee {
   middleName?: string;
 
   @Prop()
+  nationalId?: string;
+
+  @Prop({ type: Date })
   dateOfBirth?: Date;
 
-  // ---- Contact info ----
-  @Prop({ required: true, unique: true })
-  workEmail: string;
+  @Prop()
+  gender?: string; // later you can make a Gender enum
 
+  // ========= CONTACT INFO (self-service) =========
   @Prop()
   personalEmail?: string;
 
   @Prop()
-  phone?: string;
+  mobilePhone?: string;
 
   @Prop()
-  profilePictureUrl?: string;
-
-  // ---- Employment identifiers ----
-  @Prop({ required: true, unique: true })
-  employeeCode: string; // E0001, etc.
-
-  @Prop({ enum: EmployeeStatus, default: EmployeeStatus.ACTIVE })
-  status: EmployeeStatus;
+  address?: string;
 
   @Prop()
+  emergencyContactName?: string;
+
+  @Prop()
+  emergencyContactPhone?: string;
+
+  // ========= JOB / ORG INFO (HR-governed) =========
+  @Prop({ unique: true, sparse: true })
+  employeeNo?: string; // e.g. "EMP-000123"
+
+  @Prop()
+  department?: string; // can later be ref: 'Department'
+
+  @Prop()
+  jobTitle?: string; // "Software Engineer", "HR Generalist", etc.
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' })
+  manager?: mongoose.Types.ObjectId; // reporting line
+
+  @Prop({ type: Date })
   hireDate?: Date;
 
-  @Prop()
-  probationEndDate?: Date;
-
-  @Prop()
-  employmentType?: 'FULL_TIME' | 'PART_TIME' | 'CONTRACTOR' | 'INTERN';
-
-  @Prop()
-  workLocation?: string;
-
-  @Prop()
-  grade?: string;
-
-  @Prop()
-  payGradeCode?: string;
-
-  // ---- Org structure links ----
-  @Prop({ type: Types.ObjectId, ref: 'Department' })
-  departmentId?: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Position' })
-  positionId?: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: 'Employee' })
-  managerId?: Types.ObjectId;
-
-  // ---- Access control ----
   @Prop({
-    type: [String],
-    enum: Object.values(EmployeeRole),
-    default: [EmployeeRole.EMPLOYEE],
+    type: String,
+    enum: EmploymentStatus,
+    default: EmploymentStatus.ACTIVE,
   })
-  roles: EmployeeRole[];
+  employmentStatus: EmploymentStatus;
 
-  // ---- Performance history ----
-  @Prop({ type: [Types.ObjectId], ref: 'Appraisal', default: [] })
-  performanceHistoryIds?: Types.ObjectId[];
+  // ========= LIFECYCLE / OFFBOARDING =========
+  @Prop({ type: Date })
+  terminationDate?: Date;
 
-  // ---- Change requests for governed fields ----
-  @Prop({ type: [ChangeRequestItem], default: [] })
-  changeRequests: ChangeRequestItem[];
+  @Prop({ type: Date })
+  resignationDate?: Date;
 
-  // ---- Audit fields ----
-  @Prop({ type: Types.ObjectId, ref: 'Employee' })
-  createdBy?: Types.ObjectId;
+  @Prop({ default: true })
+  isActive: boolean;
 
-  @Prop({ type: Types.ObjectId, ref: 'Employee' })
-  updatedBy?: Types.ObjectId;
+  // ========= OTHER =========
+  @Prop()
+  profilePhotoUrl?: string;
+
+  @Prop({ type: Date, default: Date.now })
+  createdAt: Date;
+
+  @Prop({ type: Date, default: Date.now })
+  updatedAt: Date;
 }
 
 export const EmployeeSchema = SchemaFactory.createForClass(Employee);
