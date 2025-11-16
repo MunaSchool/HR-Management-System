@@ -3,8 +3,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { EmployeeProfileController } from './employee-profile.controller';
-import { EmployeeProfileService } from './employee-profile.service';
+import { EmployeeController } from './employee-profile.controller';
+import { EmployeeService } from './employee-profile.service';
 
 // Schemas (UPDATED FILENAMES)
 import { Employee, EmployeeSchema } from './schemas/employee.schema';
@@ -25,8 +25,8 @@ import {
       { name: EmployeeChangeRequest.name, schema: EmployeeChangeRequestSchema },
     ]),
   ],
-  controllers: [EmployeeProfileController],
-  providers: [EmployeeProfileService],
-  exports: [EmployeeProfileService], // optional but recommended
+  controllers: [EmployeeController],
+  providers: [EmployeeService],
+  exports: [EmployeeService], // optional but recommended
 })
-export class EmployeeProfileModule {}
+export class EmployeeModule {}
