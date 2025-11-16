@@ -13,7 +13,7 @@ export class Candidate {
       firstName: { type: String, required: true },
       lastName: { type: String, required: true },
       email: { type: String, required: true },
-      phone: { type: Number, required: true },
+      phone: { type: String, required: true },
     },
     required: true,
   })
@@ -21,7 +21,7 @@ export class Candidate {
     firstName: string;
     lastName: string;
     email: string;
-    phone: number;
+    phone: String;
   };
 
   @Prop({
