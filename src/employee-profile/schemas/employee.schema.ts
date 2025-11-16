@@ -40,7 +40,7 @@ export class Employee {
   dateOfBirth?: Date;
 
   @Prop()
-  gender?: string; // later you can make a Gender enum
+  gender?: string; 
 
   // ========= CONTACT INFO (self-service) =========
   @Prop()
@@ -63,7 +63,7 @@ export class Employee {
   employeeNo?: string; // e.g. "EMP-000123"
 
   @Prop()
-  department?: string; // can later be ref: 'Department'
+  department?: string; 
 
   @Prop()
   jobTitle?: string; // "Software Engineer", "HR Generalist", etc.

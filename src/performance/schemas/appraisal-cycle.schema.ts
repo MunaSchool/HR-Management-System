@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { AppraisalType } from '../enums/appraisal-type.enum';
-
+import { AppraisalType } from '../enum/appraisal-type.enum';
+import { AppraisalStatus } from '../enum/appraisal-status.enum';
 export type AppraisalCycleDocument = HydratedDocument<AppraisalCycle>;
 
 @Schema({ timestamps: true })
@@ -26,9 +26,11 @@ export class AppraisalCycle {
   template: mongoose.Types.ObjectId;
 
   @Prop({
-    default: 'DRAFT', // could also be enum if you want (same as AppraisalStatus)
-  })
-  status: string; // DRAFT, ACTIVE, CLOSED, ARCHIVED
+  type: String,
+  enum: AppraisalStatus,
+  default: AppraisalStatus.DRAFT,
+})
+status: AppraisalStatus;
 
   @Prop({ type: [String], default: [] })
   includedOrgUnits?: string[]; // departments or units
