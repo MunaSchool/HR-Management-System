@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { Employee } from '../../employee.schema';
-import { Candidate } from '../../recruitment/models/candidate.schema';
+import { Employee } from 'src/employee-profile/schemas/employee.schema';
+import { Candidate } from './candidate.schema';
 
 export enum DocumentType {
   ID = 'id',

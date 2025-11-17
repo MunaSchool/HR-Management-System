@@ -9,7 +9,7 @@ import { PayrollConfigurationModule } from './payroll-configuration/payroll-conf
 import { PayrollProcessingModule } from './payroll-processing/payroll-processing.module';
 import { PayrollTrackingModule } from './payroll-tracking/payroll-tracking.module';
 import { PerformanceModule } from './performance/performance.module';
-import { RecruitmentModule } from './recruitment/src/recruitment/recruitment.module';
+import { RecruitmentModule } from './recruitment/recruitment.module';
 
 
 @Module({

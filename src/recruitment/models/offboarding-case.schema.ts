@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { Employee } from '../../employee.schema';
+import { Employee } from 'src/employee-profile/schemas/employee.schema';
 
 export enum OffboardingType {
   Resignation = 'resignation',
