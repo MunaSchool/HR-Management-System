@@ -17,6 +17,7 @@ export class Employee {
     required: true,
     enum: Role,
     default: Role.EMPLOYEE,
+    type: String,
   })
   role: Role;
 
