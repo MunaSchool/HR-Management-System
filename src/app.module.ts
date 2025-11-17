@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { LeavesModule } from './leaves/leaves.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ShiftAssignmentModule } from './shift-assignment/shift-assignment.module';
 import { ShiftModule } from './shift/shift.module';
@@ -26,9 +26,8 @@ import { NotificationModule } from './notification/notification.module';
     SchedulingModule,
     CorrectionRequestModule,
     NotificationModule,
+    LeavesModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
  
