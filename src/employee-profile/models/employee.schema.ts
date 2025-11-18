@@ -189,10 +189,4 @@ export const EmployeeSchema = SchemaFactory.createForClass(Employee);
 // ======================================
 // 📌 INDEXES (for search & manager/team views)
 // ======================================
-EmployeeSchema.index({ workEmail: 1 }, { unique: true });
-EmployeeSchema.index({ employeeNo: 1 }, { unique: true, sparse: true });
-EmployeeSchema.index({ firstName: 1, lastName: 1 });
-EmployeeSchema.index({ department: 1 });
-EmployeeSchema.index({ position: 1 });
-EmployeeSchema.index({ employmentStatus: 1 });
-EmployeeSchema.index({ manager: 1 });
+
