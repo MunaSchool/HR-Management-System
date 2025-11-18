@@ -33,7 +33,7 @@ import {
       { name: PerformanceTemplate.name, schema: PerformanceTemplateSchema },
       { name: Appraisal.name, schema: AppraisalSchema },
       { name: AppraisalCycle.name, schema: AppraisalCycleSchema },
-    ]),
+    ]),EmployeeProfileModule, OrgStructureModule, TimeManagementModule
 
     // ===== Cross-module dependencies =====
     // TM: attendance & punctuality for ratings

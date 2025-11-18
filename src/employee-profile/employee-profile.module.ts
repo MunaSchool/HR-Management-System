@@ -27,7 +27,7 @@ import {RecruitmentModule }from 'src/recruitment/recruitment.module';
       { name: Employee.name, schema: EmployeeSchema },
       { name: EmployeeDocumentFile.name, schema: EmployeeDocumentSchema },
       { name: EmployeeChangeRequest.name, schema: EmployeeChangeRequestSchema },
-    ]),
+    ]),OrgStructureModule,PerformanceModule,RecruitmentModule
 
   
     

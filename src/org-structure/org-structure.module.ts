@@ -16,7 +16,7 @@ import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-co
     MongooseModule.forFeature([
       { name: Department.name, schema: DepartmentSchema },
       { name: JobPosition.name, schema: JobPositionSchema },
-    ]),
+    ]),EmployeeProfileModule, PayrollConfigurationModule
    
   ],
   controllers: [OrgStructureController],
