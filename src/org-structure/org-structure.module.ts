@@ -17,8 +17,7 @@ import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-co
       { name: Department.name, schema: DepartmentSchema },
       { name: JobPosition.name, schema: JobPositionSchema },
     ]),
-    forwardRef(() => EmployeeProfileModule),
-    forwardRef(() => PayrollConfigurationModule),
+   
   ],
   controllers: [OrgStructureController],
   providers: [OrgStructureService],

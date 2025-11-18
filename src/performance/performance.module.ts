@@ -36,10 +36,7 @@ import {
     ]),
 
     // ===== Cross-module dependencies =====
-    forwardRef(() => EmployeeProfileModule), // EP: employee list, profile data
-    forwardRef(() => OrgStructureModule),    // OS: reporting lines, departments
-    forwardRef(() => TimeManagementModule),  // TM: attendance & punctuality for ratings
-        // Notifications: reminders, cycle alerts, dispute alerts
+    // TM: attendance & punctuality for ratings
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],

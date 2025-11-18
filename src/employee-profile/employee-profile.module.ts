@@ -20,8 +20,7 @@ import {
 // Imported Modules ( Integrations)
 import { OrgStructureModule } from 'src/org-structure/org-structure.module';
 import { PerformanceModule } from 'src/performance/performance.module';
-import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-configuration.module';
-
+import {RecruitmentModule }from 'src/recruitment/recruitment.module';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -30,10 +29,8 @@ import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-co
       { name: EmployeeChangeRequest.name, schema: EmployeeChangeRequestSchema },
     ]),
 
-    // Cross–module integrations (Milestone 2)
-    forwardRef(() => OrgStructureModule),
-    forwardRef(() => PerformanceModule),
-    forwardRef(() => PayrollConfigurationModule), // optional but needed when Status/Pay Grade updates affect payroll
+  
+    
   ],
 
   controllers: [EmployeeProfileController],
