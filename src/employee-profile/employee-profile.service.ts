@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Employee, EmployeeDocument } from './models/employee.schema';
+import { Employee, EmployeeDocument } from './schemas/employee.schema';
 import { EmploymentStatus } from './enums/employment-status.enum';
 
 @Injectable()

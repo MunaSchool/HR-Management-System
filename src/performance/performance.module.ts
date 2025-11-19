@@ -15,17 +15,17 @@ import { TimeManagementModule } from '../time-management/time-management.module'
 import {
   PerformanceTemplate,
   PerformanceTemplateSchema,
-} from './models/performance-template.schema';
+} from './schemas/performance-template.schema';
 
 import {
   Appraisal,
   AppraisalSchema,
-} from './models/appraisal.schema';
+} from './schemas/appraisal.schema';
 
 import {
   AppraisalCycle,
   AppraisalCycleSchema,
-} from './models/appraisal-cycle.schema';
+} from './schemas/appraisal-cycle.schema';
 
 @Module({
   imports: [
@@ -33,7 +33,10 @@ import {
       { name: PerformanceTemplate.name, schema: PerformanceTemplateSchema },
       { name: Appraisal.name, schema: AppraisalSchema },
       { name: AppraisalCycle.name, schema: AppraisalCycleSchema },
-    ]),EmployeeProfileModule, OrgStructureModule, TimeManagementModule
+    ]),
+    forwardRef(()=>EmployeeProfileModule), 
+    OrgStructureModule, 
+    forwardRef(()=>TimeManagementModule)
 
     // ===== Cross-module dependencies =====
     // TM: attendance & punctuality for ratings

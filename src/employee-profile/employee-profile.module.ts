@@ -7,15 +7,15 @@ import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
 
 // Schemas
-import { Employee, EmployeeSchema } from './models/employee.schema';
+import { Employee, EmployeeSchema } from './schemas/employee.schema';
 import {
   EmployeeDocumentFile,
   EmployeeDocumentSchema,
-} from './models/employee-document.schema';
+} from './schemas/employee-document.schema';
 import {
   EmployeeChangeRequest,
   EmployeeChangeRequestSchema,
-} from './models/employee-change-request.schema';
+} from './schemas/employee-change-request.schema';
 
 // Imported Modules ( Integrations)
 import { OrgStructureModule } from 'src/org-structure/org-structure.module';
@@ -27,7 +27,10 @@ import {RecruitmentModule }from 'src/recruitment/recruitment.module';
       { name: Employee.name, schema: EmployeeSchema },
       { name: EmployeeDocumentFile.name, schema: EmployeeDocumentSchema },
       { name: EmployeeChangeRequest.name, schema: EmployeeChangeRequestSchema },
-    ]),OrgStructureModule,PerformanceModule,RecruitmentModule
+    ]),
+    forwardRef(()=>OrgStructureModule),
+    forwardRef(()=>PerformanceModule),
+    RecruitmentModule
 
   
     
