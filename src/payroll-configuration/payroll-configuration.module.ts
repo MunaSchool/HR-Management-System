@@ -9,6 +9,10 @@ import { PayGrade, PayGradeSchema } from './schemas/paygrade.schema';
 import { PayrollPolicy, PayrollPolicySchema } from './schemas/PayrollPolicy.schema';
 import { PayType, PayTypeSchema } from './schemas/paytype.schema';
 import { PayrollConfigurationService } from './payroll-configuration.service';
+import { Employee, EmployeeSchema } from '../employee-profile/schemas/employee.schema';
+import {OnboardingTask, OnboardingTaskSchema } from '../recruitment/models/onboarding-task.schema';
+import { OffboardingCase, OffboardingCaseSchema } from 'src/recruitment/models/offboarding-case.schema';
+import { JobPosition, JobPositionSchema } from '../org-structure/schemas/position.schema';
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { PayrollConfigurationService } from './payroll-configuration.service';
       { name: PayGrade.name, schema: PayGradeSchema },
       { name: PayrollPolicy.name, schema: PayrollPolicySchema },
       { name: PayType.name, schema: PayTypeSchema },
+      { name: Employee.name, schema: EmployeeSchema },
+      { name: OnboardingTask.name, schema: OnboardingTaskSchema },
+      { name: OffboardingCase.name, schema: OffboardingCaseSchema },
+      { name: JobPosition.name, schema: JobPositionSchema },
     ]),
   ],
   providers: [PayrollConfigurationService],

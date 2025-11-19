@@ -9,16 +9,16 @@ export enum ShiftStatus{
 }
 @Schema({ timestamps: true })
 export class ShiftAssignment{
-    @Prop({required: true, type: mongoose.Schema.Types.ObjectId})
+    @Prop({required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Shift'})
         shiftId: mongoose.Schema.Types.ObjectId;
 
-    @Prop({required: true, type: mongoose.Schema.Types.ObjectId})
+    @Prop({required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Employee'})
         employeeId: mongoose.Schema.Types.ObjectId;
 
-    @Prop({required: true, type: mongoose.Schema.Types.ObjectId})
+    @Prop({required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Employee.department'})
         departmentId:mongoose.Schema.Types.ObjectId;
 
-    @Prop({required: true, type: mongoose.Schema.Types.ObjectId})
+    @Prop({required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Employee.jobTitle'})
         positionId?:mongoose.Schema.Types.ObjectId;
         
     @Prop({default: ShiftStatus.Approved})
@@ -27,7 +27,7 @@ export class ShiftAssignment{
     @Prop({default: Date.now()})
         expiryDate: Date;
 
-    @Prop() 
+    @Prop({required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Employee'}) 
         lastModifiedBy?: mongoose.Schema.Types.ObjectId;
         
 }

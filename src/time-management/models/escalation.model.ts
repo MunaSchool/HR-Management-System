@@ -10,14 +10,14 @@ export enum EscalationStatus {
 
 @Schema({ timestamps: true })
 export class Escalation {
-  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId })
+  @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Employee' })
       requestedBy: mongoose.Schema.Types.ObjectId; 
   
- @Prop({ type: mongoose.Schema.Types.ObjectId })
+ @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' })
      approvedBy?: mongoose.Schema.Types.ObjectId; 
  
 
-  @Prop({  type: mongoose.Schema.Types.ObjectId  })
+  @Prop({  type: mongoose.Schema.Types.ObjectId , ref: 'Employee' })
   escalatedTo: mongoose.Schema.Types.ObjectId; 
  
 

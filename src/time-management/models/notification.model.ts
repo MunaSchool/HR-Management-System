@@ -12,7 +12,7 @@ export enum NotificationType {
 
 @Schema()
 export class Notification {
-  @Prop({required: true, type: mongoose.Schema.Types.ObjectId})
+  @Prop({required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Employee'})
   recipientId: mongoose.Schema.Types.ObjectId;
 
   @Prop({required: true, default: "Untitled"})
@@ -27,7 +27,7 @@ export class Notification {
   @Prop({ default: Date.now })
   timestamp: Date; 
 
-  @Prop({required: true, type: mongoose.Schema.Types.ObjectId})
+  @Prop({required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Employee'})
   senderId: mongoose.Schema.Types.ObjectId
 }
 
