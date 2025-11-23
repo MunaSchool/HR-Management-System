@@ -1,7 +1,0 @@
-export enum AppraisalStatus {
-  DRAFT = 'DRAFT',
-  IN_PROGRESS = 'IN_PROGRESS',
-  SUBMITTED = 'SUBMITTED',
-  PUBLISHED = 'PUBLISHED',
-  CLOSED = 'CLOSED',
-}

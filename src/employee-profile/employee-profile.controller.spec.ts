@@ -9,7 +9,9 @@ describe('EmployeeProfileController', () => {
       controllers: [EmployeeProfileController],
     }).compile();
 
-    controller = module.get<EmployeeProfileController>(EmployeeProfileController);
+    controller = module.get<EmployeeProfileController>(
+      EmployeeProfileController,
+    );
   });
 
   it('should be defined', () => {
