@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TimeManagementModule } from './time-management/time-management.module';
@@ -13,7 +15,28 @@ import { PayrollConfigurationModule } from './payroll-configuration/payroll-conf
 import { PayrollExecutionModule } from './payroll-execution/payroll-execution.module';
 
 @Module({
-  imports: [TimeManagementModule, RecruitmentModule, LeavesModule, PayrollExecutionModule, PayrollConfigurationModule, PayrollTrackingModule, EmployeeProfileModule, OrganizationStructureModule, PerformanceModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('DB_URL'),
+      }),
+      inject: [ConfigService],
+    }),
+    TimeManagementModule,
+    RecruitmentModule,
+    LeavesModule,
+    PayrollExecutionModule,
+    PayrollConfigurationModule,
+    PayrollTrackingModule,
+    EmployeeProfileModule,
+    OrganizationStructureModule,
+    PerformanceModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
