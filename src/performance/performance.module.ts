@@ -1,37 +1,40 @@
-// src/performance/performance.module.ts
-
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-
 import { PerformanceController } from './performance.controller';
 import { PerformanceService } from './performance.service';
-
-// ===== Schemas =====
 import {
-  PerformanceTemplate,
-  PerformanceTemplateSchema,
-} from './schemas/performance-template.schema';
-
-import {
-  Appraisal,
-  AppraisalSchema,
-} from './schemas/appraisal.schema';
-
+  AppraisalTemplate,
+  AppraisalTemplateSchema,
+} from './models/appraisal-template.schema';
 import {
   AppraisalCycle,
   AppraisalCycleSchema,
-} from './schemas/appraisal-cycle.schema';
+} from './models/appraisal-cycle.schema';
+import {
+  AppraisalAssignment,
+  AppraisalAssignmentSchema,
+} from './models/appraisal-assignment.schema';
+import {
+  AppraisalRecord,
+  AppraisalRecordSchema,
+} from './models/appraisal-record.schema';
+import {
+  AppraisalDispute,
+  AppraisalDisputeSchema,
+} from './models/appraisal-dispute.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: PerformanceTemplate.name, schema: PerformanceTemplateSchema },
-      { name: Appraisal.name, schema: AppraisalSchema },
+      { name: AppraisalTemplate.name, schema: AppraisalTemplateSchema },
       { name: AppraisalCycle.name, schema: AppraisalCycleSchema },
+      { name: AppraisalAssignment.name, schema: AppraisalAssignmentSchema },
+      { name: AppraisalRecord.name, schema: AppraisalRecordSchema },
+      { name: AppraisalDispute.name, schema: AppraisalDisputeSchema },
     ]),
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],
-  exports: [PerformanceService], // so other modules can use performance data
+  exports: [PerformanceService],
 })
 export class PerformanceModule {}
