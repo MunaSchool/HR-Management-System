@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nodemon --watch src --exec ts-node --transpile-only src/main.ts",
+    "start": "nodemon --exec ts-node -r tsconfig-paths/register src/main.ts",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -27,7 +27,8 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.1.9",
     "@nestjs/swagger": "^11.2.2",
-    "mongoose": "^8.19.4",
+    "mongoose": "^8.20.0",
+    "nestjs": "^0.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
