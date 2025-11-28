@@ -13,6 +13,16 @@ import { ShiftSchema, Shift } from './models/shift.schema';
 import { ShiftAssignmentSchema, ShiftAssignment } from './models/shift-assignment.schema';
 import { LatenessRule, latenessRuleSchema } from './models/lateness-rule.schema';
 import { HolidaySchema, Holiday } from './models/holiday.schema';
+import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
+import { OrganizationStructureModule } from '../organization-structure/organization-structure.module';
+import { NotificationLogService } from './services/notification-log.service';
+import { ShiftAssignmentService } from './services/shift-assignment.service';
+import { EmployeeProfile, EmployeeProfileSchema } from '../employee-profile/models/employee-profile.schema';
+import { Department, DepartmentSchema } from '../organization-structure/models/department.schema';
+import { Position, PositionSchema } from '../organization-structure/models/position.schema';
+import { ScheduleRuleService } from './services/schedule-rule.service';
+
+
 
 
 @Module({
@@ -28,8 +38,15 @@ import { HolidaySchema, Holiday } from './models/holiday.schema';
     { name: ShiftAssignment.name, schema: ShiftAssignmentSchema },
     { name: LatenessRule.name, schema: latenessRuleSchema },
     { name: Holiday.name, schema: HolidaySchema },
-  ])],
+    { name: EmployeeProfile.name, schema:EmployeeProfileSchema},
+    { name: Department.name, schema: DepartmentSchema},
+    { name: Position.name, schema: PositionSchema}
+  ]),
+  EmployeeProfileModule,
+  OrganizationStructureModule
+
+  ],
   controllers: [TimeManagementController],
-  providers: [TimeManagementService]
+  providers: [TimeManagementService, NotificationLogService,ShiftAssignmentService, ScheduleRuleService]
 })
 export class TimeManagementModule {}
