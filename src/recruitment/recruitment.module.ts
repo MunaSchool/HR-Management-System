@@ -1,38 +1,39 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { RecruitmentService } from './recruitment.service';
 import { RecruitmentController } from './recruitment.controller';
-
-import { Application, ApplicationSchema } from './models/application.schema';
-import { Candidate, CandidateSchema } from './models/candidate.schema';
-import { Interview, InterviewSchema } from './models/interview.schema';
-import { JobOffer, JobOfferSchema } from './models/job-offer.schema';
-import { JobPosting, JobPostingSchema } from './models/job-posting.schema';
-import { OffboardingCase, OffboardingCaseSchema } from './models/offboarding-case.schema';
-import { OffboardingChecklist, OffboardingChecklistSchema } from './models/offboarding-checklist.schema';
-import { OnboardingDocument, OnboardingDocumentSchema } from './models/onboarding-document.schema';
-import { OnboardingTask, OnboardingTaskSchema } from './models/onboarding-task.schema';
-import { PhysicalResourceProvisioning, PhysicalResourceProvisioningSchema } from './models/physical-resource-provisioning.schema';
-import { SystemAccessProvisioning, SystemAccessProvisioningSchema } from './models/system-access-provisioning.schema';
-import { TerminationReview, TerminationReviewSchema } from './models/termination-review.schema';@Module({
-  imports: [
-    MongooseModule.forFeature([
+import { RecruitmentService } from './recruitment.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { JobTemplate, JobTemplateSchema } from './models/job-template.schema';
+import { JobRequisition,JobRequisitionSchema } from './models/job-requisition.schema';
+import { Application,ApplicationSchema } from './models/application.schema';
+import { ApplicationStatusHistory,ApplicationStatusHistorySchema } from './models/application-history.schema';
+import { Interview,InterviewSchema } from './models/interview.schema';
+import { AssessmentResult,AssessmentResultSchema } from './models/assessment-result.schema';
+import { Referral,ReferralSchema } from './models/referral.schema';
+import { Offer,OfferSchema } from './models/offer.schema';
+import { Contract,ContractSchema } from './models/contract.schema';
+import { Document,DocumentSchema } from './models/document.schema';
+import { TerminationRequest,TerminationRequestSchema } from './models/termination-request.schema';
+import { ClearanceChecklist,ClearanceChecklistSchema } from './models/clearance-checklist.schema';
+import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
+@Module({
+  imports:[MongooseModule.forFeature([
+      { name: JobTemplate.name, schema: JobTemplateSchema },
+      { name: JobRequisition.name, schema: JobRequisitionSchema },
       { name: Application.name, schema: ApplicationSchema },
-      { name: Candidate.name, schema: CandidateSchema },
+      { name: ApplicationStatusHistory.name, schema: ApplicationStatusHistorySchema },
       { name: Interview.name, schema: InterviewSchema },
-      { name: JobOffer.name, schema: JobOfferSchema },
-      { name: JobPosting.name, schema: JobPostingSchema },
-      { name: OffboardingCase.name, schema: OffboardingCaseSchema },
-      { name: OffboardingChecklist.name, schema: OffboardingChecklistSchema },
-      { name: OnboardingDocument.name, schema: OnboardingDocumentSchema },
-      { name: OnboardingTask.name, schema: OnboardingTaskSchema },
-      { name: PhysicalResourceProvisioning.name, schema: PhysicalResourceProvisioningSchema },
-      { name: SystemAccessProvisioning.name, schema: SystemAccessProvisioningSchema },
-      { name: TerminationReview.name, schema: TerminationReviewSchema },
-    ]),
+      { name: AssessmentResult.name, schema: AssessmentResultSchema },
+      { name: Referral.name, schema: ReferralSchema },
+      { name: Offer.name, schema: OfferSchema },
+      { name: Contract.name, schema: ContractSchema },
+      { name: Document.name, schema: DocumentSchema },
+      { name: TerminationRequest.name, schema: TerminationRequestSchema },
+      { name: ClearanceChecklist.name, schema: ClearanceChecklistSchema },
+    ]),EmployeeProfileModule
   ],
   controllers: [RecruitmentController],
   providers: [RecruitmentService],
-  exports: [RecruitmentService, MongooseModule],
+  exports:[RecruitmentService]
+
 })
 export class RecruitmentModule {}
