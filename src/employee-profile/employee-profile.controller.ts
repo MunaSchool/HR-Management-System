@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -14,197 +15,42 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-  ApiConsumes,
-  ApiBody,
-} from '@nestjs/swagger';
+
 import { EmployeeProfileService } from './employee-profile.service';
+import { EmployeeRoleService } from './services/employee-role.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import type { CurrentUserData } from '../auth/decorators/current-user.decorator';
+import type  { CurrentUserData } from '../auth/decorators/current-user.decorator';
+
 import { SystemRole, EmployeeStatus } from './enums/employee-profile.enums';
+
 import { UpdateContactInfoDto } from './dto/update-contact-info.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateChangeRequestDto } from './dto/create-change-request.dto';
 import { ProcessChangeRequestDto } from './dto/process-change-request.dto';
 import { UpdateEmployeeMasterDto } from './dto/update-employee-master.dto';
+import { AssignRoleDto } from './dto/assign-role.dto';
 
-@Controller('employee-profile')
-@ApiTags('Employee Profile Management')
 @UseGuards(AuthGuard, RolesGuard)
-@ApiBearerAuth()
+@Controller('employee-profile')
 export class EmployeeProfileController {
   constructor(
     private readonly employeeProfileService: EmployeeProfileService,
+    private readonly employeeRoleService: EmployeeRoleService,
   ) {}
 
-  // ==================== EMPLOYEE SELF-SERVICE ENDPOINTS ====================
+  // ==================== BASIC CRUD ====================
 
-  @Get('me')
-  @UseGuards(AuthGuard)
-  @ApiBearerAuth()
-  @ApiTags('Employee Self-Service')
-  @ApiOperation({
-    summary: 'View my employee profile',
-    description:
-      'US-E2-04: Employee views their full profile including personal info, employment details, and appraisal history - Secured with JWT',
-  })
-  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token' })
-  @ApiResponse({ status: 404, description: 'Profile not found' })
-  async getMyProfile(@CurrentUser() user: CurrentUserData) {
-    return this.employeeProfileService.getMyProfile(user.employeeId);
+  @Get()
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getAllEmployees(@CurrentUser() user: CurrentUserData) {
+    return this.employeeProfileService.findAll();
   }
-
-  @Patch('me/contact-info')
-  @ApiTags('Employee Self-Service')
-  @ApiOperation({
-    summary: 'Update my contact information',
-    description:
-      'US-E2-05: Employee updates contact info (phone, email, address) - immediate update without approval',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Contact information updated successfully',
-  })
-  async updateMyContactInfo(
-    @CurrentUser() user: CurrentUserData,
-    @Body() updateDto: UpdateContactInfoDto,
-  ) {
-    return this.employeeProfileService.updateMyContactInfo(
-      user.employeeId,
-      user.userId,
-      updateDto,
-    );
-  }
-
-  @Patch('me/profile')
-  @ApiTags('Employee Self-Service')
-  @ApiOperation({
-    summary: 'Update biography and profile picture',
-    description:
-      'US-E2-12: Employee adds biography and uploads profile picture',
-  })
-  @ApiResponse({ status: 200, description: 'Profile updated successfully' })
-  async updateMyProfile(
-    @CurrentUser() user: CurrentUserData,
-    @Body() updateDto: UpdateProfileDto,
-  ) {
-    return this.employeeProfileService.updateMyProfile(
-      user.employeeId,
-      user.userId,
-      updateDto,
-    );
-  }
-
-  @Post('me/change-requests')
-  @ApiTags('Employee Self-Service')
-  @ApiOperation({
-    summary: 'Submit profile change request',
-    description:
-      'US-E6-02, US-E2-06: Employee requests corrections for critical data (job title, department, name, marital status, etc.)',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Change request submitted successfully',
-  })
-  async createChangeRequest(
-    @CurrentUser() user: CurrentUserData,
-    @Body() createDto: CreateChangeRequestDto,
-  ) {
-    return this.employeeProfileService.createChangeRequest(
-      user.employeeId,
-      user.userId,
-      createDto,
-    );
-  }
-
-  @Get('me/change-requests')
-  @ApiTags('Employee Self-Service')
-  @ApiOperation({
-    summary: 'View my change request history',
-    description: 'Employee views all their profile change requests',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Change requests retrieved successfully',
-  })
-  async getMyChangeRequests(@CurrentUser() user: CurrentUserData) {
-    return this.employeeProfileService.getMyChangeRequests(user.employeeId);
-  }
-
-  // ==================== DEPARTMENT MANAGER ENDPOINTS ====================
-
-  @Get('team')
-  @ApiTags('Department Manager')
-  @Roles(SystemRole.DEPARTMENT_HEAD)
-  @ApiOperation({
-    summary: 'View team members profiles',
-    description:
-      'US-E4-01, US-E4-02: Manager views team member profiles (excluding sensitive data) with summary of job titles and departments',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Team members retrieved successfully',
-  })
-  async getTeamMembers(@CurrentUser() user: CurrentUserData) {
-    // Assuming user object contains managerPositionId
-    const managerPositionId = user['managerPositionId'] || user.employeeId;
-    return this.employeeProfileService.getTeamMembers(managerPositionId);
-  }
-
-  @Get('team/:employeeId')
-  @ApiTags('Department Manager')
-  @Roles(SystemRole.DEPARTMENT_HEAD)
-  @ApiOperation({
-    summary: 'View specific team member profile',
-    description:
-      'US-E4-01: Manager views detailed profile of a direct report (non-sensitive data)',
-  })
-  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
-  @ApiResponse({ status: 403, description: 'Not a direct report' })
-  @ApiResponse({ status: 404, description: 'Profile not found' })
-  async getTeamMemberProfile(
-    @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
-  ) {
-    const managerPositionId = user['managerPositionId'] || user.employeeId;
-    return this.employeeProfileService.getTeamMemberProfile(
-      employeeId,
-      managerPositionId,
-    );
-  }
-
-  // ==================== HR ADMIN / SYSTEM ADMIN ENDPOINTS ====================
 
   @Get('search')
-  @ApiTags('HR Admin')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  @ApiOperation({
-    summary: 'Search employees',
-    description:
-      'US-E6-03: HR Admin searches for employee data by various criteria',
-  })
-  @ApiQuery({ name: 'q', required: false, description: 'Search query' })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: EmployeeStatus,
-    description: 'Filter by employee status',
-  })
-  @ApiQuery({
-    name: 'departmentId',
-    required: false,
-    description: 'Filter by department ID',
-  })
-  @ApiResponse({ status: 200, description: 'Search results' })
   async searchEmployees(
     @Query('q') searchQuery?: string,
     @Query('status') status?: EmployeeStatus,
@@ -218,32 +64,24 @@ export class EmployeeProfileController {
   }
 
   @Get(':employeeId')
-  @ApiTags('HR Admin')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  @ApiOperation({
-    summary: 'Get employee profile by ID',
-    description: 'HR Admin retrieves full employee profile including sensitive data',
-  })
-  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'Profile not found' })
-  async getEmployeeById(@Param('employeeId') employeeId: string) {
+  async getEmployeeById(
+    @Param('employeeId') employeeId: string,
+  ) {
     return this.employeeProfileService.getMyProfile(employeeId);
   }
 
+  @Post()
+  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  async createEmployee(
+    @CurrentUser() user: CurrentUserData,
+    @Body() employeeData: any,
+  ) {
+    return this.employeeProfileService.create(employeeData);
+  }
+
   @Put(':employeeId')
-  @ApiTags('HR Admin')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  @ApiOperation({
-    summary: 'Update employee master data',
-    description:
-      'US-EP-04: HR Admin edits any part of employee profile (master data management)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Employee profile updated successfully',
-  })
-  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  @ApiResponse({ status: 404, description: 'Profile not found' })
   async updateEmployeeMasterData(
     @CurrentUser() user: CurrentUserData,
     @Param('employeeId') employeeId: string,
@@ -252,31 +90,125 @@ export class EmployeeProfileController {
     return this.employeeProfileService.updateEmployeeMasterData(
       employeeId,
       user.userId,
-      user.role,
+      user.roles?.[0] || '',
       updateDto,
     );
   }
 
+  @Delete(':employeeId')
+  @Roles(SystemRole.SYSTEM_ADMIN)
+  async deleteEmployee(@Param('employeeId') employeeId: string) {
+    return this.employeeProfileService.delete(employeeId);
+  }
+
+  // ==================== SELF SERVICE ====================
+
+
+  @Get('me')
+  async getMyProfile(@CurrentUser() user: CurrentUserData) {
+    return this.employeeProfileService.getMyProfile(user.employeeId);
+  }
+
+  @Patch('me/contact-info')
+  async updateMyContactInfo(
+    @CurrentUser() user: CurrentUserData,
+    @Body() updateDto: UpdateContactInfoDto,
+  ) {
+    return this.employeeProfileService.updateMyContactInfo(
+      user.employeeId,
+      user.userId,
+      updateDto,
+    );
+  }
+
+  @Patch('me/profile')
+  async updateMyProfile(
+    @CurrentUser() user: CurrentUserData,
+    @Body() updateDto: UpdateProfileDto,
+  ) {
+    return this.employeeProfileService.updateMyProfile(
+      user.employeeId,
+      user.userId,
+      updateDto,
+    );
+  }
+
+  @Post('me/change-requests')
+  async createChangeRequest(
+    @CurrentUser() user: CurrentUserData,
+    @Body() createDto: CreateChangeRequestDto,
+  ) {
+    return this.employeeProfileService.createChangeRequest(
+      user.employeeId,
+      user.userId,
+      createDto,
+    );
+  }
+
+  @Get('me/change-requests')
+  async getMyChangeRequests(@CurrentUser() user: CurrentUserData) {
+    return this.employeeProfileService.getMyChangeRequests(user.employeeId);
+  }
+
+  @Post('me/profile-picture')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadProfilePicture(
+    @CurrentUser() user: CurrentUserData,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const fileUrl = await this.employeeProfileService.saveFile(file, user.employeeId);
+
+    const profile = await this.employeeProfileService.getMyProfile(user.employeeId);
+
+    if (profile.profilePictureUrl) {
+      await this.employeeProfileService.deleteFile(profile.profilePictureUrl);
+    }
+
+    await this.employeeProfileService.updateMyProfile(user.employeeId, user.userId, {
+      profilePictureUrl: fileUrl,
+    });
+
+    return { message: 'Profile picture uploaded successfully', url: fileUrl };
+  }
+
+  @Get('profile-picture/:filename')
+  async getProfilePicture(@Param('filename') filename: string, @Res() res: Response) {
+    const file = await this.employeeProfileService.getFile(filename);
+    res.send(file);
+  }
+
+  // ==================== MANAGER ENDPOINTS ====================
+
+  @Get('team')
+  @Roles(SystemRole.DEPARTMENT_HEAD)
+  async getTeamMembers(@CurrentUser() user: CurrentUserData) {
+    const managerPositionId = user['managerPositionId'] || user.employeeId;
+    return this.employeeProfileService.getTeamMembers(managerPositionId);
+  }
+
+  @Get('team/:employeeId')
+  @Roles(SystemRole.DEPARTMENT_HEAD)
+  async getTeamMemberProfile(
+    @CurrentUser() user: CurrentUserData,
+    @Param('employeeId') employeeId: string,
+  ) {
+    const managerPositionId = user['managerPositionId'] || user.employeeId;
+    return this.employeeProfileService.getTeamMemberProfile(employeeId, managerPositionId);
+  }
+
+  // ==================== HR ADMIN ====================
+
   @Patch(':employeeId/status')
-  @ApiTags('HR Admin')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  @ApiOperation({
-    summary: 'Deactivate/Change employee status',
-    description:
-      'US-EP-05: HR Admin deactivates employee profile upon termination or resignation, or changes status',
-  })
-  @ApiResponse({ status: 200, description: 'Status updated successfully' })
-  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   async updateEmployeeStatus(
     @CurrentUser() user: CurrentUserData,
     @Param('employeeId') employeeId: string,
-    @Body()
-    statusDto: { status: EmployeeStatus; effectiveDate?: Date },
+    @Body() statusDto: { status: EmployeeStatus; effectiveDate?: Date },
   ) {
     return this.employeeProfileService.deactivateEmployee(
       employeeId,
       user.userId,
-      user.role,
+      user.roles?.[0] || '',
       statusDto.status,
       statusDto.effectiveDate,
     );
@@ -285,46 +217,18 @@ export class EmployeeProfileController {
   // ==================== CHANGE REQUEST MANAGEMENT ====================
 
   @Get('change-requests/pending')
-  @ApiTags('Change Requests')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  @ApiOperation({
-    summary: 'Get all pending change requests',
-    description: 'HR Admin retrieves all pending profile change requests for review',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Pending requests retrieved successfully',
-  })
   async getPendingChangeRequests() {
     return this.employeeProfileService.getPendingChangeRequests();
   }
 
   @Get('change-requests/:requestId')
-  @ApiTags('Change Requests')
-  @ApiOperation({
-    summary: 'Get change request by ID',
-    description: 'Retrieve details of a specific change request',
-  })
-  @ApiResponse({ status: 200, description: 'Request retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'Request not found' })
   async getChangeRequestById(@Param('requestId') requestId: string) {
     return this.employeeProfileService.getChangeRequestById(requestId);
   }
 
   @Patch('change-requests/:requestId/process')
-  @ApiTags('Change Requests')
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  @ApiOperation({
-    summary: 'Process (approve/reject) change request',
-    description:
-      'US-E2-03: HR Admin reviews and approves or rejects employee-submitted profile changes',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Change request processed successfully',
-  })
-  @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  @ApiResponse({ status: 404, description: 'Request not found' })
+  @Roles(SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async processChangeRequest(
     @CurrentUser() user: CurrentUserData,
     @Param('requestId') requestId: string,
@@ -333,96 +237,88 @@ export class EmployeeProfileController {
     return this.employeeProfileService.processChangeRequest(
       requestId,
       user.userId,
-      user.role,
+      user.roles?.[0] || '',
       processDto,
     );
   }
 
-  // ==================== FILE UPLOAD ENDPOINTS ====================
+  // ==================== ROLE MANAGEMENT ====================
 
-  @Post('me/profile-picture')
-  @ApiTags('Employee Self-Service')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiOperation({
-    summary: 'Upload profile picture',
-    description: 'Upload and set employee profile picture',
-  })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-          description: 'Profile picture (max 5MB, jpeg/png/gif/webp)',
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 201, description: 'File uploaded successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid file' })
-  async uploadProfilePicture(
+  @Post(':employeeId/roles/assign')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  async assignRoles(
     @CurrentUser() user: CurrentUserData,
-    @UploadedFile() file: Express.Multer.File,
+    @Param('employeeId') employeeId: string,
+    @Body() assignRoleDto: AssignRoleDto,
   ) {
-    // Save file
-    const fileUrl = await this.employeeProfileService.saveFile(
-      file,
-      user.employeeId,
-    );
-
-    // Get current profile to delete old picture
-    const profile = await this.employeeProfileService.getMyProfile(
-      user.employeeId,
-    );
-
-    if (profile.profilePictureUrl) {
-      await this.employeeProfileService.deleteFile(profile.profilePictureUrl);
-    }
-
-    // Update profile with new picture URL
-    await this.employeeProfileService.updateMyProfile(
-      user.employeeId,
+    return await this.employeeRoleService.assignRolesToEmployee(
+      employeeId,
+      assignRoleDto,
       user.userId,
-      {
-        profilePictureUrl: fileUrl,
-      },
+      user.roles?.[0] || '',
     );
-
-    return {
-      message: 'Profile picture uploaded successfully',
-      url: fileUrl,
-    };
   }
 
-  @Get('profile-picture/:filename')
-  @ApiTags('File Upload')
-  @ApiOperation({
-    summary: 'Get profile picture',
-    description: 'Retrieve profile picture by filename',
-  })
-  @ApiResponse({ status: 200, description: 'File retrieved successfully' })
-  @ApiResponse({ status: 404, description: 'File not found' })
-  async getProfilePicture(
-    @Param('filename') filename: string,
-    @Res() res: Response,
+  @Get(':employeeId/roles')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getEmployeeRoles(@Param('employeeId') employeeId: string) {
+    return await this.employeeRoleService.getEmployeeRoles(employeeId);
+  }
+
+  @Get('roles/by-role/:role')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getEmployeesByRole(@Param('role') role: SystemRole) {
+    return await this.employeeRoleService.getEmployeesByRole(role);
+  }
+
+  @Delete(':employeeId/roles/remove')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  async removeRoles(
+    @CurrentUser() user: CurrentUserData,
+    @Param('employeeId') employeeId: string,
   ) {
-    const file = await this.employeeProfileService.getFile(filename);
+    return await this.employeeRoleService.removeRolesFromEmployee(
+      employeeId,
+      user.userId,
+      user.roles?.[0] || '',
+    );
+  }
 
-    // Determine content type from filename
-    const ext = filename.split('.').pop()?.toLowerCase();
-    const contentType =
-      {
-        jpg: 'image/jpeg',
-        jpeg: 'image/jpeg',
-        png: 'image/png',
-        gif: 'image/gif',
-        webp: 'image/webp',
-      }[ext || ''] || 'application/octet-stream';
+  @Patch(':employeeId/permissions/add')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  async addPermission(
+    @CurrentUser() user: CurrentUserData,
+    @Param('employeeId') employeeId: string,
+    @Body('permission') permission: string,
+  ) {
+    return await this.employeeRoleService.addPermissionToEmployee(
+      employeeId,
+      permission,
+      user.userId,
+      user.roles?.[0] || '',
+    );
+  }
 
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.send(file);
+  @Patch(':employeeId/permissions/remove')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  async removePermission(
+    @CurrentUser() user: CurrentUserData,
+    @Param('employeeId') employeeId: string,
+    @Body('permission') permission: string,
+  ) {
+    return await this.employeeRoleService.removePermissionFromEmployee(
+      employeeId,
+      permission,
+      user.userId,
+      user.roles?.[0] || '',
+    );
+  }
+
+  @Get('roles/all')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getAllRoleAssignments(@CurrentUser() user: CurrentUserData) {
+    return await this.employeeRoleService.getAllRoleAssignments(
+      user.roles?.[0] || '',
+    );
   }
 }

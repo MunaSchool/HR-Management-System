@@ -1,17 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsString, IsOptional } from 'class-validator';
-import { ProfileChangeStatus } from '../enums/employee-profile.enums';
+import { IsBoolean, IsString, IsOptional } from 'class-validator';
 
 export class ProcessChangeRequestDto {
   @ApiProperty({
-    enum: ProfileChangeStatus,
-    example: ProfileChangeStatus.APPROVED,
+    example: true,
+    description: 'Whether to approve or reject the change request',
   })
-  @IsEnum(ProfileChangeStatus)
-  status: ProfileChangeStatus;
+  @IsBoolean()
+  approved: boolean;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    description: 'Comments from the reviewer',
+  })
   @IsOptional()
   @IsString()
-  remarks?: string;
+  comments?: string;
 }

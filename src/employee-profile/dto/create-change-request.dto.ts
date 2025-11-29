@@ -20,11 +20,11 @@ export class CreateChangeRequestDto {
   reason?: string;
 
   @ApiProperty({
-    description: 'Proposed changes as key-value pairs',
+    description: 'Requested changes as key-value pairs',
     example: { jobTitle: 'Senior Developer', department: 'Engineering' },
     required: false,
   })
   @IsOptional()
   @IsObject()
-  proposedChanges?: Record<string, any>;
+  requestedChanges?: Record<string, any>;
 }

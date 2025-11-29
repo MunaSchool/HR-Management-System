@@ -9,6 +9,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { EmployeeProfile } from '../employee-profile/models/employee-profile.schema';
+import { EmployeeSystemRole } from '../employee-profile/models/employee-system-role.schema';
 import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
@@ -16,6 +17,8 @@ export class AuthService {
   constructor(
     @InjectModel(EmployeeProfile.name)
     private employeeProfileModel: Model<EmployeeProfile>,
+    @InjectModel(EmployeeSystemRole.name)
+    private employeeRoleModel: Model<EmployeeSystemRole>,
     private jwtService: JwtService,
   ) {}
 
@@ -36,12 +39,39 @@ export class AuthService {
       throw new ConflictException('Email already exists');
     }
 
+    const existingNationalId = await this.employeeProfileModel.findOne({
+      nationalId: registerDto.nationalId
+    });
+
+    if (existingNationalId) {
+      throw new ConflictException('National ID already exists');
+    }
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
-    await this.employeeProfileModel.create({
+    // Create employee profile
+    const newEmployee = await this.employeeProfileModel.create({
       employeeNumber: registerDto.employeeNumber,
       workEmail: registerDto.workEmail,
       password: hashedPassword,
+      firstName: registerDto.firstName,
+      lastName: registerDto.lastName,
+      nationalId: registerDto.nationalId,
+      dateOfHire: new Date(registerDto.dateOfHire),
+      fullName: `${registerDto.firstName} ${registerDto.lastName}`,
+    });
+
+    // Create role assignment with provided roles or default
+    const roleAssignment = await this.employeeRoleModel.create({
+      employeeProfileId: newEmployee._id,
+      roles: registerDto.roles || ['DEPARTMENT_EMPLOYEE'],
+      permissions: registerDto.permissions || [],
+      isActive: true,
+    });
+
+    // Link role assignment to employee profile
+    await this.employeeProfileModel.findByIdAndUpdate(newEmployee._id, {
+      accessProfileId: roleAssignment._id,
     });
 
     return 'Registered successfully';
@@ -50,7 +80,7 @@ export class AuthService {
   async signIn(
     employeeNumber: string,
     password: string
-  ): Promise<{ access_token: string; payload: { userid: Types.ObjectId; roles: string[] } }> {
+  ): Promise<{ access_token: string; payload: { userid: Types.ObjectId; roles: string[]; status: string } }> {
     const employee = await this.employeeProfileModel
       .findOne({ employeeNumber })
       .populate('accessProfileId');
@@ -78,6 +108,7 @@ export class AuthService {
       roles,
       employeeNumber: employee.employeeNumber,
       email: employee.workEmail,
+      status: employee.status, // BR-3j: Include employee status in JWT
     };
 
     return {
@@ -85,6 +116,7 @@ export class AuthService {
       payload: {
         userid: employee._id,
         roles,
+        status: employee.status,
       },
     };
   }

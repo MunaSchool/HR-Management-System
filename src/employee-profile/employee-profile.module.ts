@@ -2,6 +2,12 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
+import { EmployeeRoleService } from './services/employee-role.service';
+import { EmployeeCrudService } from './services/employee-crud.service';
+import { EmployeeSelfServiceService } from './services/employee-self-service.service';
+import { ChangeRequestService } from './services/change-request.service';
+import { FileUploadService } from './services/file-upload.service';
+import { HrAdminService } from './services/hr-admin.service';
 import { Candidate, CandidateSchema } from './models/candidate.schema';
 import {
   EmployeeProfile,
@@ -36,6 +42,15 @@ import { PerformanceModule } from '../performance/performance.module';
     PerformanceModule,
   ],
   controllers: [EmployeeProfileController],
-  providers: [EmployeeProfileService],
+  providers: [
+    EmployeeProfileService,
+    EmployeeRoleService,
+    EmployeeCrudService,
+    EmployeeSelfServiceService,
+    ChangeRequestService,
+    FileUploadService,
+    HrAdminService,
+  ],
+  exports: [EmployeeProfileService],
 })
 export class EmployeeProfileModule {}
