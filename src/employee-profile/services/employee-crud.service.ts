@@ -2,18 +2,48 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EmployeeProfile, EmployeeProfileDocument } from '../models/employee-profile.schema';
+import { EmployeeSystemRole } from '../models/employee-system-role.schema';
+import { CreateEmployeeDto } from '../dto/create-employee.dto';
 
 @Injectable()
 export class EmployeeCrudService {
   constructor(
     @InjectModel(EmployeeProfile.name)
     private employeeProfileModel: Model<EmployeeProfileDocument>,
+    @InjectModel(EmployeeSystemRole.name)
+    private employeeRoleModel: Model<EmployeeSystemRole>,
   ) {}
 
-  // Create a new employee profile
-  async create(employeeData: Partial<EmployeeProfile>): Promise<EmployeeProfileDocument> {
-    const newEmployee = new this.employeeProfileModel(employeeData);
-    return await newEmployee.save();
+  // Create a new employee profile with role assignment
+  async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
+    const { roles, permissions, ...profileData } = employeeData;
+
+    // Create employee profile
+    const newEmployee = await this.employeeProfileModel.create({
+      ...profileData,
+      fullName: `${profileData.firstName} ${profileData.lastName}`,
+    });
+
+    // Create role assignment
+    const roleAssignment = await this.employeeRoleModel.create({
+      employeeProfileId: newEmployee._id,
+      roles: roles,
+      permissions: permissions || [],
+      isActive: true,
+    });
+
+    // Link role to employee
+    const updated = await this.employeeProfileModel.findByIdAndUpdate(
+      newEmployee._id,
+      { accessProfileId: roleAssignment._id },
+      { new: true }
+    );
+
+    if (!updated) {
+      throw new NotFoundException('Employee profile not found');
+    }
+
+    return updated;
   }
 
   // Get all employee profiles

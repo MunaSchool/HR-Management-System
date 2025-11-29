@@ -32,6 +32,7 @@ import { CreateChangeRequestDto } from './dto/create-change-request.dto';
 import { ProcessChangeRequestDto } from './dto/process-change-request.dto';
 import { UpdateEmployeeMasterDto } from './dto/update-employee-master.dto';
 import { AssignRoleDto } from './dto/assign-role.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('employee-profile')
@@ -63,42 +64,42 @@ export class EmployeeProfileController {
     );
   }
 
-  @Get(':employeeId')
+  @Get(':id')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async getEmployeeById(
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
   ) {
-    return this.employeeProfileService.getMyProfile(employeeId);
+    return this.employeeProfileService.getMyProfile(id);
   }
 
   @Post()
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async createEmployee(
     @CurrentUser() user: CurrentUserData,
-    @Body() employeeData: any,
+    @Body() employeeData: CreateEmployeeDto,
   ) {
     return this.employeeProfileService.create(employeeData);
   }
 
-  @Put(':employeeId')
+  @Put(':id')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async updateEmployeeMasterData(
     @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
     @Body() updateDto: UpdateEmployeeMasterDto,
   ) {
     return this.employeeProfileService.updateEmployeeMasterData(
-      employeeId,
+      id,
       user.userId,
       user.roles?.[0] || '',
       updateDto,
     );
   }
 
-  @Delete(':employeeId')
+  @Delete(':id')
   @Roles(SystemRole.SYSTEM_ADMIN)
-  async deleteEmployee(@Param('employeeId') employeeId: string) {
-    return this.employeeProfileService.delete(employeeId);
+  async deleteEmployee(@Param('id') id: string) {
+    return this.employeeProfileService.delete(id);
   }
 
   // ==================== SELF SERVICE ====================
@@ -186,27 +187,27 @@ export class EmployeeProfileController {
     return this.employeeProfileService.getTeamMembers(managerPositionId);
   }
 
-  @Get('team/:employeeId')
+  @Get('team/:id')
   @Roles(SystemRole.DEPARTMENT_HEAD)
   async getTeamMemberProfile(
     @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
   ) {
     const managerPositionId = user['managerPositionId'] || user.employeeId;
-    return this.employeeProfileService.getTeamMemberProfile(employeeId, managerPositionId);
+    return this.employeeProfileService.getTeamMemberProfile(id, managerPositionId);
   }
 
   // ==================== HR ADMIN ====================
 
-  @Patch(':employeeId/status')
+  @Patch(':id/status')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async updateEmployeeStatus(
     @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
     @Body() statusDto: { status: EmployeeStatus; effectiveDate?: Date },
   ) {
     return this.employeeProfileService.deactivateEmployee(
-      employeeId,
+      id,
       user.userId,
       user.roles?.[0] || '',
       statusDto.status,
@@ -244,25 +245,25 @@ export class EmployeeProfileController {
 
   // ==================== ROLE MANAGEMENT ====================
 
-  @Post(':employeeId/roles/assign')
+  @Post(':id/roles/assign')
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async assignRoles(
     @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
     @Body() assignRoleDto: AssignRoleDto,
   ) {
     return await this.employeeRoleService.assignRolesToEmployee(
-      employeeId,
+      id,
       assignRoleDto,
       user.userId,
       user.roles?.[0] || '',
     );
   }
 
-  @Get(':employeeId/roles')
+  @Get(':id/roles')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getEmployeeRoles(@Param('employeeId') employeeId: string) {
-    return await this.employeeRoleService.getEmployeeRoles(employeeId);
+  async getEmployeeRoles(@Param('id') id: string) {
+    return await this.employeeRoleService.getEmployeeRoles(id);
   }
 
   @Get('roles/by-role/:role')
@@ -271,43 +272,43 @@ export class EmployeeProfileController {
     return await this.employeeRoleService.getEmployeesByRole(role);
   }
 
-  @Delete(':employeeId/roles/remove')
+  @Delete(':id/roles/remove')
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async removeRoles(
     @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
   ) {
     return await this.employeeRoleService.removeRolesFromEmployee(
-      employeeId,
+      id,
       user.userId,
       user.roles?.[0] || '',
     );
   }
 
-  @Patch(':employeeId/permissions/add')
+  @Patch(':id/permissions/add')
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async addPermission(
     @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
     @Body('permission') permission: string,
   ) {
     return await this.employeeRoleService.addPermissionToEmployee(
-      employeeId,
+      id,
       permission,
       user.userId,
       user.roles?.[0] || '',
     );
   }
 
-  @Patch(':employeeId/permissions/remove')
+  @Patch(':id/permissions/remove')
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async removePermission(
     @CurrentUser() user: CurrentUserData,
-    @Param('employeeId') employeeId: string,
+    @Param('id') id: string,
     @Body('permission') permission: string,
   ) {
     return await this.employeeRoleService.removePermissionFromEmployee(
-      employeeId,
+      id,
       permission,
       user.userId,
       user.roles?.[0] || '',

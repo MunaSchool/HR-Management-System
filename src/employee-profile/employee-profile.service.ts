@@ -11,6 +11,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateChangeRequestDto } from './dto/create-change-request.dto';
 import { ProcessChangeRequestDto } from './dto/process-change-request.dto';
 import { UpdateEmployeeMasterDto } from './dto/update-employee-master.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { EmployeeProfile } from './models/employee-profile.schema';
 import { EmployeeStatus } from './enums/employee-profile.enums';
 
@@ -30,7 +31,7 @@ export class EmployeeProfileService {
 
   // ==================== BASIC CRUD (Delegated to EmployeeCrudService) ====================
 
-  async create(employeeData: Partial<EmployeeProfile>): Promise<EmployeeProfileDocument> {
+  async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
     return this.employeeCrudService.create(employeeData);
   }
 
