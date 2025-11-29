@@ -1,3 +1,4 @@
+import { Department, DepartmentSchema } from '../organization-structure/models/department.schema';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PerformanceController } from './performance.controller';
@@ -22,6 +23,8 @@ import {
   AppraisalDispute,
   AppraisalDisputeSchema,
 } from './models/appraisal-dispute.schema';
+import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
+import { OrganizationStructureModule } from '../organization-structure/organization-structure.module';
 
 @Module({
   imports: [
@@ -31,7 +34,11 @@ import {
       { name: AppraisalAssignment.name, schema: AppraisalAssignmentSchema },
       { name: AppraisalRecord.name, schema: AppraisalRecordSchema },
       { name: AppraisalDispute.name, schema: AppraisalDisputeSchema },
+      { name: Department.name, schema: DepartmentSchema },
+      // ❌ REMOVE EmployeeProfile here — already included via EmployeeProfileModule
     ]),
+    EmployeeProfileModule,         // ✔ provides EmployeeProfile model
+    OrganizationStructureModule,
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],
