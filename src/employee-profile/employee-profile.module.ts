@@ -8,6 +8,7 @@ import { EmployeeSelfServiceService } from './services/employee-self-service.ser
 import { ChangeRequestService } from './services/change-request.service';
 import { FileUploadService } from './services/file-upload.service';
 import { HrAdminService } from './services/hr-admin.service';
+import { CandidateRegistrationService } from './services/candidate-registration.service';
 import { Candidate, CandidateSchema } from './models/candidate.schema';
 import {
   EmployeeProfile,
@@ -52,7 +53,8 @@ import { TimeManagementModule } from '../time-management/time-management.module'
     ChangeRequestService,
     FileUploadService,
     HrAdminService,
+    CandidateRegistrationService,
   ],
-  exports: [EmployeeProfileService],
+  exports: [EmployeeProfileService, CandidateRegistrationService],
 })
 export class EmployeeProfileModule {}
