@@ -26,6 +26,7 @@ import {
   EmployeeQualificationSchema,
 } from './models/qualification.schema';
 import { PerformanceModule } from '../performance/performance.module';
+import { TimeManagementModule } from '../time-management/time-management.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { PerformanceModule } from '../performance/performance.module';
       { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
     PerformanceModule,
+    TimeManagementModule,
   ],
   controllers: [EmployeeProfileController],
   providers: [
