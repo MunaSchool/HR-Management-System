@@ -1,21 +1,41 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
-import { AppraisalType } from '../enum/appraisal-type.enum';
-import { AppraisalStatus } from '../enum/appraisal-status.enum';
+import { HydratedDocument, Types } from 'mongoose';
+import {
+  AppraisalCycleStatus,
+  AppraisalTemplateType,
+} from '../enums/performance.enums';
+import { Department } from '../../organization-structure/models/department.schema';
+import { AppraisalTemplate } from './appraisal-template.schema';
 
 export type AppraisalCycleDocument = HydratedDocument<AppraisalCycle>;
 
-@Schema({ timestamps: true })
+@Schema({ _id: false })
+export class CycleTemplateAssignment {
+  @Prop({ type: Types.ObjectId, ref: 'AppraisalTemplate', required: true })
+  templateId: Types.ObjectId;
+
+  @Prop({ type: [Types.ObjectId], ref: 'Department', default: [] })
+  departmentIds: Types.ObjectId[];
+}
+
+export const CycleTemplateAssignmentSchema = SchemaFactory.createForClass(
+  CycleTemplateAssignment,
+);
+
+@Schema({ collection: 'appraisal_cycles', timestamps: true })
 export class AppraisalCycle {
-  @Prop({ required: true })
-  name: string; // e.g. "2025 Annual Appraisal"
+  @Prop({ type: String, required: true, unique: true })
+  name: string;
+
+  @Prop({ type: String })
+  description?: string;
 
   @Prop({
     type: String,
-    enum: AppraisalType,
+    enum: Object.values(AppraisalTemplateType),
     required: true,
   })
-  type: AppraisalType;
+  cycleType: AppraisalTemplateType;
 
   @Prop({ type: Date, required: true })
   startDate: Date;
@@ -23,22 +43,30 @@ export class AppraisalCycle {
   @Prop({ type: Date, required: true })
   endDate: Date;
 
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'PerformanceTemplate',   // FIXED HERE!!
-    required: true,
-  })
-  template: mongoose.Types.ObjectId;
+  @Prop({ type: Date })
+  managerDueDate?: Date;
+
+  @Prop({ type: Date })
+  employeeAcknowledgementDueDate?: Date;
+
+  @Prop({ type: [CycleTemplateAssignmentSchema], default: [] })
+  templateAssignments: CycleTemplateAssignment[];
 
   @Prop({
     type: String,
-    enum: AppraisalStatus,
-    default: AppraisalStatus.DRAFT,
+    enum: Object.values(AppraisalCycleStatus),
+    default: AppraisalCycleStatus.PLANNED,
   })
-  status: AppraisalStatus;
+  status: AppraisalCycleStatus;
 
-  @Prop({ type: [String], default: [] })
-  includedOrgUnits?: string[]; // department IDs
+  @Prop({ type: Date })
+  publishedAt?: Date;
+
+  @Prop({ type: Date })
+  closedAt?: Date;
+
+  @Prop({ type: Date })
+  archivedAt?: Date;
 }
 
 export const AppraisalCycleSchema =

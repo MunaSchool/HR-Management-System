@@ -1,34 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { TimeManagementService } from './time-management.service';
-import { CreateTimeManagementDto } from './dto/create-time-management.dto';
-import { UpdateTimeManagementDto } from './dto/update-time-management.dto';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Types } from 'mongoose';
+import { NotificationLogService } from './services/notification-log.service';
+import { AuthGuard } from '../auth/guards/auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { CurrentUserData } from '../auth/decorators/current-user.decorator';
 
 @Controller('time-management')
 export class TimeManagementController {
-  constructor(private readonly timeManagementService: TimeManagementService) {}
+  constructor(private readonly notificationLogService: NotificationLogService) {}
 
-  @Post()
-  create(@Body() createTimeManagementDto: CreateTimeManagementDto) {
-    return this.timeManagementService.create(createTimeManagementDto);
+  @Get('notifications')
+  @UseGuards(AuthGuard)
+  async getMyNotifications(@CurrentUser() user: CurrentUserData) {
+    return this.notificationLogService.getEmployeeNotifications(new Types.ObjectId(user.employeeId));
   }
 
-  @Get()
-  findAll() {
-    return this.timeManagementService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.timeManagementService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTimeManagementDto: UpdateTimeManagementDto) {
-    return this.timeManagementService.update(+id, updateTimeManagementDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.timeManagementService.remove(+id);
+  @Get('notifications/all')
+  @UseGuards(AuthGuard)
+  async getAllNotifications() {
+    return this.notificationLogService.getAllNotifications();
   }
 }

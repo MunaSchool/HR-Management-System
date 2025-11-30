@@ -1,40 +1,24 @@
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-
-import { PayrollTrackingService } from './payroll-tracking.service';
+import { forwardRef, Module } from '@nestjs/common';
 import { PayrollTrackingController } from './payroll-tracking.controller';
-
-import { Dispute, DisputeSchema } from './schemas/dispute.schema';
-import { Claim, ClaimSchema } from './schemas/claim.schema';
-import { Refund, RefundSchema } from './schemas/refund.schema';
-import { PayrollReport, PayrollReportSchema } from './schemas/payroll-report.schema';
-
-import { PayrollProcessingModule } from '../payroll-processing/payroll-processing.module';
+import { PayrollTrackingService } from './payroll-tracking.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { refunds, refundsSchema } from './models/refunds.schema';
+import { claims, claimsSchema } from './models/claims.schema';
+import { disputes, disputesSchema } from './models/disputes.schema';
 import { PayrollConfigurationModule } from '../payroll-configuration/payroll-configuration.module';
-import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
-import { LeavesModule } from '../leaves/leaves.module';
-import { OrgStructureModule } from '../org-structure/org-structure.module';
+import { PayrollExecutionModule } from '../payroll-execution/payroll-execution.module';
 
 @Module({
+  
   imports: [
-
+    PayrollConfigurationModule,forwardRef(()=> PayrollExecutionModule),
     MongooseModule.forFeature([
-      { name: Dispute.name, schema: DisputeSchema },
-      { name: Claim.name, schema: ClaimSchema },
-      { name: Refund.name, schema: RefundSchema },
-      { name: PayrollReport.name, schema: PayrollReportSchema },
-    ]),
-
-
-    PayrollProcessingModule,
-    PayrollConfigurationModule,
-    EmployeeProfileModule,
-    LeavesModule,
-    OrgStructureModule,
-  ],
-
+      { name: refunds.name, schema: refundsSchema },
+      { name: claims.name, schema: claimsSchema },
+      { name: disputes.name, schema: disputesSchema },
+    ])],
   controllers: [PayrollTrackingController],
   providers: [PayrollTrackingService],
-  exports: [PayrollTrackingService],
+  exports:[PayrollTrackingService]
 })
-export class PayrollTrackingModule {}
+export class PayrollTrackingModule { }

@@ -6,6 +6,7 @@ import { EmployeeProfileChangeRequest } from '../models/ep-change-request.schema
 import { CreateChangeRequestDto } from '../dto/create-change-request.dto';
 import { ProcessChangeRequestDto } from '../dto/process-change-request.dto';
 import { ProfileChangeStatus, SystemRole } from '../enums/employee-profile.enums';
+import { NotificationLogService } from '../../time-management/services/notification-log.service';
 
 @Injectable()
 export class ChangeRequestService {
@@ -14,6 +15,7 @@ export class ChangeRequestService {
     private employeeProfileModel: Model<EmployeeProfileDocument>,
     @InjectModel(EmployeeProfileChangeRequest.name)
     private changeRequestModel: Model<EmployeeProfileChangeRequest>,
+    private notificationLogService: NotificationLogService,
   ) {}
 
   // Create a change request (US-E6-02, US-E2-06)
@@ -22,7 +24,16 @@ export class ChangeRequestService {
     userId: string,
     createDto: CreateChangeRequestDto,
   ): Promise<EmployeeProfileChangeRequest> {
+    // Generate unique request ID
+    const requestId = `CR-${Date.now()}-${employeeId.slice(-6)}`;
+
+    // Generate description from requested changes
+    const changeFields = Object.keys(createDto.requestedChanges || {}).join(', ');
+    const requestDescription = `Request to update: ${changeFields || 'profile data'}`;
+
     const newRequest = new this.changeRequestModel({
+      requestId,
+      requestDescription,
       employeeProfileId: employeeId,
       requestedBy: userId,
       requestedChanges: createDto.requestedChanges,
@@ -30,7 +41,17 @@ export class ChangeRequestService {
       status: ProfileChangeStatus.PENDING,
       requestDate: new Date(),
     });
-    return await newRequest.save();
+
+    const savedRequest = await newRequest.save();
+
+    // Send notification to HR about new change request
+    await this.notificationLogService.sendNotification({
+      to: new Types.ObjectId(employeeId),
+      type: 'Profile Change Request Submitted',
+      message: `A new profile change request has been submitted for review. Reason: ${createDto.reason}`,
+    });
+
+    return savedRequest;
   }
 
   // Get my change requests
@@ -111,6 +132,20 @@ export class ChangeRequestService {
           lastModifiedAt: new Date(),
         },
       );
+
+      // Notify employee that request was approved
+      await this.notificationLogService.sendNotification({
+        to: new Types.ObjectId(request.employeeProfileId.toString()),
+        type: 'Profile Change Request Approved',
+        message: `Your profile change request has been approved. ${processDto.comments || ''}`,
+      });
+    } else {
+      // Notify employee that request was rejected
+      await this.notificationLogService.sendNotification({
+        to: new Types.ObjectId(request.employeeProfileId.toString()),
+        type: 'Profile Change Request Rejected',
+        message: `Your profile change request has been rejected. ${processDto.comments || ''}`,
+      });
     }
 
     return await request.save();

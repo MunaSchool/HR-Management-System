@@ -18,6 +18,7 @@ import type { Response } from 'express';
 
 import { EmployeeProfileService } from './employee-profile.service';
 import { EmployeeRoleService } from './services/employee-role.service';
+import { CandidateRegistrationService } from './services/candidate-registration.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -34,23 +35,58 @@ import { UpdateEmployeeMasterDto } from './dto/update-employee-master.dto';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 
-@UseGuards(AuthGuard, RolesGuard)
 @Controller('employee-profile')
 export class EmployeeProfileController {
   constructor(
     private readonly employeeProfileService: EmployeeProfileService,
     private readonly employeeRoleService: EmployeeRoleService,
+    private readonly candidateRegistrationService: CandidateRegistrationService,
   ) {}
 
-  // ==================== BASIC CRUD ====================
+  // ==================== CANDIDATE ROUTES ====================
+  @Post('candidate/register')
+  async registerCandidate(@Body() registerDto: any) {
+    return this.candidateRegistrationService.registerCandidate(registerDto);
+  }
 
+  @Get('candidate/profile')
+  @UseGuards(AuthGuard)
+  async getCandidateProfile(@CurrentUser() user: CurrentUserData) {
+    return this.candidateRegistrationService.getCandidateProfile(user.employeeId);
+  }
+
+  @Put('candidate/profile')
+  @UseGuards(AuthGuard)
+  async updateCandidateProfile(
+    @CurrentUser() user: CurrentUserData,
+    @Body() updateDto: any,
+  ) {
+    return this.candidateRegistrationService.updateCandidateProfile(user.employeeId, updateDto);
+  }
+
+  @Put('candidate/change-password')
+  @UseGuards(AuthGuard)
+  async changeCandidatePassword(
+    @CurrentUser() user: CurrentUserData,
+    @Body() passwordDto: any,
+  ) {
+    return this.candidateRegistrationService.changePassword(
+      user.employeeId,
+      passwordDto.currentPassword,
+      passwordDto.newPassword,
+    );
+  }
+
+  // ==================== SEARCH ROUTES ====================
   @Get()
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getAllEmployees(@CurrentUser() user: CurrentUserData) {
+  async getAllEmployees() {
     return this.employeeProfileService.findAll();
   }
 
   @Get('search')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async searchEmployees(
     @Query('q') searchQuery?: string,
@@ -64,53 +100,15 @@ export class EmployeeProfileController {
     );
   }
 
-  @Get(':id')
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getEmployeeById(
-    @Param('id') id: string,
-  ) {
-    return this.employeeProfileService.getMyProfile(id);
-  }
-
-  @Post()
-  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
-  async createEmployee(
-    @CurrentUser() user: CurrentUserData,
-    @Body() employeeData: CreateEmployeeDto,
-  ) {
-    return this.employeeProfileService.create(employeeData);
-  }
-
-  @Put(':id')
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async updateEmployeeMasterData(
-    @CurrentUser() user: CurrentUserData,
-    @Param('id') id: string,
-    @Body() updateDto: UpdateEmployeeMasterDto,
-  ) {
-    return this.employeeProfileService.updateEmployeeMasterData(
-      id,
-      user.userId,
-      user.roles?.[0] || '',
-      updateDto,
-    );
-  }
-
-  @Delete(':id')
-  @Roles(SystemRole.SYSTEM_ADMIN)
-  async deleteEmployee(@Param('id') id: string) {
-    return this.employeeProfileService.delete(id);
-  }
-
-  // ==================== SELF SERVICE ====================
-
-
+  // ==================== SELF-SERVICE ROUTES ====================
   @Get('me')
+  @UseGuards(AuthGuard)
   async getMyProfile(@CurrentUser() user: CurrentUserData) {
     return this.employeeProfileService.getMyProfile(user.employeeId);
   }
 
   @Patch('me/contact-info')
+  @UseGuards(AuthGuard)
   async updateMyContactInfo(
     @CurrentUser() user: CurrentUserData,
     @Body() updateDto: UpdateContactInfoDto,
@@ -123,6 +121,7 @@ export class EmployeeProfileController {
   }
 
   @Patch('me/profile')
+  @UseGuards(AuthGuard)
   async updateMyProfile(
     @CurrentUser() user: CurrentUserData,
     @Body() updateDto: UpdateProfileDto,
@@ -135,6 +134,7 @@ export class EmployeeProfileController {
   }
 
   @Post('me/change-requests')
+  @UseGuards(AuthGuard)
   async createChangeRequest(
     @CurrentUser() user: CurrentUserData,
     @Body() createDto: CreateChangeRequestDto,
@@ -147,18 +147,19 @@ export class EmployeeProfileController {
   }
 
   @Get('me/change-requests')
+  @UseGuards(AuthGuard)
   async getMyChangeRequests(@CurrentUser() user: CurrentUserData) {
     return this.employeeProfileService.getMyChangeRequests(user.employeeId);
   }
 
   @Post('me/profile-picture')
+  @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   async uploadProfilePicture(
     @CurrentUser() user: CurrentUserData,
     @UploadedFile() file: Express.Multer.File,
   ) {
     const fileUrl = await this.employeeProfileService.saveFile(file, user.employeeId);
-
     const profile = await this.employeeProfileService.getMyProfile(user.employeeId);
 
     if (profile.profilePictureUrl) {
@@ -172,15 +173,9 @@ export class EmployeeProfileController {
     return { message: 'Profile picture uploaded successfully', url: fileUrl };
   }
 
-  @Get('profile-picture/:filename')
-  async getProfilePicture(@Param('filename') filename: string, @Res() res: Response) {
-    const file = await this.employeeProfileService.getFile(filename);
-    res.send(file);
-  }
-
-  // ==================== MANAGER ENDPOINTS ====================
-
+  // ==================== MANAGER ROUTES ====================
   @Get('team')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.DEPARTMENT_HEAD)
   async getTeamMembers(@CurrentUser() user: CurrentUserData) {
     const managerPositionId = user['managerPositionId'] || user.employeeId;
@@ -188,6 +183,7 @@ export class EmployeeProfileController {
   }
 
   @Get('team/:id')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.DEPARTMENT_HEAD)
   async getTeamMemberProfile(
     @CurrentUser() user: CurrentUserData,
@@ -197,38 +193,22 @@ export class EmployeeProfileController {
     return this.employeeProfileService.getTeamMemberProfile(id, managerPositionId);
   }
 
-  // ==================== HR ADMIN ====================
-
-  @Patch(':id/status')
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async updateEmployeeStatus(
-    @CurrentUser() user: CurrentUserData,
-    @Param('id') id: string,
-    @Body() statusDto: { status: EmployeeStatus; effectiveDate?: Date },
-  ) {
-    return this.employeeProfileService.deactivateEmployee(
-      id,
-      user.userId,
-      user.roles?.[0] || '',
-      statusDto.status,
-      statusDto.effectiveDate,
-    );
-  }
-
   // ==================== CHANGE REQUEST MANAGEMENT ====================
-
   @Get('change-requests/pending')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async getPendingChangeRequests() {
     return this.employeeProfileService.getPendingChangeRequests();
   }
 
   @Get('change-requests/:requestId')
+  @UseGuards(AuthGuard)
   async getChangeRequestById(@Param('requestId') requestId: string) {
     return this.employeeProfileService.getChangeRequestById(requestId);
   }
 
   @Patch('change-requests/:requestId/process')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async processChangeRequest(
     @CurrentUser() user: CurrentUserData,
@@ -243,9 +223,48 @@ export class EmployeeProfileController {
     );
   }
 
-  // ==================== ROLE MANAGEMENT ====================
+  // ==================== STATIC ROLE ROUTES (MUST COME FIRST) ====================
+  @Get('roles/by-role/:role')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getEmployeesByRole(@Param('role') role: SystemRole) {
+    return await this.employeeRoleService.getEmployeesByRole(role);
+  }
+
+  @Get('roles/all')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getAllRoleAssignments(@CurrentUser() user: CurrentUserData) {
+    return await this.employeeRoleService.getAllRoleAssignments(
+      user.roles?.[0] || '',
+    );
+  }
+
+  // ==================== FILE SERVING ====================
+  @Get('profile-picture/:filename')
+  async getProfilePicture(@Param('filename') filename: string, @Res() res: Response) {
+    const file = await this.employeeProfileService.getFile(filename);
+    res.send(file);
+  }
+
+  // ==================== DYNAMIC ROUTES (ALWAYS LAST!) ====================
+  @Get(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getEmployeeById(@Param('id') id: string) {
+    return this.employeeProfileService.findById(id);
+
+  }
+
+  @Get(':id/roles')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getEmployeeRoles(@Param('id') id: string) {
+    return await this.employeeRoleService.getEmployeeRoles(id);
+  }
 
   @Post(':id/roles/assign')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async assignRoles(
     @CurrentUser() user: CurrentUserData,
@@ -260,19 +279,8 @@ export class EmployeeProfileController {
     );
   }
 
-  @Get(':id/roles')
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getEmployeeRoles(@Param('id') id: string) {
-    return await this.employeeRoleService.getEmployeeRoles(id);
-  }
-
-  @Get('roles/by-role/:role')
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getEmployeesByRole(@Param('role') role: SystemRole) {
-    return await this.employeeRoleService.getEmployeesByRole(role);
-  }
-
   @Delete(':id/roles/remove')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async removeRoles(
     @CurrentUser() user: CurrentUserData,
@@ -286,6 +294,7 @@ export class EmployeeProfileController {
   }
 
   @Patch(':id/permissions/add')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async addPermission(
     @CurrentUser() user: CurrentUserData,
@@ -301,6 +310,7 @@ export class EmployeeProfileController {
   }
 
   @Patch(':id/permissions/remove')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
   async removePermission(
     @CurrentUser() user: CurrentUserData,
@@ -315,11 +325,43 @@ export class EmployeeProfileController {
     );
   }
 
-  @Get('roles/all')
+  @Patch(':id/status')
+  @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getAllRoleAssignments(@CurrentUser() user: CurrentUserData) {
-    return await this.employeeRoleService.getAllRoleAssignments(
+  async updateEmployeeStatus(
+    @CurrentUser() user: CurrentUserData,
+    @Param('id') id: string,
+    @Body() statusDto: { status: EmployeeStatus; effectiveDate?: Date },
+  ) {
+    return this.employeeProfileService.deactivateEmployee(
+      id,
+      user.userId,
       user.roles?.[0] || '',
+      statusDto.status,
+      statusDto.effectiveDate,
     );
+  }
+
+  @Put(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async updateEmployeeMasterData(
+    @CurrentUser() user: CurrentUserData,
+    @Param('id') id: string,
+    @Body() updateDto: UpdateEmployeeMasterDto,
+  ) {
+    return this.employeeProfileService.updateEmployeeMasterData(
+      id,
+      user.userId,
+      user.roles?.[0] || '',
+      updateDto,
+    );
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.SYSTEM_ADMIN)
+  async deleteEmployee(@Param('id') id: string) {
+    return this.employeeProfileService.delete(id);
   }
 }
