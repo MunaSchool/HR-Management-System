@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TimeManagementController } from './time-management.controller';
 import { TimeManagementService } from './time-management.service';
+import { NotificationLogService } from './services/notification-log.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationLogSchema, NotificationLog } from './models/notification-log.schema';
 import { AttendanceCorrectionRequestSchema, AttendanceCorrectionRequest } from './models/attendance-correction-request.schema';
@@ -30,6 +31,7 @@ import { HolidaySchema, Holiday } from './models/holiday.schema';
     { name: Holiday.name, schema: HolidaySchema },
   ])],
   controllers: [TimeManagementController],
-  providers: [TimeManagementService]
+  providers: [TimeManagementService, NotificationLogService],
+  exports: [NotificationLogService],
 })
 export class TimeManagementModule {}
