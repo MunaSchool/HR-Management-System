@@ -17,6 +17,12 @@ export class EmployeeProfileChangeRequest {
   @Prop({ type: String })
   reason?: string;
 
+<<<<<<< HEAD
+=======
+  @Prop({ type: Object })
+  requestedChanges?: Record<string, any>;
+
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b
   @Prop({
     type: String,
     enum: Object.values(ProfileChangeStatus),
@@ -24,6 +30,24 @@ export class EmployeeProfileChangeRequest {
   })
   status: ProfileChangeStatus;
 
+<<<<<<< HEAD
+=======
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  requestedBy?: Types.ObjectId;
+
+  @Prop({ type: Date, default: () => new Date() })
+  requestDate: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  reviewedBy?: Types.ObjectId;
+
+  @Prop({ type: Date })
+  reviewDate?: Date;
+
+  @Prop({ type: String })
+  reviewComments?: string;
+
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b
   @Prop({ type: Date, default: () => new Date() })
   submittedAt: Date;
 

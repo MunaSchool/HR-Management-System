@@ -37,6 +37,16 @@ export class EmployeeProfile extends UserProfileBase {
   @Prop({ type: Date })
   contractEndDate?: Date;
 
+<<<<<<< HEAD
+=======
+  // Banking details
+  @Prop({ type: String })
+  bankName?: string;
+
+  @Prop({ type: String })
+  bankAccountNumber?: string;
+
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b
   
   @Prop({
     type: String,
@@ -105,4 +115,8 @@ export class EmployeeProfile extends UserProfileBase {
 }
 
 export const EmployeeProfileSchema =
+<<<<<<< HEAD
   SchemaFactory.createForClass(EmployeeProfile);
+=======
+  SchemaFactory.createForClass(EmployeeProfile);
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b

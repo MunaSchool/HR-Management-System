@@ -36,12 +36,17 @@ export enum SystemRole {
   HR_MANAGER = 'HR Manager',
   HR_EMPLOYEE = 'HR Employee',
   PAYROLL_SPECIALIST = 'Payroll Specialist',
+<<<<<<< HEAD
+=======
+  PAYROLL_MANAGER='Payroll Manager',
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b
   SYSTEM_ADMIN = 'System Admin',
   LEGAL_POLICY_ADMIN = 'Legal & Policy Admin',
   RECRUITER = 'Recruiter',
   FINANCE_STAFF = 'Finance Staff',
   JOB_CANDIDATE = 'Job Candidate',
   HR_ADMIN = 'HR Admin',
+  PAYROLL_MANAGER = "PAYROLL_MANAGER",
 }
 
 export enum CandidateStatus {

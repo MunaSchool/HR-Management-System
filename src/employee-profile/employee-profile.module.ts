@@ -2,6 +2,15 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
+<<<<<<< HEAD
+=======
+import { EmployeeRoleService } from './services/employee-role.service';
+import { EmployeeCrudService } from './services/employee-crud.service';
+import { EmployeeSelfServiceService } from './services/employee-self-service.service';
+import { ChangeRequestService } from './services/change-request.service';
+import { FileUploadService } from './services/file-upload.service';
+import { HrAdminService } from './services/hr-admin.service';
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b
 import { Candidate, CandidateSchema } from './models/candidate.schema';
 import {
   EmployeeProfile,
@@ -19,6 +28,10 @@ import {
   EmployeeQualification,
   EmployeeQualificationSchema,
 } from './models/qualification.schema';
+<<<<<<< HEAD
+=======
+import { PerformanceModule } from '../performance/performance.module';
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b
 
 @Module({
   imports: [
@@ -32,8 +45,24 @@ import {
       },
       { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
+<<<<<<< HEAD
   ],
   controllers: [EmployeeProfileController],
   providers: [EmployeeProfileService],
+=======
+    PerformanceModule,
+  ],
+  controllers: [EmployeeProfileController],
+  providers: [
+    EmployeeProfileService,
+    EmployeeRoleService,
+    EmployeeCrudService,
+    EmployeeSelfServiceService,
+    ChangeRequestService,
+    FileUploadService,
+    HrAdminService,
+  ],
+  exports: [EmployeeProfileService],
+>>>>>>> 3f678b0e10fb523a4d3c1513d955911c2ede501b
 })
 export class EmployeeProfileModule {}
