@@ -12,6 +12,7 @@ import { OrganizationStructureModule } from './organization-structure/organizati
 import { PerformanceModule } from './performance/performance.module';
 import { PayrollConfigurationModule } from './payroll-configuration/payroll-configuration.module';
 import { PayrollExecutionModule } from './payroll-execution/payroll-execution.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { PayrollExecutionModule } from './payroll-execution/payroll-execution.mo
     PayrollTrackingModule,
     EmployeeProfileModule,
     OrganizationStructureModule,
-    PerformanceModule
+    PerformanceModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
