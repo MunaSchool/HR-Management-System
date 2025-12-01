@@ -28,6 +28,7 @@ import {
 } from './models/qualification.schema';
 import { PerformanceModule } from '../performance/performance.module';
 import { TimeManagementModule } from '../time-management/time-management.module';
+import { OrganizationStructureModule } from '../organization-structure/organization-structure.module';
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { TimeManagementModule } from '../time-management/time-management.module'
       { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
     forwardRef(() => PerformanceModule),
-    forwardRef(()=>TimeManagementModule),
+    forwardRef(() => OrganizationStructureModule),
+    forwardRef(() => TimeManagementModule),
   ],
 
   controllers: [EmployeeProfileController],
