@@ -24,7 +24,16 @@ export class ChangeRequestService {
     userId: string,
     createDto: CreateChangeRequestDto,
   ): Promise<EmployeeProfileChangeRequest> {
+    // Generate unique request ID
+    const requestId = `CR-${Date.now()}-${employeeId.slice(-6)}`;
+
+    // Generate description from requested changes
+    const changeFields = Object.keys(createDto.requestedChanges || {}).join(', ');
+    const requestDescription = `Request to update: ${changeFields || 'profile data'}`;
+
     const newRequest = new this.changeRequestModel({
+      requestId,
+      requestDescription,
       employeeProfileId: employeeId,
       requestedBy: userId,
       requestedChanges: createDto.requestedChanges,

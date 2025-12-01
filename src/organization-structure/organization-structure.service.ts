@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { Department, DepartmentDocument } from './models/department.schema';
 import { Position, PositionDocument } from './models/position.schema';
 import { StructureChangeRequest, StructureChangeRequestDocument } from './models/structure-change-request.schema';
+import { EmployeeProfile, EmployeeProfileDocument } from '../employee-profile/models/employee-profile.schema';
+import { NotificationLogService } from '../time-management/services/notification-log.service';
 
 @Injectable()
 export class OrganizationStructureService {
@@ -17,6 +19,11 @@ export class OrganizationStructureService {
 
   @InjectModel(StructureChangeRequest.name)
   private readonly changeRequestModel: Model<StructureChangeRequestDocument>,
+
+  @InjectModel(EmployeeProfile.name)
+  private readonly employeeProfileModel: Model<EmployeeProfileDocument>,
+
+  private readonly notificationLogService: NotificationLogService,
 ) {
 
   // ============================
@@ -166,8 +173,28 @@ export class OrganizationStructureService {
   // ======================
   // 📌 SUBMIT CHANGE REQUEST
   // ======================
-  async submitChangeRequest(dto: any) {
-    return this.changeRequestModel.create(dto);
+  async submitChangeRequest(dto: any, requestedBy: string) {
+    const changeRequest = await this.changeRequestModel.create({
+      ...dto,
+      requestedByEmployeeId: new Types.ObjectId(requestedBy),
+      status: 'Pending',
+      submittedAt: new Date(),
+    });
+
+    // Send notification to System Admin (REQ-OSM-11)
+    const systemAdmins = await this.employeeProfileModel.find({
+      systemRoles: { $in: ['System Admin'] }
+    }).exec();
+
+    for (const admin of systemAdmins) {
+      await this.notificationLogService.sendNotification({
+        to: new Types.ObjectId(admin._id.toString()),
+        type: 'Structure Change Request Submitted',
+        message: `A new organizational structure change request has been submitted. Please review and approve.`,
+      });
+    }
+
+    return changeRequest;
   }
 
   // ======================
@@ -184,5 +211,155 @@ export class OrganizationStructureService {
     const req = await this.changeRequestModel.findById(id).exec();
     if (!req) throw new NotFoundException("Change request not found");
     return req;
+  }
+
+  // ======================
+  // 📌 DELIMIT POSITION (BR 12, BR 37)
+  // ======================
+  async delimitPosition(id: string, dto: any) {
+    const position = await this.positionModel.findById(id).exec();
+    if (!position) throw new NotFoundException("Position not found");
+
+    // Delimit instead of delete (soft delete)
+    const updated = await this.positionModel.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      { new: true }
+    );
+    return updated;
+  }
+
+  // ======================
+  // 📌 APPROVE CHANGE REQUEST (REQ-OSM-04, BR 36)
+  // ======================
+  async approveChangeRequest(id: string, approvedBy: string) {
+    const request = await this.changeRequestModel.findById(id).exec();
+    if (!request) throw new NotFoundException("Change request not found");
+
+    // Update request status
+    const updated = await this.changeRequestModel.findByIdAndUpdate(
+      id,
+      {
+        status: 'Approved',
+        approvedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    // Send notification to requester (REQ-OSM-11)
+    await this.notificationLogService.sendNotification({
+      to: new Types.ObjectId(request.requestedByEmployeeId.toString()),
+      type: 'Structure Change Request Approved',
+      message: `Your organizational structure change request has been approved and applied.`,
+    });
+
+    return updated;
+  }
+
+  // ======================
+  // 📌 REJECT CHANGE REQUEST
+  // ======================
+  async rejectChangeRequest(id: string, reason: string, rejectedBy: string) {
+    const request = await this.changeRequestModel.findById(id).exec();
+    if (!request) throw new NotFoundException("Change request not found");
+
+    const updated = await this.changeRequestModel.findByIdAndUpdate(
+      id,
+      {
+        status: 'Rejected',
+        rejectedAt: new Date(),
+        rejectionReason: reason,
+      },
+      { new: true }
+    );
+
+    // Send notification to requester
+    await this.notificationLogService.sendNotification({
+      to: new Types.ObjectId(request.requestedByEmployeeId.toString()),
+      type: 'Structure Change Request Rejected',
+      message: `Your organizational structure change request has been rejected. Reason: ${reason}`,
+    });
+
+    return updated;
+  }
+
+  // ======================
+  // 📌 GET ORGANIZATION HIERARCHY (REQ-SANV-01, BR 24)
+  // ======================
+  async getOrganizationHierarchy() {
+    const departments = await this.departmentModel.find({ isActive: true }).exec();
+    const positions = await this.positionModel.find({ isActive: true })
+      .populate('departmentId')
+      .populate('reportsToPositionId')
+      .exec();
+
+    return {
+      departments,
+      positions,
+    };
+  }
+
+  // ======================
+  // 📌 GET DEPARTMENT HIERARCHY
+  // ======================
+  async getDepartmentHierarchy(departmentId: string) {
+    const department = await this.departmentModel.findById(departmentId).exec();
+    if (!department) throw new NotFoundException("Department not found");
+
+    const positions = await this.positionModel.find({
+      departmentId: new Types.ObjectId(departmentId),
+      isActive: true
+    })
+      .populate('reportsToPositionId')
+      .exec();
+
+    return {
+      department,
+      positions,
+    };
+  }
+
+  // ======================
+  // 📌 GET MY TEAM HIERARCHY (REQ-SANV-02, BR 41)
+  // ======================
+  async getMyTeamHierarchy(employeeId: string) {
+    const employee = await this.employeeProfileModel.findById(employeeId).exec();
+    if (!employee) throw new NotFoundException("Employee not found");
+
+    const teamPositions = await this.positionModel.find({
+      reportsToPositionId: employee.primaryPositionId,
+      isActive: true,
+    })
+      .populate('departmentId')
+      .exec();
+
+    return {
+      manager: employee,
+      teamPositions,
+    };
+  }
+
+  // ======================
+  // 📌 GET MY STRUCTURE (BR 41)
+  // ======================
+  async getMyStructure(employeeId: string) {
+    const employee = await this.employeeProfileModel.findById(employeeId)
+      .populate('primaryPositionId')
+      .populate('primaryDepartmentId')
+      .exec();
+
+    if (!employee) throw new NotFoundException("Employee not found");
+
+    const position = await this.positionModel.findById(employee.primaryPositionId)
+      .populate('reportsToPositionId')
+      .populate('departmentId')
+      .exec();
+
+    return {
+      employee,
+      position,
+      department: employee.primaryDepartmentId,
+      reportsTo: position?.reportsToPositionId,
+    };
   }
 }

@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { EmployeeProfile, EmployeeProfileDocument } from '../models/employee-profile.schema';
 import { UpdateContactInfoDto } from '../dto/update-contact-info.dto';
 import { UpdateProfileDto } from '../dto/update-profile.dto';
 import { EmployeeStatus } from '../enums/employee-profile.enums';
 import { PerformanceService } from '../../performance/performance.service';
+import { NotificationLogService } from '../../time-management/services/notification-log.service';
 
 @Injectable()
 export class EmployeeSelfServiceService {
@@ -13,12 +14,14 @@ export class EmployeeSelfServiceService {
     @InjectModel(EmployeeProfile.name)
     private employeeProfileModel: Model<EmployeeProfileDocument>,
     private performanceService: PerformanceService,
+    private notificationLogService: NotificationLogService,
   ) {}
 
   // Get my employee profile (US-E2-04)
   async getMyProfile(employeeId: string): Promise<any> {
     const profile = await this.employeeProfileModel
       .findById(employeeId)
+      .populate('accessProfileId')
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
       .populate('supervisorPositionId')
@@ -29,8 +32,14 @@ export class EmployeeSelfServiceService {
       throw new NotFoundException('Employee profile not found');
     }
 
-    // Retrieve appraisal history from Performance module
-    const appraisalHistory = await this.performanceService.getEmployeeAppraisals(employeeId);
+    // Retrieve appraisal history from Performance module with error handling
+    let appraisalHistory: any[] = [];
+    try {
+      appraisalHistory = await this.performanceService.getEmployeeAppraisals(employeeId);
+    } catch (error) {
+      // If performance service fails, return empty array for appraisal history
+      console.error('Failed to fetch appraisal history:', error.message);
+    }
 
     return {
       ...profile.toObject(),
@@ -56,6 +65,14 @@ export class EmployeeSelfServiceService {
     if (!updated) {
       throw new NotFoundException('Employee profile not found');
     }
+
+    // Send N-037 notification to employee
+    await this.notificationLogService.sendNotification({
+      to: new Types.ObjectId(employeeId),
+      type: 'N-037',
+      message: 'Your contact information has been updated successfully.',
+    });
+
     return updated;
   }
 
@@ -77,6 +94,14 @@ export class EmployeeSelfServiceService {
     if (!updated) {
       throw new NotFoundException('Employee profile not found');
     }
+
+    // Send N-037 notification to employee
+    await this.notificationLogService.sendNotification({
+      to: new Types.ObjectId(employeeId),
+      type: 'N-037',
+      message: 'Your profile has been updated successfully.',
+    });
+
     return updated;
   }
 

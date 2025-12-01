@@ -64,7 +64,7 @@ export class AuthService {
     // Create role assignment with provided roles or default
     const roleAssignment = await this.employeeRoleModel.create({
       employeeProfileId: newEmployee._id,
-      roles: registerDto.roles || ['DEPARTMENT_EMPLOYEE'],
+      roles: registerDto.roles || ['department employee'],
       permissions: registerDto.permissions || [],
       isActive: true,
     });
@@ -100,8 +100,8 @@ export class AuthService {
     }
 
     const roles = employee.accessProfileId
-      ? (employee.accessProfileId as any).roles || ['DEPARTMENT_EMPLOYEE']
-      : ['DEPARTMENT_EMPLOYEE'];
+      ? (employee.accessProfileId as any).roles || ['department employee']
+      : ['department employee'];
 
     const payload = {
       userid: employee._id,
