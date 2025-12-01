@@ -23,12 +23,15 @@ const shift_schema_1 = require("./models/shift.schema");
 const shift_assignment_schema_1 = require("./models/shift-assignment.schema");
 const lateness_rule_schema_1 = require("./models/lateness-rule.schema");
 const holiday_schema_1 = require("./models/holiday.schema");
+const auth_module_1 = require("../auth/auth.module");
 let TimeManagementModule = class TimeManagementModule {
 };
 exports.TimeManagementModule = TimeManagementModule;
 exports.TimeManagementModule = TimeManagementModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([
+        imports: [
+            auth_module_1.AuthModule,
+            mongoose_1.MongooseModule.forFeature([
                 { name: notification_log_schema_1.NotificationLog.name, schema: notification_log_schema_1.NotificationLogSchema },
                 { name: attendance_correction_request_schema_1.AttendanceCorrectionRequest.name, schema: attendance_correction_request_schema_1.AttendanceCorrectionRequestSchema },
                 { name: shift_type_schema_1.ShiftType.name, schema: shift_type_schema_1.ShiftTypeSchema },
@@ -40,7 +43,8 @@ exports.TimeManagementModule = TimeManagementModule = __decorate([
                 { name: shift_assignment_schema_1.ShiftAssignment.name, schema: shift_assignment_schema_1.ShiftAssignmentSchema },
                 { name: lateness_rule_schema_1.LatenessRule.name, schema: lateness_rule_schema_1.latenessRuleSchema },
                 { name: holiday_schema_1.Holiday.name, schema: holiday_schema_1.HolidaySchema },
-            ])],
+            ])
+        ],
         controllers: [time_management_controller_1.TimeManagementController],
         providers: [time_management_service_1.TimeManagementService, notification_log_service_1.NotificationLogService],
         exports: [notification_log_service_1.NotificationLogService],

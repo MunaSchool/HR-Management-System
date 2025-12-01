@@ -14,22 +14,26 @@ import { ShiftSchema, Shift } from './models/shift.schema';
 import { ShiftAssignmentSchema, ShiftAssignment } from './models/shift-assignment.schema';
 import { LatenessRule, latenessRuleSchema } from './models/lateness-rule.schema';
 import { HolidaySchema, Holiday } from './models/holiday.schema';
+import { AuthModule } from '../auth/auth.module';
 
 
 @Module({
-  imports: [MongooseModule.forFeature([
-    { name: NotificationLog.name, schema: NotificationLogSchema },
-    { name: AttendanceCorrectionRequest.name, schema: AttendanceCorrectionRequestSchema },
-    { name: ShiftType.name, schema: ShiftTypeSchema },
-    { name: ScheduleRule.name, schema: ScheduleRuleSchema },
-    { name: AttendanceRecord.name, schema: AttendanceRecordSchema },
-    { name: TimeException.name, schema: TimeExceptionSchema },
-    { name: OvertimeRule.name, schema: OvertimeRuleSchema },
-    { name: Shift.name, schema: ShiftSchema },
-    { name: ShiftAssignment.name, schema: ShiftAssignmentSchema },
-    { name: LatenessRule.name, schema: latenessRuleSchema },
-    { name: Holiday.name, schema: HolidaySchema },
-  ])],
+  imports: [
+    AuthModule,
+    MongooseModule.forFeature([
+      { name: NotificationLog.name, schema: NotificationLogSchema },
+      { name: AttendanceCorrectionRequest.name, schema: AttendanceCorrectionRequestSchema },
+      { name: ShiftType.name, schema: ShiftTypeSchema },
+      { name: ScheduleRule.name, schema: ScheduleRuleSchema },
+      { name: AttendanceRecord.name, schema: AttendanceRecordSchema },
+      { name: TimeException.name, schema: TimeExceptionSchema },
+      { name: OvertimeRule.name, schema: OvertimeRuleSchema },
+      { name: Shift.name, schema: ShiftSchema },
+      { name: ShiftAssignment.name, schema: ShiftAssignmentSchema },
+      { name: LatenessRule.name, schema: latenessRuleSchema },
+      { name: Holiday.name, schema: HolidaySchema },
+    ])
+  ],
   controllers: [TimeManagementController],
   providers: [TimeManagementService, NotificationLogService],
   exports: [NotificationLogService],
