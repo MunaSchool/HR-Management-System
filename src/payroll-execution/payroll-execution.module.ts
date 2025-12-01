@@ -29,33 +29,48 @@ import { PayrollPhase3Service } from './payroll-phase3.service';
 import { PayrollPhase4Service } from './payroll-phase4.service';
 
 import { JwtModule } from '@nestjs/jwt';
+import { Express } from 'express';
 
 import {AuthGuard} from'../auth/guards/auth.guard';
 import {RolesGuard} from'../auth/guards/roles.guard';
 import {Roles} from'../auth/decorators/roles.decorator';
 import {SystemRole} from'../employee-profile/enums/employee-profile.enums';
 
-
 @Module({
-  imports: [forwardRef(() => PayrollTrackingModule), PayrollConfigurationModule, TimeManagementModule, EmployeeProfileModule, LeavesModule,
-  MongooseModule.forFeature([
-    { name: payrollRuns.name, schema: payrollRunsSchema },
-    { name: paySlip.name, schema: paySlipSchema },
-    { name: employeePayrollDetails.name, schema: employeePayrollDetailsSchema },
-    { name: employeeSigningBonus.name, schema: employeeSigningBonusSchema },
-    { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
-    { name: employeePenalties.name, schema: employeePenaltiesSchema },
-    { name: EmployeeTerminationResignation.name, schema: EmployeeTerminationResignationSchema },
-    { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
-    { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
+  imports: [
+    forwardRef(() => PayrollTrackingModule),
+    PayrollConfigurationModule,
+    TimeManagementModule,
+    EmployeeProfileModule,
+    LeavesModule,
+    MongooseModule.forFeature([
+      { name: payrollRuns.name, schema: payrollRunsSchema },
+      { name: paySlip.name, schema: paySlipSchema },
+      { name: employeePayrollDetails.name, schema: employeePayrollDetailsSchema },
+      { name: employeeSigningBonus.name, schema: employeeSigningBonusSchema },
+      { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
+      { name: employeePenalties.name, schema: employeePenaltiesSchema },
+      { name: EmployeeTerminationResignation.name, schema: EmployeeTerminationResignationSchema },
+      { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
+      { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
+    ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
       signOptions: { expiresIn: '1d' },
     }),
-
-  ])],
+  ],
   controllers: [PayrollExecutionController],
-  providers: [PayrollExecutionService, PayrollPhase1_1Service, PayrollPhase1_1AService,PayrollPhase1_1BService,PayrollPhase1_1CService, PayrollPhase2Service, PayrollPhase3Service, PayrollPhase4Service],
-  exports: [PayrollExecutionService]
+  providers: [
+    PayrollExecutionService,
+    PayrollPhase1_1Service,
+    PayrollPhase1_1AService,
+    PayrollPhase1_1BService,
+    PayrollPhase1_1CService,
+    PayrollPhase2Service,
+    PayrollPhase3Service,
+    PayrollPhase4Service
+  ],
+  exports: [PayrollExecutionService],
 })
-export class PayrollExecutionModule { }
+export class PayrollExecutionModule {}
+
