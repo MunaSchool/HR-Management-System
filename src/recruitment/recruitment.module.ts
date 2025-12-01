@@ -16,7 +16,7 @@ import { Onboarding, OnboardingSchema } from './models/onboarding.schema';
 
 //TO KEEP
 import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
-// import time managemnt module and remove time management schema
+// import time management module and remove time management schema
 import { TimeManagementModule } from 'src/time-management/time-management.module';
 
 import { RecruitmentController } from 'src/recruitment/controllers/recruitment.controller';
@@ -26,23 +26,21 @@ import { OffboardingController } from 'src/recruitment/controllers/offboarding.c
 import { RecruitmentService } from 'src/recruitment/services/recruitment.service';
 import { OnboardingService } from 'src/recruitment/services/onboarding.service';
 import { OffboardingService } from 'src/recruitment/services/offboarding.service';
+import { AuthModule } from 'src/auth/auth.module';
 
-//TO REMOVE
-// import { NotificationLogService } from 'src/external-controller-services/services/notification-log.service'; 
-// import { EmployeeCrudService } from 'src/external-controller-services/services/employee-crud.service';
-// import { EmployeeRoleService } from 'src/external-controller-services/services/employee-role.service';
-// import { HrAdminService } from 'src/external-controller-services/services/hr-admin.service';; 
+import { PerformanceModule } from 'src/performance/performance.module'; 
+import { PayrollExecutionModule } from 'src/payroll-execution/payroll-execution.module';
+import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-configuration.module';
 
-// import { NotificationLog, NotificationLogSchema } from 'src/external-controller-services/models/notification-log.schema';
-// import { Candidate,CandidateSchema } from './external-controller-services/models/candidate.schema';
-// import { Department,DepartmentSchema } from './external-controller-services/models/department.schema';
-// import { EmployeeProfile , EmployeeProfileSchema } from './external-controller-services/models/employee-profile.schema';
-// import { EmployeeSystemRole, EmployeeSystemRoleSchema } from './external-controller-services/models/employee-system-role.schema';
-// import { EmployeeProfileChangeRequest,EmployeeProfileChangeRequestSchema } from './external-controller-services/models/ep-change-request.schema';
-//import { TimeManagementController } from './controllers/time-management.controller';
+// Import payroll schemas
+import { employeeSigningBonus, employeeSigningBonusSchema } from '../payroll-execution/models/EmployeeSigningBonus.schema';
+import { employeePayrollDetails, employeePayrollDetailsSchema } from '../payroll-execution/models/employeePayrollDetails.schema';
+import { payrollRuns, payrollRunsSchema } from '../payroll-execution/models/payrollRuns.schema';
+import { signingBonus, signingBonusSchema } from '../payroll-configuration/models/signingBonus.schema';
 
 @Module({
-  imports:[MongooseModule.forFeature([
+  imports:[
+    MongooseModule.forFeature([
       { name: Onboarding.name, schema: OnboardingSchema },
       { name: JobTemplate.name, schema: JobTemplateSchema },
       { name: JobRequisition.name, schema: JobRequisitionSchema },
@@ -56,18 +54,22 @@ import { OffboardingService } from 'src/recruitment/services/offboarding.service
       { name: Document.name, schema: DocumentSchema },
       { name: TerminationRequest.name, schema: TerminationRequestSchema },
       { name: ClearanceChecklist.name, schema: ClearanceChecklistSchema },
-      //TO REMOVE
-      // { name: NotificationLog.name, schema: NotificationLogSchema },
-      // { name: Candidate.name, schema: CandidateSchema },
-      // { name: Department.name, schema: DepartmentSchema },
-      // { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
-      // { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
-      // { name: EmployeeProfileChangeRequest.name, schema: EmployeeProfileChangeRequestSchema },
-    ]), EmployeeProfileModule ,TimeManagementModule
+      
+      // Payroll schemas for OnboardingService
+      { name: employeeSigningBonus.name, schema: employeeSigningBonusSchema },
+      { name: employeePayrollDetails.name, schema: employeePayrollDetailsSchema },
+      { name: payrollRuns.name, schema: payrollRunsSchema },
+      { name: signingBonus.name, schema: signingBonusSchema },
+    ]), 
+    EmployeeProfileModule,
+    TimeManagementModule, 
+    AuthModule,
+    PerformanceModule, 
+    PayrollExecutionModule,
+    PayrollConfigurationModule
   ],
 
   controllers: [
-  //TimeManagementController,
     RecruitmentController,
     OnboardingController,
     OffboardingController,
@@ -77,25 +79,12 @@ import { OffboardingService } from 'src/recruitment/services/offboarding.service
     RecruitmentService,
     OnboardingService,
     OffboardingService,
-    //TO REMOVE
-    // NotificationLogService,
-    // EmployeeCrudService,
-    // EmployeeRoleService,  // Add here
-    // HrAdminService,       // Add here
-    // EmployeeCrudService,
-    // NotificationLogService,
- 
   ],
 
   exports: [
     RecruitmentService,
     OnboardingService,
     OffboardingService,
-    // EmployeeRoleService,
-    // HrAdminService,
-    // NotificationLogService,
-
   ]
-
 })
 export class RecruitmentModule {}

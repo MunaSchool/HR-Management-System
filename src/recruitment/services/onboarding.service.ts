@@ -19,6 +19,11 @@ import { Document } from '../models/document.schema';
 //ERRORS WILL DISSAPEAR ONCE ALL IS MERGED INTO MAIN -DO NOT REMOVE ANYTHING
 import { EmployeeProfileService } from 'src/employee-profile/employee-profile.service';
 import { EmployeeStatus, SystemRole } from 'src/employee-profile/enums/employee-profile.enums';
+import { PayrollExecutionService } from 'src/payroll-execution/payroll-execution.service';
+import { payrollRuns } from 'src/payroll-execution/models/payrollRuns.schema';
+import { employeePayrollDetails } from 'src/payroll-execution/models/employeePayrollDetails.schema';
+import { employeeSigningBonus } from 'src/payroll-execution/models/EmployeeSigningBonus.schema';
+import { signingBonus } from 'src/payroll-configuration/models/signingBonus.schema';
 //import { PayrollExecutionService } from 'src/external-controller-services/services/payroll-execution-service.service';
 
 @Injectable()
@@ -38,13 +43,24 @@ export class OnboardingService {
 
     @InjectModel(Application.name)
     private readonly applicationModel: Model<ApplicationDocument>,
+
+    @InjectModel(employeeSigningBonus.name)
+    private readonly employeeSigningBonusModel: Model<employeeSigningBonus>,
+
+    @InjectModel(employeePayrollDetails.name)
+    private readonly employeePayrollDetailsModel: Model<employeePayrollDetails>,
+
+    @InjectModel(payrollRuns.name)
+    private readonly payrollRunsModel: Model<payrollRuns>,
+
+    @InjectModel(signingBonus.name)
+    private readonly signingBonusConfigModel: Model<signingBonus>,
     
     private readonly notificationLogService: NotificationLogService,
 
     private readonly employeeCrudService: EmployeeProfileService ,
 
-    //private readonly payrollConfigService: 
-
+    private readonly payrollExectutionService : PayrollExecutionService ,
 
   ) {}
 
@@ -70,7 +86,7 @@ export class OnboardingService {
   }
 
   
-   async updateContract(contractId: string, contractData: UpdateContractDto): Promise<ContractDocument> {
+  async updateContract(contractId: string, contractData: UpdateContractDto): Promise<ContractDocument> {
     const currentContract = await this.contractModel.findById(contractId);
     if (!currentContract) {
       throw new NotFoundException(`Contract with ID ${contractId} not found`);
@@ -110,7 +126,9 @@ export class OnboardingService {
     }
 
     // Trigger: Both signatures complete - update to HIRED and trigger all systems
-    if (updatedContract.employeeSignedAt && updatedContract.employerSignedAt &&
+    if (
+      updatedContract.employeeSignedAt &&
+      updatedContract.employerSignedAt &&
       (!currentContract.employeeSignedAt || !currentContract.employerSignedAt)
     ) {
       const application = await this.applicationModel.findById(offer.applicationId);
@@ -121,62 +139,87 @@ export class OnboardingService {
           { new: true }
         );
 
-      // Create employee profile from candidate data once both sign 
+        // 1. CREATE SIGNING BONUS RECORD IF CONTRACT HAS SIGNING BONUS
+        if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
+          // Find the active/approved signing bonus template from payroll config
+          const signingBonusConfig = await this.signingBonusConfigModel
+            .findOne({
+              status: 'APPROVED',
+            })
+            .sort({ createdAt: -1 })
+            .exec();
 
-      // const candidate = await this.employeeCrudService.findById(candidateID.toString)
-      
-      // if(!candidate) {
-      //   await this.employeeCrudService.create({
-      //     firstName: candidate.firstName,
-      //     lastName: candidate.lastName,
-      //     //email: candidate.email,
-      //     //phone: candidate.phone,
-      //     dateOfBirth: candidate.dateOfBirth,
-      //     address: candidate.address,
-      //     // Add other required fields from CreateEmployeeDto
-      //     roles: [SystemRole.DEPARTMENT_EMPLOYEE], // Default role
-      //     permissions: [],
-      //     hireDate: new Date(),
-      //     status: EmployeeStatus.ACTIVE,
-      //   });
-      // }
+          if (!signingBonusConfig) {
+            throw new NotFoundException('No approved signing bonus configuration found');
+          }
 
-      //handle payroll signing bonus - need payroll config
-        // const bonus = updatedContract.signingBonus ;
+          const signingBonusRecord = await this.employeeSigningBonusModel.create({
+            employeeId: candidateID,
+            signingBonusId: signingBonusConfig._id,
+            givenAmount: updatedContract.signingBonus,
+            paymentDate: null,
+            status: 'PENDING',
+          });
 
-        // await PayrollExecutionService.approveSigningBonus(id ?)
+          // Notify payroll to review signing bonus
+          await this.notificationLogService.sendNotification({
+            to: hrManagerID,
+            type: 'Signing Bonus Approval Required',
+            message: `New hire signing bonus of ${updatedContract.signingBonus} requires approval for employee ${candidateID}`,
+          });
+        }
 
-    
+        // 2. HANDLE PAYROLL CYCLE START DATE
+        const currentDate = new Date();
+        const currentPayrollRun = await this.payrollRunsModel.findOne({
+          payrollPeriod: {
+            $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
+            $lt: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1),
+          },
+          status: { $in: ['DRAFT', 'IN_PROGRESS'] },
+        });
 
-        // Notify IT/Facilities to prepare equipment
+        if (currentPayrollRun) {
+          await this.employeePayrollDetailsModel.create({
+            employeeId: candidateID,
+            payrollRunId: currentPayrollRun._id,
+            baseSalary: updatedContract.grossSalary,
+            allowances: 0,
+            deductions: 0,
+            netSalary: updatedContract.grossSalary,
+            netPay: updatedContract.grossSalary,
+            bankStatus: 'MISSING',
+            bonus: updatedContract.signingBonus || 0,
+            benefit: 0,
+            exceptions: `New hire - Start date: ${updatedContract.employerSignedAt}`,
+          });
+        }
+
+        // Equipment and system setup notifications
         await this.notificationLogService.sendNotification({
           to: hrManagerID,
           type: 'New Hire Equipment Setup Required',
           message: `New hire equipment and workspace setup needed for employee ID: ${offer.candidateId}. Please reserve: desk, laptop, access card, and other equipment.`,
         });
 
-        // Notify System Admin to provision system access
         await this.notificationLogService.sendNotification({
           to: hrManagerID,
           type: 'System Access Provisioning Required',
           message: `New hire requires system access provisioning for employee ID: ${offer.candidateId}. Please set up: Email account, Payroll system access, Internal systems access, VPN credentials, and other required system permissions.`,
         });
 
-        // Notify IT for email setup
         await this.notificationLogService.sendNotification({
           to: hrManagerID,
           type: 'Email Account Setup Required',
           message: `Please create email account and configure access for new hire (Employee ID: ${offer.candidateId}). Ensure email is active before Day 1.`,
         });
 
-        // Notify Payroll Officer for payroll system access
         await this.notificationLogService.sendNotification({
           to: hrManagerID,
           type: 'Payroll System Access Required',
           message: `New hire needs payroll system access (Employee ID: ${offer.candidateId}). Please provision account and send credentials securely.`,
         });
 
-        // Notify the new employee about account setup in progress
         await this.notificationLogService.sendNotification({
           to: candidateID,
           type: 'Welcome! System Setup in Progress',
