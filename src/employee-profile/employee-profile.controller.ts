@@ -85,6 +85,13 @@ export class EmployeeProfileController {
     return this.employeeProfileService.findAll();
   }
 
+  @Post()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  async createEmployee(@Body() createDto: CreateEmployeeDto) {
+    return this.employeeProfileService.create(createDto);
+  }
+
   @Get('search')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)

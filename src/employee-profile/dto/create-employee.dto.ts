@@ -31,9 +31,14 @@ export class CreateEmployeeDto {
   @IsString()
   directManagerId?: string;
 
+  @IsOptional()
+  @IsString()
+  password?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  roles: string[];
+  roles?: string[];
 
   @IsOptional()
   @IsArray()

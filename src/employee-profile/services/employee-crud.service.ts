@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 import { EmployeeProfile, EmployeeProfileDocument } from '../models/employee-profile.schema';
 import { EmployeeSystemRole } from '../models/employee-system-role.schema';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
@@ -16,34 +17,46 @@ export class EmployeeCrudService {
 
   // Create a new employee profile with role assignment
   async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
-    const { roles, permissions, ...profileData } = employeeData;
+    const { roles, permissions, password, ...profileData } = employeeData;
+
+    // Hash password if provided
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
 
     // Create employee profile
     const newEmployee = await this.employeeProfileModel.create({
       ...profileData,
+      ...(hashedPassword && { password: hashedPassword }),
       fullName: `${profileData.firstName} ${profileData.lastName}`,
     });
 
-    // Create role assignment
-    const roleAssignment = await this.employeeRoleModel.create({
-      employeeProfileId: newEmployee._id,
-      roles: roles,
-      permissions: permissions || [],
-      isActive: true,
-    });
+    // Always create role assignment (default to department employee if no roles provided)
+    const assignedRoles = roles && roles.length > 0 ? roles : ['department employee'];
 
-    // Link role to employee
-    const updated = await this.employeeProfileModel.findByIdAndUpdate(
-      newEmployee._id,
-      { accessProfileId: roleAssignment._id },
-      { new: true }
-    );
+    try {
+      const roleAssignment = await this.employeeRoleModel.create({
+        employeeProfileId: new Types.ObjectId(newEmployee._id),
+        roles: assignedRoles,
+        permissions: permissions || [],
+        isActive: true,
+      });
 
-    if (!updated) {
-      throw new NotFoundException('Employee profile not found');
+      // Link role to employee
+      const updated = await this.employeeProfileModel.findByIdAndUpdate(
+        newEmployee._id,
+        { accessProfileId: roleAssignment._id },
+        { new: true }
+      ).populate('accessProfileId');
+
+      if (!updated) {
+        throw new NotFoundException('Employee profile not found after role assignment');
+      }
+
+      return updated;
+    } catch (error) {
+      // If role creation fails, delete the employee to maintain data consistency
+      await this.employeeProfileModel.findByIdAndDelete(newEmployee._id);
+      throw error;
     }
-
-    return updated;
   }
 
   // Get all employee profiles
