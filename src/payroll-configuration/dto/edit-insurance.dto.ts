@@ -1,35 +1,37 @@
-import { IsArray, IsNotEmpty, IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ConfigStatus } from '../enums/payroll-configuration-enums';
 
-
 export class editInsuranceBracketsDTO {
+  @IsString()
+  @IsOptional()
+  name?: string;
 
-    @IsString()
-    @IsOptional()
-    name: string;
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  amount?: number;
 
-    @IsNumber()
-    @Min(0)
-    amount: number;
+  @IsEnum(ConfigStatus)
+  @IsOptional()
+  status?: ConfigStatus;
 
-    @IsEnum(ConfigStatus)
-    @IsOptional()
-    status: ConfigStatus;
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  minSalary?: number;
 
-    @IsNumber()
-    @Min(0)
-    minSalary: Number;
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  maxSalary?: number;
 
-    @IsNumber()
-    @Min(0)
-    maxSalary: Number;
+  @IsNumber()
+  @IsOptional()
+  EmployeeRate?: number;
 
-    @IsNumber()
-    @IsOptional()
-    EmployeeRate: Number;
-
-    @IsNumber()
-    @IsOptional()
-    EmployerRate: Number;
-
+  @IsNumber()
+  @IsOptional()
+  EmployerRate?: number;
 }
+
+

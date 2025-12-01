@@ -1,22 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  UseInterceptors,
-  UploadedFile,
-  Res,
-} from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import type { Response } from 'express';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 
-import { PayrollConfigurationService } from './payroll-configuration.service'
+import { PayrollConfigurationService } from './payroll-configuration.service';
 
 import { updatePayrollPoliciesDto } from './dto/update-policies.dto';
 import { createPayrollPoliciesDto } from './dto/create-policies.dto';
@@ -31,205 +15,144 @@ import { createsigningBonusesDTO } from './dto/create-signingBonus.dto';
 import { createInsuranceBracketsDTO } from './dto/create-insurance.dto';
 import { editInsuranceBracketsDTO } from './dto/edit-insurance.dto';
 import { payrollPoliciesDocument } from './models/payrollPolicies.schema';
-//import employee roles w quards from auth
+import { CreateCompanySettingsDto } from './dto/create-company-settings.dto';
+import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
+import { ApprovalDto } from './dto/approval.dto';
 
-
-@Controller('auth')
+@Controller('payroll-configuration')
 export class PayrollConfigurationController {
-    constructor(private readonly payrollConfigurationService: PayrollConfigurationService) {}
+  constructor(
+    private readonly payrollConfigurationService: PayrollConfigurationService,
+  ) {}
 
-    //////////////PAYROLL SPECIALIST'S ROUTES///////////
+  // -------------------
+  // PAYROLL SPECIALIST ROUTES
+  // -------------------
 
-    /////1- config payroll policies
-    @Get('policies')
-    async getAllPolicies(): Promise<payrollPoliciesDocument[]> {
-        return this.payrollConfigurationService.findAllPolicies();
-    }
+  @Get('policies')
+  async getAllPolicies(): Promise<payrollPoliciesDocument[]> {
+    return this.payrollConfigurationService.findAllPolicies();
+  }
 
-    @Get('policies/:id')
-    async getPolicyById(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
-        return this.payrollConfigurationService.findById(id);
-    }
+  @Get('policies/:id')
+  async getPolicyById(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.findById(id);
+  }
 
-    @Post('policies')
-    async createPolicy(@Body() policyData: createPayrollPoliciesDto): Promise<payrollPoliciesDocument> {
-        return this.payrollConfigurationService.createPolicy(policyData);
-    }
+  @Post('policies')
+  async createPolicy(@Body() policyData: createPayrollPoliciesDto): Promise<payrollPoliciesDocument> {
+    return this.payrollConfigurationService.createPolicy(policyData);
+  }
 
-    @Put('policies/:id')
-    async updatePolicy(
-        @Param('id') id: string,
-        @Body() updateData: updatePayrollPoliciesDto
-    ): Promise<payrollPoliciesDocument | null> {
-        return this.payrollConfigurationService.updatePolicy(id, updateData);
-    }
+  @Put('policies/:id')
+  async updatePolicy(
+    @Param('id') id: string,
+    @Body() updateData: updatePayrollPoliciesDto
+  ): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.updatePolicy(id, updateData);
+  }
 
-    @Delete('policies/:id')
-    async deletePolicy(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
-        return this.payrollConfigurationService.deletePolicy(id);
-    }
+  @Delete('policies/:id')
+  async deletePolicy(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.deletePolicy(id);
+  }
 
-    //////2- config pay grades
-    @Get('pay-grades/:id')
-    async getPayGrade(@Param('id') id: string) {
-        return this.payrollConfigurationService.getPayGrade(id);
-    }
+  // -------------------
+  // INSURANCE BRACKETS
+  // -------------------
 
-    @Post('pay-grades')
-    async addPayGrade(@Body() pg: addPayGradeDTO) {
-        return this.payrollConfigurationService.AddPayGrade(pg);
-    }
+  @Get('insurance-brackets/:id')
+  async findInsuranceBracket(@Param('id') id: string) {
+    return this.payrollConfigurationService.findInsuranceBrackets(id);
+  }
 
-    @Put('pay-grades/:id')
-    async editPayGrade(
-        @Param('id') id: string,
-        @Body() updateData: editPayGradeDTO
-    ) {
-        return this.payrollConfigurationService.editPayGrade(id, updateData);
-    }
+  @Post('insurance-brackets')
+  async createInsuranceBracket(@Body() bracketData: createInsuranceBracketsDTO) {
+    return this.payrollConfigurationService.createInsuranceBrackets(bracketData);
+  }
 
-    @Delete('pay-grades/:id')
-    async removePayGrade(@Param('id') id: string) {
-        return this.payrollConfigurationService.remove(id);
-    }
+  @Put('insurance-brackets/:id')
+  async editInsuranceBracket(
+    @Param('id') id: string,
+    @Body() updateData: editInsuranceBracketsDTO
+  ) {
+    return this.payrollConfigurationService.editInsuranceBrackets(id, updateData);
+  }
 
-    @Get('pay-grades/:payGradeId/calculate-gross-salary')
-    async calculateGrossSalary(
-        @Param('payGradeId') payGradeId: string,
-        @Query('allowanceId') allowanceId: string
-    ): Promise<number> {
-        return this.payrollConfigurationService.calculateGrossSalary(payGradeId, allowanceId);
-    }
+  @Delete('insurance-brackets/:id')
+  async removeInsuranceBracket(@Param('id') id: string) {
+    return this.payrollConfigurationService.removeInsuranceBrackets(id);
+  }
 
-    //////5- define employee paytypes according to employee agreement
-    @Get('pay-types')
-    async getAllPayTypes() {
-        return this.payrollConfigurationService.getAllPayTypes();
-    }
+  // -------------------
+  // PAYROLL MANAGER APPROVAL
+  // -------------------
 
-    @Get('pay-types/:id')
-    async getPayType(@Param('id') id: string) {
-        return this.payrollConfigurationService.getPayTypes(id);
-    }
+  @Post('approve/payroll/:model/:id')
+  async approvePayrollConfig(
+    @Param('model') model: string,
+    @Param('id') id: string,
+  ) {
+    return this.payrollConfigurationService.payrollManagerApprove(model, id);
+  }
 
-    @Post('pay-types')
-    async createPayType(@Body() pt: createPayTypeDTO) {
-        return this.payrollConfigurationService.createPayTypes(pt);
-    }
+  @Post('reject/payroll/:model/:id')
+  async rejectPayrollConfig(
+    @Param('model') model: string,
+    @Param('id') id: string,
+  ) {
+    return this.payrollConfigurationService.payrollManagerReject(model, id);
+  }
 
-    @Put('pay-types/:id')
-    async editPayType(
-        @Param('id') id: string,
-        @Body() updateData: editPayTypeDTO
-    ) {
-        return this.payrollConfigurationService.editPayTypes(id, updateData);
-    }
+  // -------------------
+  // HR MANAGER INSURANCE APPROVAL
+  // -------------------
 
-    @Delete('pay-types/:id')
-    async removePayType(@Param('id') id: string) {
-        return this.payrollConfigurationService.removePayType(id);
-    }
+  @Post('approve/insurance/:id')
+  async approveInsurance(@Param('id') id: string) {
+    return this.payrollConfigurationService.hrApproveInsurance(id);
+  }
 
-    //////7-set allowances
-    @Get('allowances/:id')
-    async getAllowance(@Param('id') id: string) {
-        return this.payrollConfigurationService.getAllowance(id);
-    }
+  @Post('reject/insurance/:id')
+  async rejectInsurance(@Param('id') id: string) {
+    return this.payrollConfigurationService.hrRejectInsurance(id);
+  }
 
-    @Post('allowances')
-    async createAllowance(@Body() allowanceData: createAllowanceDto) {
-        return this.payrollConfigurationService.createAllowance(allowanceData);
-    }
+  // -------------------
+  // COMPANY SETTINGS (SYSTEM ADMIN)
+  // -------------------
 
-    @Delete('allowances/:id')
-    async removeAllowance(@Param('id') id: string) {
-        return this.payrollConfigurationService.removeAllowance(id);
-    }
+  @Post('company-settings')
+  createSettings(@Body() dto: CreateCompanySettingsDto) {
+    return this.payrollConfigurationService.create(dto);
+  }
 
-    //////19- config policies for signing bonuses
-    @Get('signing-bonuses/:id')
-    async findSigningBonus(@Param('id') id: string) {
-        return this.payrollConfigurationService.findSigningBonuses(id);
-    }
+  @Get('company-settings')
+  getAllSettings() {
+    return this.payrollConfigurationService.findAll();
+  }
 
-    @Post('signing-bonuses')
-    async createSigningBonus(@Body() bonusData: createsigningBonusesDTO) {
-        return this.payrollConfigurationService.createSigningBonuses(bonusData);
-    }
+  @Get('company-settings/:id')
+  getSettings(@Param('id') id: string) {
+    return this.payrollConfigurationService.findOne(id);
+  }
 
-    @Put('signing-bonuses/:id')
-    async editSigningBonus(
-        @Param('id') id: string,
-        @Body() updateData: editsigningBonusDTO
-    ) {
-        return this.payrollConfigurationService.editsigningBonus(id, updateData);
-    }
+  @Put('company-settings/:id')
+  updateSettings(@Param('id') id: string, @Body() dto: UpdateCompanySettingsDto) {
+    return this.payrollConfigurationService.update(id, dto);
+  }
 
-    @Delete('signing-bonuses/:id')
-    async removeSigningBonus(@Param('id') id: string) {
-        return this.payrollConfigurationService.removeSigningBonuses(id);
-    }
+  @Delete('company-settings/:id')
+  deleteSettings(@Param('id') id: string) {
+    return this.payrollConfigurationService.delete(id);
+  }
 
-    //////20- config resignation and termination benefits
-    @Get('termination-resignation-benefits')
-    async findAllTerminationAndResignationBenefits() {
-        return this.payrollConfigurationService.findAllTerminationAndResignationBenefits();
-    }
+  // -------------------
+  // GENERAL APPROVAL/REJECTION
+  // -------------------
 
-    @Get('termination-resignation-benefits/:id')
-    async findTerminationAndResignationBenefitsById(@Param('id') id: string) {
-        return this.payrollConfigurationService.findTerminationAndResignationBenefitsById(id);
-    }
-
-    @Post('termination-resignation-benefits')
-    async createTerminationAndResignationBenefits(@Body() benefitsData: createResigAndTerminBenefitsDTO) {
-        return this.payrollConfigurationService.createTerminationAndResignationBenefits(benefitsData);
-    }
-
-    @Put('termination-resignation-benefits/:id')
-    async updateTerminationAndResignationBenefits(
-        @Param('id') id: string,
-        @Body() updateData: createResigAndTerminBenefitsDTO
-    ) {
-        return this.payrollConfigurationService.updateTerminationAndResignationBenefits(id, updateData);
-    }
-
-    @Delete('termination-resignation-benefits/:id')
-    async removeTerminationAndResignationBenefits(@Param('id') id: string) {
-        return this.payrollConfigurationService.removeTerminationAndResignationBenefits(id);
-    }
-
-    //////21- config insurance brackets w defined salary ranges
-    @Get('insurance-brackets/:id')
-    async findInsuranceBracket(@Param('id') id: string) {
-        return this.payrollConfigurationService.findInsuranceBrackets(id);
-    }
-
-    @Post('insurance-brackets')
-    async createInsuranceBracket(@Body() bracketData: createInsuranceBracketsDTO) {
-        return this.payrollConfigurationService.createInsuranceBrackets(bracketData);
-    }
-
-    @Put('insurance-brackets/:id')
-    async editInsuranceBracket(
-        @Param('id') id: string,
-        @Body() updateData: editInsuranceBracketsDTO
-    ) {
-        return this.payrollConfigurationService.editInsuranceBrackets(id, updateData);
-    }
-
-    @Delete('insurance-brackets/:id')
-    async removeInsuranceBracket(@Param('id') id: string) {
-        return this.payrollConfigurationService.removeInsuranceBrackets(id);
-    }
-
-
-    /////////////////  PAYROLL MANAGER  /////////////////////
-
-    ////////////////  HR MANAGER  /////////////////////////
-
-    //////////////  SYSTEM ADMIN  /////////////////////////
-
-    ///////////////  LAW ADMIN  //////////////////////////
-
+  @Post('approval')
+  approveOrReject(@Body() dto: ApprovalDto) {
+    return this.payrollConfigurationService.approveOrReject(dto);
+  }
 }

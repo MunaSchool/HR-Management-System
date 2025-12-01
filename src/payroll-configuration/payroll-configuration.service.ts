@@ -24,6 +24,9 @@ import { editsigningBonusDTO } from './dto/edit-signingBonus.dto';
 import { createsigningBonusesDTO } from './dto/create-signingBonus.dto';
 import { createInsuranceBracketsDTO } from './dto/create-insurance.dto';
 import { editInsuranceBracketsDTO } from './dto/edit-insurance.dto';
+import { CreateCompanySettingsDto } from './dto/create-company-settings.dto';
+import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
+import { ApprovalDto } from './dto/approval.dto';
 
 
 @Injectable()
@@ -69,25 +72,21 @@ export class PayrollConfigurationService
 
 
     //////2- config pay grades
-    async getPayGrade(id: string): Promise<payGradeDocument | null> {
-        return this.payGradeModel.findById(id).exec();
+    async getPayGrade(id: string): Promise<payGradeDocument|null> {
+        return await this.payGradeModel.findById({ id });
     }
 
-    async getAllPayGrades(): Promise<payGradeDocument[]> {
-        return this.payGradeModel.find().exec();
-    }
-
-    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument | null> {
-        const newpg = new this.payGradeModel(pg);
+    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument|null> {
+        const newpg = new this.payGradeModel(payGrade);
         return newpg.save();
     }
 
-    async editPayGrade(id: string, updateData: editPayGradeDTO): Promise<payGradeDocument | null> {
-        return this.payGradeModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    async editPayGrade(pg: string, updateData: editPayGradeDTO): Promise<payGradeDocument|null> {
+        return await this.payGradeModel.findByIdAndUpdate(pg, updateData, { new: true });  
     }
 
-    async remove(id: string): Promise<payGradeDocument | null> {
-        return this.payGradeModel.findByIdAndDelete(id).exec();
+    async remove(pg: string): Promise<payGradeDocument | null> {
+        return await this.payGradeModel.findByIdAndDelete(pg); 
     }
 
         //plsss go back to this!!!!!
@@ -140,10 +139,6 @@ export class PayrollConfigurationService
         return newAllowance.save();
     }
 
-    async getAllAllowances(): Promise<allowanceDocument[]> {
-        return this.allowanceModel.find().exec();
-    }
-
     async getAllowance(id: string): Promise<allowanceDocument|null>{
         return await this.allowanceModel.findById(id);
     }
@@ -155,25 +150,21 @@ export class PayrollConfigurationService
 
 
     //////19- config policies for signing bonuses
-    async findSigningBonuses(id: string): Promise<signingBonusDocument | null> {
-        return this.signingBonusModel.findById(id).exec();
-    }
-
-    async findAllSigningBonuses(): Promise<signingBonusDocument[]> {
-        return this.signingBonusModel.find().exec();
+    async findSigningBonuses(id: string): Promise<signingBonusDocument|null>{
+        return await this.signingBonusModel.findById(id)
     }
 
     async editsigningBonus(id: string, updateData: editsigningBonusDTO): Promise<signingBonusDocument|null>{
         return await this.signingBonusModel.findByIdAndUpdate(id, updateData, { new: true });
     }
 
-    async createSigningBonuses(id: createsigningBonusesDTO): Promise<signingBonusDocument | null> {
+    async createSigningBonuses(id:createsigningBonusesDTO): Promise<signingBonusDocument|null>{
         const sb = new this.signingBonusModel(id);
         return sb.save();
     }
 
-    async removeSigningBonuses(id: string): Promise<signingBonusDocument | null> {
-        return this.signingBonusModel.findByIdAndDelete(id).exec();
+    async removeSigningBonuses(id: string): Promise<signingBonusDocument|null>{
+        return this.signingBonusModel.findByIdAndDelete(id);
     }
 
 
@@ -203,27 +194,48 @@ export class PayrollConfigurationService
 
 
     ////////21- config insurance brackets w defined salary ranges
-    async findInsuranceBrackets(id: string): Promise<insuranceBracketsDocument | null> {
-        return this.insuranceBracketsModel.findById(id).exec();
+    async findInsuranceBrackets(id: string): Promise<insuranceBracketsDocument|null>{
+        return await this.insuranceBracketsModel.findById(id);
     }
 
-    async findAllInsuranceBrackets(): Promise<insuranceBracketsDocument[]> {
-        return this.insuranceBracketsModel.find().exec();
-    }
-
-    async createInsuranceBrackets(id: createInsuranceBracketsDTO): Promise<insuranceBracketsDocument | null> {
+    async createInsuranceBrackets(id: createInsuranceBracketsDTO):Promise <insuranceBracketsDocument|null>{
         const ib = new this.insuranceBracketsModel(id);
         return ib.save();
     }
 
-    async editInsuranceBrackets(id: string, updateData: editInsuranceBracketsDTO): Promise<insuranceBracketsDocument | null> {
-        return this.insuranceBracketsModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    async editInsuranceBrackets (id: string, updateData: editInsuranceBracketsDTO): Promise<insuranceBracketsDocument|null>{
+        return await this.insuranceBracketsModel.findByIdAndUpdate(id, updateData, { new: true });
     }
 
-    async removeInsuranceBrackets(id: string): Promise<insuranceBracketsDocument | null> {
-        return this.insuranceBracketsModel.findByIdAndDelete(id).exec();
+    async removeInsuranceBrackets(id: string): Promise<insuranceBracketsDocument|null>{
+        return await this.insuranceBracketsModel.findByIdAndDelete(id);
     }
-    
+
+    //calculate employee & employer social insurance
+    //not saved to db fa ask ab that
+    calculateInsurance(employeeRate: number, minSalary: number, maxSalary: number): number {
+    const salaryRange = maxSalary - minSalary;
+    const socialInsurance = employeeRate * salaryRange;
+    return socialInsurance;
+    }
+
+    /*chatgpts version(delete later)
+    async calculateEmployeeInsurance(bracketId: string): Promise<InsuranceBracketDocument> {
+  // Step 1: Fetch insurance bracket
+  const bracket = await this.insuranceBracketsModel.findById(bracketId).exec();
+  if (!bracket) throw new Error("Insurance bracket not found");
+
+  // Step 2: Calculate
+  const salaryRange = bracket.maxSalary - bracket.minSalary;
+  const insurance = bracket.employeeRate * salaryRange;
+
+  // Step 3: Save to the document
+  bracket.employeeInsurance = insurance;
+
+  // Step 4: Save to DB
+  return bracket.save();
+}
+    */ 
 
 
 
@@ -232,12 +244,105 @@ export class PayrollConfigurationService
 
 
 
-    /////////////////  PAYROLL MANAGER  /////////////////////
 
+  // -------------------
+  // PHASE 4 – PAYROLL MANAGER APPROVALS
+  // -------------------
 
+  async payrollManagerApprove(model: string, id: string) {
+    // Map model name to Mongoose model
+    const modelsMap: Record<string, Mongoose.Model<any>> = {
+      payrollPolicies: this.payrollPoliciesModel,
+      payGrade: this.payGradeModel,
+      payType: this.payTypeModel,
+      allowance: this.allowanceModel,
+      signingBonus: this.signingBonusModel,
+      terminationBenefits: this.terminationAndResignationBenefitsModel,
+    };
 
-    ////////////////  HR MANAGER  /////////////////////////
+    const targetModel = modelsMap[model];
+    if (!targetModel) throw new Error(`Model ${model} not found`);
 
+    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+  }
+
+  async payrollManagerReject(model: string, id: string) {
+    const modelsMap: Record<string, Mongoose.Model<any>> = {
+      payrollPolicies: this.payrollPoliciesModel,
+      payGrade: this.payGradeModel,
+      payType: this.payTypeModel,
+      allowance: this.allowanceModel,
+      signingBonus: this.signingBonusModel,
+      terminationBenefits: this.terminationAndResignationBenefitsModel,
+    };
+
+    const targetModel = modelsMap[model];
+    if (!targetModel) throw new Error(`Model ${model} not found`);
+
+    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+  }
+
+  // -------------------
+  // PHASE 5 – HR MANAGER INSURANCE APPROVAL
+  // -------------------
+
+  async hrApproveInsurance(id: string) {
+    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+  }
+
+  async hrRejectInsurance(id: string) {
+    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+  }
+
+  // -------------------
+  // COMPANY SETTINGS (SYSTEM ADMIN)
+  // -------------------
+
+  async create(dto: CreateCompanySettingsDto) {
+    const newSettings = new this.companyWideSettingsModel(dto);
+    return newSettings.save();
+  }
+
+  async findAll() {
+    return this.companyWideSettingsModel.find().exec();
+  }
+
+  async findOne(id: string) {
+    return this.companyWideSettingsModel.findById(id).exec();
+  }
+
+  async update(id: string, dto: UpdateCompanySettingsDto) {
+    return this.companyWideSettingsModel.findByIdAndUpdate(id, dto, { new: true });
+  }
+
+  async delete(id: string) {
+    return this.companyWideSettingsModel.findByIdAndDelete(id);
+  }
+
+  // -------------------
+  // GENERAL APPROVAL/REJECTION
+  // -------------------
+
+  async approveOrReject(dto: ApprovalDto) {
+    const { model, id, action } = dto;
+    const modelsMap: Record<string, Mongoose.Model<any>> = {
+      payrollPolicies: this.payrollPoliciesModel,
+      payGrade: this.payGradeModel,
+      payType: this.payTypeModel,
+      allowance: this.allowanceModel,
+      signingBonus: this.signingBonusModel,
+      terminationBenefits: this.terminationAndResignationBenefitsModel,
+      insurance: this.insuranceBracketsModel,
+      companySettings: this.companyWideSettingsModel,
+    };
+
+    const targetModel = modelsMap[model];
+    if (!targetModel) throw new Error(`Model ${model} not found`);
+
+    const status = action === 'approve' ? 'approved' : 'rejected';
+    return targetModel.findByIdAndUpdate(id, { approvalStatus: status }, { new: true });
+  }
+}
 
 
     //////////////  SYSTEM ADMIN  /////////////////////////
@@ -247,4 +352,4 @@ export class PayrollConfigurationService
 
 
 
-}
+
