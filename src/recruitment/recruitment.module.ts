@@ -26,6 +26,7 @@ import { OffboardingController } from 'src/recruitment/controllers/offboarding.c
 import { RecruitmentService } from 'src/recruitment/services/recruitment.service';
 import { OnboardingService } from 'src/recruitment/services/onboarding.service';
 import { OffboardingService } from 'src/recruitment/services/offboarding.service';
+import { AuthModule } from 'src/auth/auth.module';
 
 //TO REMOVE
 // import { NotificationLogService } from 'src/external-controller-services/services/notification-log.service'; 
@@ -63,7 +64,7 @@ import { OffboardingService } from 'src/recruitment/services/offboarding.service
       // { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
       // { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
       // { name: EmployeeProfileChangeRequest.name, schema: EmployeeProfileChangeRequestSchema },
-    ]), EmployeeProfileModule ,TimeManagementModule
+    ]), EmployeeProfileModule ,TimeManagementModule , AuthModule
   ],
 
   controllers: [
