@@ -34,17 +34,17 @@ import { editTaxRulesDTO } from './dto/edit-tax-rules.dto';
 @Injectable()
 export class PayrollConfigurationService 
 {
-        constructor( 
-            @InjectModel(payrollPolicies.name) private payrollPoliciesModel: Mongoose.Model<payrollPoliciesDocument>,
-            @InjectModel(payGrade.name) private payGradeModel: Mongoose.Model<payGradeDocument>,
-            @InjectModel(allowance.name) private allowanceModel: Mongoose.Model<allowanceDocument>,
-            @InjectModel(CompanyWideSettings.name) private companyWideSettingsModel: Mongoose.Model<CompanyWideSettingsDocument>,
-            @InjectModel(insuranceBrackets.name) private insuranceBracketsModel: Mongoose.Model<insuranceBracketsDocument>,
-            @InjectModel(payType.name) private payTypeModel: Mongoose.Model<payTypeDocument>,
-            @InjectModel(signingBonus.name) private signingBonusModel: Mongoose.Model<signingBonusDocument>,
-            @InjectModel(taxRules.name) private taxRulesModel: Mongoose.Model<taxRulesDocument>,
-            @InjectModel(terminationAndResignationBenefits.name) private terminationAndResignationBenefitsModel: Mongoose.Model<terminationAndResignationBenefitsDocument>,
-        ) {}
+    constructor( 
+        @InjectModel(payrollPolicies.name) private payrollPoliciesModel: Mongoose.Model<payrollPoliciesDocument>,
+        @InjectModel(payGrade.name) private payGradeModel: Mongoose.Model<payGradeDocument>,
+        @InjectModel(allowance.name) private allowanceModel: Mongoose.Model<allowanceDocument>,
+        @InjectModel(CompanyWideSettings.name) private companyWideSettingsModel: Mongoose.Model<CompanyWideSettingsDocument>,
+        @InjectModel(insuranceBrackets.name) private insuranceBracketsModel: Mongoose.Model<insuranceBracketsDocument>,
+        @InjectModel(payType.name) private payTypeModel: Mongoose.Model<payTypeDocument>,
+        @InjectModel(signingBonus.name) private signingBonusModel: Mongoose.Model<signingBonusDocument>,
+        @InjectModel(taxRules.name) private taxRulesModel: Mongoose.Model<taxRulesDocument>,
+        @InjectModel(terminationAndResignationBenefits.name) private terminationAndResignationBenefitsModel: Mongoose.Model<terminationAndResignationBenefitsDocument>,
+    ) {}
 
 
     /////////// PAYROLL SPECIALIST METHODS ///////////////
