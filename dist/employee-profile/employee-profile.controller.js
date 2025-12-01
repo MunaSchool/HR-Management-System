@@ -29,7 +29,6 @@ const create_change_request_dto_1 = require("./dto/create-change-request.dto");
 const process_change_request_dto_1 = require("./dto/process-change-request.dto");
 const update_employee_master_dto_1 = require("./dto/update-employee-master.dto");
 const assign_role_dto_1 = require("./dto/assign-role.dto");
-const create_employee_dto_1 = require("./dto/create-employee.dto");
 let EmployeeProfileController = class EmployeeProfileController {
     employeeProfileService;
     employeeRoleService;
@@ -53,9 +52,6 @@ let EmployeeProfileController = class EmployeeProfileController {
     }
     async getAllEmployees() {
         return this.employeeProfileService.findAll();
-    }
-    async createEmployee(createDto) {
-        return this.employeeProfileService.create(createDto);
     }
     async searchEmployees(searchQuery, status, departmentId) {
         return this.employeeProfileService.searchEmployees(searchQuery || '', status, departmentId);
@@ -183,15 +179,6 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], EmployeeProfileController.prototype, "getAllEmployees", null);
-__decorate([
-    (0, common_1.Post)(),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(employee_profile_enums_1.SystemRole.HR_ADMIN, employee_profile_enums_1.SystemRole.SYSTEM_ADMIN),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_employee_dto_1.CreateEmployeeDto]),
-    __metadata("design:returntype", Promise)
-], EmployeeProfileController.prototype, "createEmployee", null);
 __decorate([
     (0, common_1.Get)('search'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard, roles_guard_1.RolesGuard),

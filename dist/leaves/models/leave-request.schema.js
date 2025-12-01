@@ -68,7 +68,6 @@ __decorate([
 ], LeaveRequest.prototype, "approvalFlow", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: leave_status_enum_1.LeaveStatus,
         default: leave_status_enum_1.LeaveStatus.PENDING,
     }),

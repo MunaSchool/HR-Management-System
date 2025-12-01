@@ -21,7 +21,7 @@ let Holiday = class Holiday {
 };
 exports.Holiday = Holiday;
 __decorate([
-    (0, mongoose_1.Prop)({ type: String, enum: index_1.HolidayType, required: true }),
+    (0, mongoose_1.Prop)({ enum: index_1.HolidayType, required: true }),
     __metadata("design:type", String)
 ], Holiday.prototype, "type", void 0);
 __decorate([

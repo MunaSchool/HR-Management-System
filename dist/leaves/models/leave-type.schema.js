@@ -55,10 +55,7 @@ __decorate([
     __metadata("design:type", Boolean)
 ], LeaveType.prototype, "requiresAttachment", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({
-        type: String,
-        enum: attachment_type_enum_1.AttachmentType
-    }),
+    (0, mongoose_1.Prop)({ enum: attachment_type_enum_1.AttachmentType }),
     __metadata("design:type", String)
 ], LeaveType.prototype, "attachmentType", void 0);
 __decorate([

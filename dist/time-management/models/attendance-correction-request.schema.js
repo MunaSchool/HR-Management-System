@@ -34,7 +34,7 @@ __decorate([
     __metadata("design:type", String)
 ], AttendanceCorrectionRequest.prototype, "reason", void 0);
 __decorate([
-    (0, mongoose_2.Prop)({ type: String, enum: index_1.CorrectionRequestStatus, default: index_1.CorrectionRequestStatus.SUBMITTED }),
+    (0, mongoose_2.Prop)({ enum: index_1.CorrectionRequestStatus, default: index_1.CorrectionRequestStatus.SUBMITTED }),
     __metadata("design:type", String)
 ], AttendanceCorrectionRequest.prototype, "status", void 0);
 exports.AttendanceCorrectionRequest = AttendanceCorrectionRequest = __decorate([

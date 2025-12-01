@@ -26,7 +26,6 @@ __decorate([
 ], Document.prototype, "ownerId", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: document_type_enum_1.DocumentType,
         required: true
     }),

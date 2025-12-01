@@ -34,7 +34,6 @@ __decorate([
 ], Interview.prototype, "applicationId", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: application_stage_enum_1.ApplicationStage,
         required: true
     }),
@@ -45,7 +44,7 @@ __decorate([
     __metadata("design:type", Date)
 ], Interview.prototype, "scheduledDate", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: String, enum: interview_method_enum_1.InterviewMethod }),
+    (0, mongoose_1.Prop)({ enum: interview_method_enum_1.InterviewMethod }),
     __metadata("design:type", String)
 ], Interview.prototype, "method", void 0);
 __decorate([
@@ -62,7 +61,6 @@ __decorate([
 ], Interview.prototype, "videoLink", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: interview_status_enum_1.InterviewStatus,
         default: interview_status_enum_1.InterviewStatus.SCHEDULED
     }),

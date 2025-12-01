@@ -27,7 +27,7 @@ __decorate([
     __metadata("design:type", mongoose_1.Types.ObjectId)
 ], TimeException.prototype, "employeeId", void 0);
 __decorate([
-    (0, mongoose_2.Prop)({ type: String, enum: index_1.TimeExceptionType, required: true }),
+    (0, mongoose_2.Prop)({ enum: index_1.TimeExceptionType, required: true }),
     __metadata("design:type", String)
 ], TimeException.prototype, "type", void 0);
 __decorate([
@@ -39,7 +39,7 @@ __decorate([
     __metadata("design:type", mongoose_1.Types.ObjectId)
 ], TimeException.prototype, "assignedTo", void 0);
 __decorate([
-    (0, mongoose_2.Prop)({ type: String, enum: index_1.TimeExceptionStatus, default: index_1.TimeExceptionStatus.OPEN }),
+    (0, mongoose_2.Prop)({ enum: index_1.TimeExceptionStatus, default: index_1.TimeExceptionStatus.OPEN }),
     __metadata("design:type", String)
 ], TimeException.prototype, "status", void 0);
 __decorate([

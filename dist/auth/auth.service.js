@@ -94,7 +94,7 @@ let AuthService = class AuthService {
         });
         const roleAssignment = await this.employeeRoleModel.create({
             employeeProfileId: newEmployee._id,
-            roles: registerDto.roles || ['department employee'],
+            roles: registerDto.roles || ['DEPARTMENT_EMPLOYEE'],
             permissions: registerDto.permissions || [],
             isActive: true,
         });
@@ -118,8 +118,8 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
         const roles = employee.accessProfileId
-            ? employee.accessProfileId.roles || ['department employee']
-            : ['department employee'];
+            ? employee.accessProfileId.roles || ['DEPARTMENT_EMPLOYEE']
+            : ['DEPARTMENT_EMPLOYEE'];
         const payload = {
             userid: employee._id,
             roles,

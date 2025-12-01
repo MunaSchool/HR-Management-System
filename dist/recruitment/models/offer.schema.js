@@ -81,7 +81,6 @@ __decorate([
 ], Offer.prototype, "deadline", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: offer_response_status_enum_1.OfferResponseStatus,
         default: offer_response_status_enum_1.OfferResponseStatus.PENDING
     }),
@@ -101,7 +100,6 @@ __decorate([
 ], Offer.prototype, "approvers", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: offer_final_status_enum_1.OfferFinalStatus,
         default: offer_final_status_enum_1.OfferFinalStatus.PENDING
     }),

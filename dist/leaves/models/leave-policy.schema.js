@@ -33,10 +33,7 @@ __decorate([
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], LeavePolicy.prototype, "leaveTypeId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({
-        type: String,
-        enum: accrual_method_enum_1.AccrualMethod, default: accrual_method_enum_1.AccrualMethod.MONTHLY
-    }),
+    (0, mongoose_1.Prop)({ enum: accrual_method_enum_1.AccrualMethod, default: accrual_method_enum_1.AccrualMethod.MONTHLY }),
     __metadata("design:type", String)
 ], LeavePolicy.prototype, "accrualMethod", void 0);
 __decorate([
@@ -60,10 +57,7 @@ __decorate([
     __metadata("design:type", Number)
 ], LeavePolicy.prototype, "expiryAfterMonths", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({
-        type: String,
-        enum: rounding_rule_enum_1.RoundingRule, default: rounding_rule_enum_1.RoundingRule.NONE
-    }),
+    (0, mongoose_1.Prop)({ enum: rounding_rule_enum_1.RoundingRule, default: rounding_rule_enum_1.RoundingRule.NONE }),
     __metadata("design:type", String)
 ], LeavePolicy.prototype, "roundingRule", void 0);
 __decorate([

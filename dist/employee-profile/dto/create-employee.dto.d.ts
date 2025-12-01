@@ -8,7 +8,6 @@ export declare class CreateEmployeeDto {
     department?: string;
     jobTitle?: string;
     directManagerId?: string;
-    password?: string;
-    roles?: string[];
+    roles: string[];
     permissions?: string[];
 }

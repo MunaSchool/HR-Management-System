@@ -36,7 +36,6 @@ __decorate([
 ], Application.prototype, "assignedHr", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: application_stage_enum_1.ApplicationStage,
         default: application_stage_enum_1.ApplicationStage.SCREENING
     }),
@@ -44,7 +43,6 @@ __decorate([
 ], Application.prototype, "currentStage", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: application_status_enum_1.ApplicationStatus,
         default: application_status_enum_1.ApplicationStatus.SUBMITTED
     }),

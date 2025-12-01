@@ -26,19 +26,8 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async login(loginDto, res) {
-        const result = await this.authService.signIn(loginDto.employeeNumber, loginDto.password);
-        res.cookie('token', result.access_token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000,
-        });
-        return {
-            statusCode: common_1.HttpStatus.OK,
-            message: 'Login successful',
-            user: result.payload,
-        };
+    async login(loginDto) {
+        return this.authService.signIn(loginDto.employeeNumber, loginDto.password);
     }
     async register(registerDto) {
         return this.authService.register(registerDto);
@@ -46,37 +35,14 @@ let AuthController = class AuthController {
     async registerFirstAdmin(registerDto) {
         return this.authService.register(registerDto);
     }
-    async getMe(req) {
-        const user = req['user'];
-        return {
-            userid: user?.userid,
-            employeeNumber: user?.employeeNumber,
-            email: user?.email,
-            roles: user?.roles,
-            status: user?.status,
-        };
-    }
-    logout(res) {
-        res.cookie('token', '', {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            expires: new Date(0),
-        });
-        return {
-            statusCode: common_1.HttpStatus.OK,
-            message: 'Logged out successfully',
-        };
-    }
 };
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [login_dto_1.LoginDto, Object]),
+    __metadata("design:paramtypes", [login_dto_1.LoginDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
@@ -97,23 +63,6 @@ __decorate([
     __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "registerFirstAdmin", null);
-__decorate([
-    (0, common_1.Get)('me'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], AuthController.prototype, "getMe", null);
-__decorate([
-    (0, common_1.Post)('logout'),
-    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
-    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    __param(0, (0, common_1.Res)({ passthrough: true })),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "logout", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

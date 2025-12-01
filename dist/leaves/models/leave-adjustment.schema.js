@@ -31,10 +31,7 @@ __decorate([
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], LeaveAdjustment.prototype, "leaveTypeId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({
-        type: String,
-        enum: adjustment_type_enum_1.AdjustmentType, required: true
-    }),
+    (0, mongoose_1.Prop)({ enum: adjustment_type_enum_1.AdjustmentType, required: true }),
     __metadata("design:type", String)
 ], LeaveAdjustment.prototype, "adjustmentType", void 0);
 __decorate([

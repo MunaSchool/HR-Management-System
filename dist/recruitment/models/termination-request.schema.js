@@ -31,7 +31,6 @@ __decorate([
 ], TerminationRequest.prototype, "employeeId", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: termination_initiation_enum_1.TerminationInitiation,
         required: true
     }),
@@ -51,7 +50,6 @@ __decorate([
 ], TerminationRequest.prototype, "hrComments", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
-        type: String,
         enum: termination_status_enum_1.TerminationStatus,
         default: termination_status_enum_1.TerminationStatus.PENDING
     }),

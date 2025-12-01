@@ -53,7 +53,7 @@ __decorate([
     __metadata("design:type", Date)
 ], ShiftAssignment.prototype, "endDate", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: String, enum: index_1.ShiftAssignmentStatus, default: index_1.ShiftAssignmentStatus.PENDING }),
+    (0, mongoose_1.Prop)({ enum: index_1.ShiftAssignmentStatus, default: index_1.ShiftAssignmentStatus.PENDING }),
     __metadata("design:type", String)
 ], ShiftAssignment.prototype, "status", void 0);
 exports.ShiftAssignment = ShiftAssignment = __decorate([

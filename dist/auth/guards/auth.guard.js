@@ -19,9 +19,13 @@ let AuthGuard = class AuthGuard {
     }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
-        const token = request.cookies?.token || request.headers['authorization']?.split(' ')[1];
-        if (!token) {
-            throw new common_1.UnauthorizedException('Authentication token missing');
+        const authHeader = request.headers.authorization;
+        if (!authHeader) {
+            throw new common_1.UnauthorizedException('No authorization header');
+        }
+        const [type, token] = authHeader.split(' ');
+        if (type !== 'Bearer' || !token) {
+            throw new common_1.UnauthorizedException('Invalid authorization format');
         }
         try {
             const payload = await this.jwtService.verifyAsync(token, {

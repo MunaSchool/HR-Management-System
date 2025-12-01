@@ -42,7 +42,7 @@ __decorate([
     __metadata("design:type", String)
 ], Shift.prototype, "endTime", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: String, enum: index_1.PunchPolicy, default: index_1.PunchPolicy.FIRST_LAST }),
+    (0, mongoose_1.Prop)({ enum: index_1.PunchPolicy, default: index_1.PunchPolicy.FIRST_LAST }),
     __metadata("design:type", String)
 ], Shift.prototype, "punchPolicy", void 0);
 __decorate([
