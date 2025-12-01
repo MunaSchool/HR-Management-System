@@ -28,6 +28,13 @@ import { PayrollPhase3Service } from './payroll-phase3.service';
 
 import { PayrollPhase4Service } from './payroll-phase4.service';
 
+import { JwtModule } from '@nestjs/jwt';
+
+import {AuthGuard} from'../auth/guards/auth.guard';
+import {RolesGuard} from'../auth/guards/roles.guard';
+import {Roles} from'../auth/decorators/roles.decorator';
+import {SystemRole} from'../employee-profile/enums/employee-profile.enums';
+
 
 @Module({
   imports: [forwardRef(() => PayrollTrackingModule), PayrollConfigurationModule, TimeManagementModule, EmployeeProfileModule, LeavesModule,
@@ -41,7 +48,10 @@ import { PayrollPhase4Service } from './payroll-phase4.service';
     { name: EmployeeTerminationResignation.name, schema: EmployeeTerminationResignationSchema },
     { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
     { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
-      
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      signOptions: { expiresIn: '1d' },
+    }),
 
   ])],
   controllers: [PayrollExecutionController],
