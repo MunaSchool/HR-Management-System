@@ -42,8 +42,9 @@ import { TimeManagementModule } from '../time-management/time-management.module'
       { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
     forwardRef(() => PerformanceModule),
-    TimeManagementModule,
+    forwardRef(()=>TimeManagementModule),
   ],
+
   controllers: [EmployeeProfileController],
   providers: [
     EmployeeProfileService,
@@ -55,6 +56,15 @@ import { TimeManagementModule } from '../time-management/time-management.module'
     HrAdminService,
     CandidateRegistrationService,
   ],
-  exports: [EmployeeProfileService, CandidateRegistrationService],
+  exports: [    
+    EmployeeProfileService,
+    EmployeeRoleService,
+    EmployeeCrudService,
+    EmployeeSelfServiceService,
+    ChangeRequestService,
+    FileUploadService,
+    HrAdminService,
+    CandidateRegistrationService,
+  ],
 })
 export class EmployeeProfileModule {}

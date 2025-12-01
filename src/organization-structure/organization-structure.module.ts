@@ -23,6 +23,7 @@ import {
 import { EmployeeProfile, EmployeeProfileSchema } from '../employee-profile/models/employee-profile.schema';
 import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
 import { TimeManagementModule } from '../time-management/time-management.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -39,7 +40,8 @@ import { TimeManagementModule } from '../time-management/time-management.module'
       { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
     ]),
     forwardRef(() => EmployeeProfileModule),
-    TimeManagementModule,
+    forwardRef(() =>TimeManagementModule),
+    AuthModule
   ],
   controllers: [OrganizationStructureController],
   providers: [OrganizationStructureService],
