@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TerminationRequest, TerminationRequestDocument } from '../models/termination-request.schema';
@@ -18,7 +18,7 @@ import { NotificationLogService } from 'src/time-management/services/notificatio
 import { EmployeeCrudService } from 'src/employee-profile/services/employee-crud.service';
 import { EmployeeRoleService } from 'src/employee-profile/services/employee-role.service';
 import { HrAdminService } from 'src/employee-profile/services/hr-admin.service';
-
+import { PerformanceService } from 'src/performance/performance.service';
 
 @Injectable()
 export class OffboardingService {
@@ -33,78 +33,139 @@ export class OffboardingService {
     //Time-Management services
     private readonly notificationLogService: NotificationLogService,
     
-    // TODO: Inject EmployeeWarningService to fetch warning history- need performance services
 
     //Employee services
     private readonly hrAdminService: HrAdminService,
     private readonly employeeCrudService : EmployeeCrudService ,
-    private readonly employeeRoleService : EmployeeRoleService 
-    
-    //TODO : inject payroll services
+    private readonly employeeRoleService : EmployeeRoleService ,
+
+    //  payroll services
+    private readonly performanceService : PerformanceService 
+
 
     //TODO , INJECT LEAVES SERVICES
+
   ) {}
 
   // TERMINATION REQUEST SERVICES
 
   async createTerminationRequest(terminationRequestData: CreateTerminationRequestDto): Promise<TerminationRequestDocument> {
-    const newTerminationRequest = new this.terminationRequestModel(terminationRequestData);
-    const savedRequest = await newTerminationRequest.save();
+    let shouldCreateRequest = false;
+    let performanceIssueDetected = false;
 
-    // TODO: USER STORY - HR Manager initiates termination based on warnings/performance -NEED PERFORMANCE
-    // When HR creates termination request, attach warning history and performance data
-    // if (savedRequest.initiator === TerminationInitiation.HR || 
-    //     savedRequest.initiator === TerminationInitiation.MANAGER) {
-    //   const warnings = await this.employeeWarningService.getWarningsByEmployeeId(savedRequest.employeeId);
-    //   const performanceReviews = await this.performanceReviewService.getReviewsByEmployeeId(savedRequest.employeeId);
-    //   // Attach to termination request for justification
-    // }
+    // USER STORY: HR Manager initiates termination based on performance data
+    if (terminationRequestData.initiator === TerminationInitiation.HR || 
+        terminationRequestData.initiator === TerminationInitiation.MANAGER) {
+      
+      try {
+        // Get employee's latest appraisal
+        const employeeAppraisals = await this.performanceService.getEmployeeAppraisals(
+          terminationRequestData.employeeId.toString()
+        );
 
-    // Notification: Employee submits resignation request - keep employee updated
-    if (savedRequest.initiator === TerminationInitiation.EMPLOYEE) {
+        if (employeeAppraisals && employeeAppraisals.length > 0) {
+          const latestAppraisal = employeeAppraisals[0]; // Most recent
+
+          if (latestAppraisal.templateId && latestAppraisal.latestAppraisalId) {
+            // Get the template
+            const template = await this.performanceService.getAppraisalTemplateById(
+              latestAppraisal.templateId.toString()
+            );
+
+            // Get the appraisal record
+            const appraisalRecord = await this.performanceService.getAppraisalRecordById(
+              latestAppraisal.latestAppraisalId.toString()
+            );
+
+            // Check if record exists and has valid data
+            if (appraisalRecord && 
+                appraisalRecord.totalScore !== undefined && 
+                template && 
+                template.ratingScale) {
+              
+              // Compare score with template minimum
+              if (appraisalRecord.totalScore < template.ratingScale.min) {
+                // Performance below minimum - allow termination request creation
+                performanceIssueDetected = true;
+                shouldCreateRequest = true;
+
+                // Create the termination request
+                const newTerminationRequest = new this.terminationRequestModel(terminationRequestData);
+                const savedRequest = await newTerminationRequest.save();
+
+                // Send performance-related notifications
+                await this.notificationLogService.sendNotification({
+                  to: savedRequest.employeeId,
+                  type: 'Termination Notice - Poor Performance',
+                  message: `A termination request has been initiated due to performance below minimum acceptable standards. Your latest appraisal score: ${appraisalRecord.totalScore}/${template.ratingScale.max} (Minimum required: ${template.ratingScale.min}). Reason: ${savedRequest.reason}. Please contact HR immediately.`,
+                });
+
+                // Notify HR
+                const hrManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.HR_MANAGER);
+                if (hrManagers && hrManagers.length > 0) {
+                  await this.notificationLogService.sendNotification({
+                    to: hrManagers[0].id,
+                    type: 'Termination Request - Below Minimum Performance',
+                    message: `Termination request created for employee ${savedRequest.employeeId}. Latest appraisal score ${appraisalRecord.totalScore}/${template.ratingScale.max} is below minimum of ${template.ratingScale.min}. Immediate action required.`,
+                  });
+                }
+
+                return savedRequest;
+              } else {
+                // Performance is acceptable - do not create termination request
+                throw new BadRequestException(
+                  `Cannot create termination request for performance reasons. Employee's latest appraisal score (${appraisalRecord.totalScore}/${template.ratingScale.max}) meets or exceeds minimum requirements (${template.ratingScale.min}).`
+                );
+              }
+            }
+          }
+        }
+
+        // No appraisal data found - cannot create HR/Manager initiated termination
+        if (!shouldCreateRequest) {
+          throw new BadRequestException(
+            'Cannot create termination request. No performance appraisal data found to justify termination.'
+          );
+        }
+
+      } catch (error) {
+        // If it's already a BadRequestException, re-throw it
+        if (error instanceof BadRequestException) {
+          throw error;
+        }
+        
+        console.error('Error checking performance for termination:', error);
+        throw new BadRequestException(
+          'Unable to verify performance data. Cannot create termination request.'
+        );
+      }
+    }
+
+    // Employee resignation - always allowed
+    if (terminationRequestData.initiator === TerminationInitiation.EMPLOYEE) {
+      const newTerminationRequest = new this.terminationRequestModel(terminationRequestData);
+      const savedRequest = await newTerminationRequest.save();
+
       await this.notificationLogService.sendNotification({
         to: savedRequest.employeeId,
         type: 'Resignation Request Submitted',
         message: 'Your resignation request has been submitted successfully and is pending HR review.',
       });
 
-      // TODO: Get HR Manager ID from system settings or department -WE CAN BYPASS BY CREATING A REQUEST DASHBOARD FOR HR SHOWING ANY EMPLOYEE TERMINATION REQUEST
-
       const hrManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.HR_MANAGER);
       if (hrManagers && hrManagers.length > 0) {
         await this.notificationLogService.sendNotification({
-          to: hrManagers[0].id, // Take first HR Manager
+          to: hrManagers[0].id,
           type: 'New Resignation Request',
           message: `Employee ${savedRequest.employeeId} has submitted a resignation request. Reason: ${savedRequest.reason}`,
         });
       }
-  
+
+      return savedRequest;
     }
 
-    // Notification: HR or Manager initiates termination
-    if (savedRequest.initiator === TerminationInitiation.HR || savedRequest.initiator === TerminationInitiation.MANAGER) {
-      // Notify employee about termination initiation
-      await this.notificationLogService.sendNotification({
-        to: savedRequest.employeeId,
-        type: 'Termination Notice',
-        message: `A termination request has been initiated. Reason: ${savedRequest.reason}. Please contact HR for details.`,
-      });
-    }
-
-    return savedRequest;
-  }
-
-  async getAllTerminationRequests(employeeId?: string): Promise<TerminationRequestDocument[]> {
-    const filter = employeeId ? { employeeId } : {};
-    return this.terminationRequestModel.find(filter).exec();
-  }
-
-  async getTerminationRequest(id: string): Promise<TerminationRequestDocument> {
-    const terminationRequest = await this.terminationRequestModel.findById(id).exec();
-    if (!terminationRequest) {
-      throw new NotFoundException('Termination request not found');
-    }
-    return terminationRequest;
+    // If we get here, something went wrong
+    throw new BadRequestException('Invalid termination request');
   }
 
 
@@ -219,6 +280,19 @@ export class OffboardingService {
 
   return updatedTerminationRequest;
 }
+
+async getAllTerminationRequests(employeeId?: string): Promise<TerminationRequestDocument[]> {
+    const filter = employeeId ? { employeeId } : {};
+    return this.terminationRequestModel.find(filter).exec();
+  }
+
+  async getTerminationRequest(id: string): Promise<TerminationRequestDocument> {
+    const terminationRequest = await this.terminationRequestModel.findById(id).exec();
+    if (!terminationRequest) {
+      throw new NotFoundException('Termination request not found');
+    }
+    return terminationRequest;
+  }
 
   // CLEARANCE CHECKLIST SERVICES
 

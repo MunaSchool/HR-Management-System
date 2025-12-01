@@ -28,6 +28,9 @@ import { OnboardingService } from 'src/recruitment/services/onboarding.service';
 import { OffboardingService } from 'src/recruitment/services/offboarding.service';
 import { AuthModule } from 'src/auth/auth.module';
 
+import { PerformanceModule } from 'src/performance/performance.module'; 
+
+
 //TO REMOVE
 // import { NotificationLogService } from 'src/external-controller-services/services/notification-log.service'; 
 // import { EmployeeCrudService } from 'src/external-controller-services/services/employee-crud.service';
@@ -64,7 +67,7 @@ import { AuthModule } from 'src/auth/auth.module';
       // { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
       // { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
       // { name: EmployeeProfileChangeRequest.name, schema: EmployeeProfileChangeRequestSchema },
-    ]), EmployeeProfileModule ,TimeManagementModule , AuthModule
+    ]), EmployeeProfileModule ,TimeManagementModule , AuthModule ,PerformanceModule
   ],
 
   controllers: [
