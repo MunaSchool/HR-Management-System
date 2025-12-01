@@ -1,24 +1,22 @@
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ConfigStatus } from '../enums/payroll-configuration-enums';
 
-export class editPayGradeDTO {
+export class editTaxRulesDTO {
   @IsString()
   @IsOptional()
-  grade?: string;
+  name?: string;
 
+  @IsString()
   @IsOptional()
-  @IsNumber()
-  @Min(6000)
-  baseSalary?: number;
+  description?: string;
 
-  @IsOptional()
   @IsNumber()
-  @Min(6000)
-  grossSalary?: number;
+  @Min(0)
+  @IsOptional()
+  rate?: number;
 
   @IsOptional()
   @IsEnum(ConfigStatus)
   status?: ConfigStatus;
 }
-
 

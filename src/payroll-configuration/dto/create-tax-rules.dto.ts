@@ -1,21 +1,22 @@
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { ConfigStatus } from '../enums/payroll-configuration-enums';
 
-export class createResigAndTerminBenefitsDTO {
+export class createTaxRulesDTO {
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @IsNumber()
-  @Min(0)
-  amount: number;
-
   @IsString()
   @IsOptional()
-  terms?: string;
+  description?: string;
 
+  @IsNumber()
+  @IsNotEmpty()
+  @Min(0)
+  rate: number;
+
+  @IsNotEmpty()
   @IsEnum(ConfigStatus)
   status: ConfigStatus;
 }
-
 

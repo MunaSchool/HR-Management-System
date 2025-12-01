@@ -34,7 +34,7 @@ export class AuthGuard implements CanActivate {
         employeeId: payload.userid,
         employeeNumber: payload.employeeNumber,
         email: payload.email,
-        roles: payload.roles || ['DEPARTMENT_EMPLOYEE'],
+        roles: payload.roles || ['department employee'],
         status: payload.status,
       };
 

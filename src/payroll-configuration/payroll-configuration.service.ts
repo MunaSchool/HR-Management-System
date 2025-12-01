@@ -24,6 +24,11 @@ import { editsigningBonusDTO } from './dto/edit-signingBonus.dto';
 import { createsigningBonusesDTO } from './dto/create-signingBonus.dto';
 import { createInsuranceBracketsDTO } from './dto/create-insurance.dto';
 import { editInsuranceBracketsDTO } from './dto/edit-insurance.dto';
+import { CreateCompanySettingsDto } from './dto/create-company-settings.dto';
+import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
+import { ApprovalDto } from './dto/approval.dto';
+import { createTaxRulesDTO } from './dto/create-tax-rules.dto';
+import { editTaxRulesDTO } from './dto/edit-tax-rules.dto';
 
 
 @Injectable()
@@ -207,8 +212,6 @@ export class PayrollConfigurationService
     async removeInsuranceBrackets(id: string): Promise<insuranceBracketsDocument|null>{
         return await this.insuranceBracketsModel.findByIdAndDelete(id);
     }
-    
-    /*
 
     //calculate employee & employer social insurance
     //not saved to db fa ask ab that
@@ -217,46 +220,211 @@ export class PayrollConfigurationService
     const socialInsurance = employeeRate * salaryRange;
     return socialInsurance;
     }
-    */
 
-    /*chatgpts version(delete later)
-    async calculateEmployeeInsurance(bracketId: string): Promise<InsuranceBracketDocument> {
-  // Step 1: Fetch insurance bracket
-  const bracket = await this.insuranceBracketsModel.findById(bracketId).exec();
-  if (!bracket) throw new Error("Insurance bracket not found");
 
-  // Step 2: Calculate
-  const salaryRange = bracket.maxSalary - bracket.minSalary;
-  const insurance = bracket.employeeRate * salaryRange;
 
-  // Step 3: Save to the document
-  bracket.employeeInsurance = insurance;
 
-  // Step 4: Save to DB
-  return bracket.save();
+  // -------------------
+  // PHASE 4 – PAYROLL MANAGER APPROVALS
+  // -------------------
+
+  async payrollManagerApprove(model: string, id: string) {
+    // Map model name to Mongoose model
+    const modelsMap: Record<string, Mongoose.Model<any>> = {
+      payrollPolicies: this.payrollPoliciesModel,
+      payGrade: this.payGradeModel,
+      payType: this.payTypeModel,
+      allowance: this.allowanceModel,
+      signingBonus: this.signingBonusModel,
+      terminationBenefits: this.terminationAndResignationBenefitsModel,
+    };
+
+    const targetModel = modelsMap[model];
+    if (!targetModel) throw new Error(`Model ${model} not found`);
+
+    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+  }
+
+  async payrollManagerReject(model: string, id: string) {
+    const modelsMap: Record<string, Mongoose.Model<any>> = {
+      payrollPolicies: this.payrollPoliciesModel,
+      payGrade: this.payGradeModel,
+      payType: this.payTypeModel,
+      allowance: this.allowanceModel,
+      signingBonus: this.signingBonusModel,
+      terminationBenefits: this.terminationAndResignationBenefitsModel,
+    };
+
+    const targetModel = modelsMap[model];
+    if (!targetModel) throw new Error(`Model ${model} not found`);
+
+    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+  }
+
+  // -------------------
+  // PHASE 5 – HR MANAGER INSURANCE APPROVAL
+  // -------------------
+
+  async hrApproveInsurance(id: string) {
+    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+  }
+
+  async hrRejectInsurance(id: string) {
+    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+  }
+
+  // -------------------
+  // COMPANY SETTINGS (SYSTEM ADMIN)
+  // -------------------
+
+  async create(dto: CreateCompanySettingsDto) {
+    const newSettings = new this.companyWideSettingsModel(dto);
+    return newSettings.save();
+  }
+
+  async findAll() {
+    return this.companyWideSettingsModel.find().exec();
+  }
+
+  async findOne(id: string) {
+    return this.companyWideSettingsModel.findById(id).exec();
+  }
+
+  async update(id: string, dto: UpdateCompanySettingsDto) {
+    return this.companyWideSettingsModel.findByIdAndUpdate(id, dto, { new: true });
+  }
+
+  async delete(id: string) {
+    return this.companyWideSettingsModel.findByIdAndDelete(id);
+  }
+
+  // -------------------
+  // GENERAL APPROVAL/REJECTION
+  // -------------------
+
+  async approveOrReject(dto: ApprovalDto) {
+    const { model, id, action } = dto;
+    const modelsMap: Record<string, Mongoose.Model<any>> = {
+      payrollPolicies: this.payrollPoliciesModel,
+      payGrade: this.payGradeModel,
+      payType: this.payTypeModel,
+      allowance: this.allowanceModel,
+      signingBonus: this.signingBonusModel,
+      terminationBenefits: this.terminationAndResignationBenefitsModel,
+      insurance: this.insuranceBracketsModel,
+      companySettings: this.companyWideSettingsModel,
+    };
+
+    const targetModel = modelsMap[model];
+    if (!targetModel) throw new Error(`Model ${model} not found`);
+
+    const status = action === 'approve' ? 'approved' : 'rejected';
+    return targetModel.findByIdAndUpdate(id, { approvalStatus: status }, { new: true });
+  }
+
+  // -------------------
+  // LEGAL & POLICY ADMIN - TAX RULES
+  // -------------------
+
+  async findAllTaxRules(): Promise<taxRulesDocument[]> {
+    return this.taxRulesModel.find().exec();
+  }
+
+  async findTaxRuleById(id: string): Promise<taxRulesDocument | null> {
+    return this.taxRulesModel.findById(id).exec();
+  }
+
+  async createTaxRule(taxRuleData: createTaxRulesDTO): Promise<taxRulesDocument> {
+    const newTaxRule = new this.taxRulesModel(taxRuleData);
+    return newTaxRule.save();
+  }
+
+  async updateTaxRule(id: string, updateData: editTaxRulesDTO): Promise<taxRulesDocument | null> {
+    return this.taxRulesModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+  }
+
+  async deleteTaxRule(id: string): Promise<taxRulesDocument | null> {
+    return this.taxRulesModel.findByIdAndDelete(id).exec();
+  }
+
+  // -------------------
+  // PAYROLL SPECIALIST - TERMINATION & RESIGNATION BENEFITS
+  // -------------------
+
+  async getAllTerminationAndResignationBenefits(): Promise<terminationAndResignationBenefitsDocument[]> {
+    return this.terminationAndResignationBenefitsModel.find().exec();
+  }
+
+  async getTerminationAndResignationBenefitById(id: string): Promise<terminationAndResignationBenefitsDocument | null> {
+    return this.terminationAndResignationBenefitsModel.findById(id).exec();
+  }
+
+  async createTerminationAndResignationBenefit(data: createResigAndTerminBenefitsDTO): Promise<terminationAndResignationBenefitsDocument> {
+    const newBenefit = new this.terminationAndResignationBenefitsModel(data);
+    return newBenefit.save();
+  }
+
+  async updateTerminationAndResignationBenefit(id: string, updateData: createResigAndTerminBenefitsDTO): Promise<terminationAndResignationBenefitsDocument | null> {
+    return this.terminationAndResignationBenefitsModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+  }
+
+  async deleteTerminationAndResignationBenefit(id: string): Promise<terminationAndResignationBenefitsDocument | null> {
+    return this.terminationAndResignationBenefitsModel.findByIdAndDelete(id).exec();
+  }
+
+  // -------------------
+  // SYSTEM ADMIN - BACKUP FUNCTIONALITY
+  // -------------------
+
+  async backupPayrollData(): Promise<{
+    policies: any[];
+    payGrades: any[];
+    payTypes: any[];
+    allowances: any[];
+    signingBonuses: any[];
+    terminationBenefits: any[];
+    insuranceBrackets: any[];
+    taxRules: any[];
+    companySettings: any[];
+    timestamp: Date;
+  }> {
+    const [
+      policies,
+      payGrades,
+      payTypes,
+      allowances,
+      signingBonuses,
+      terminationBenefits,
+      insuranceBrackets,
+      taxRules,
+      companySettings,
+    ] = await Promise.all([
+      this.payrollPoliciesModel.find().lean().exec(),
+      this.payGradeModel.find().lean().exec(),
+      this.payTypeModel.find().lean().exec(),
+      this.allowanceModel.find().lean().exec(),
+      this.signingBonusModel.find().lean().exec(),
+      this.terminationAndResignationBenefitsModel.find().lean().exec(),
+      this.insuranceBracketsModel.find().lean().exec(),
+      this.taxRulesModel.find().lean().exec(),
+      this.companyWideSettingsModel.find().lean().exec(),
+    ]);
+
+    return {
+      policies,
+      payGrades,
+      payTypes,
+      allowances,
+      signingBonuses,
+      terminationBenefits,
+      insuranceBrackets,
+      taxRules,
+      companySettings,
+      timestamp: new Date(),
+    };
+  }
 }
-    */ 
 
 
 
 
-
-
-
-
-    /////////////////  PAYROLL MANAGER  /////////////////////
-
-
-
-    ////////////////  HR MANAGER  /////////////////////////
-
-
-
-    //////////////  SYSTEM ADMIN  /////////////////////////
-
-
-    ///////////////  LAW ADMIN  //////////////////////////
-
-
-
-}
