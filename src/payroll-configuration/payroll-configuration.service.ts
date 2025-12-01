@@ -69,21 +69,25 @@ export class PayrollConfigurationService
 
 
     //////2- config pay grades
-    async getPayGrade(id: string): Promise<payGradeDocument|null> {
-        return await this.payGradeModel.findById({ id });
+    async getPayGrade(id: string): Promise<payGradeDocument | null> {
+        return this.payGradeModel.findById(id).exec();
     }
 
-    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument|null> {
-        const newpg = new this.payGradeModel(payGrade);
+    async getAllPayGrades(): Promise<payGradeDocument[]> {
+        return this.payGradeModel.find().exec();
+    }
+
+    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument | null> {
+        const newpg = new this.payGradeModel(pg);
         return newpg.save();
     }
 
-    async editPayGrade(pg: string, updateData: editPayGradeDTO): Promise<payGradeDocument|null> {
-        return await this.payGradeModel.findByIdAndUpdate(pg, updateData, { new: true });  
+    async editPayGrade(id: string, updateData: editPayGradeDTO): Promise<payGradeDocument | null> {
+        return this.payGradeModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
     }
 
-    async remove(pg: string): Promise<payGradeDocument | null> {
-        return await this.payGradeModel.findByIdAndDelete(pg); 
+    async remove(id: string): Promise<payGradeDocument | null> {
+        return this.payGradeModel.findByIdAndDelete(id).exec();
     }
 
         //plsss go back to this!!!!!
@@ -136,6 +140,10 @@ export class PayrollConfigurationService
         return newAllowance.save();
     }
 
+    async getAllAllowances(): Promise<allowanceDocument[]> {
+        return this.allowanceModel.find().exec();
+    }
+
     async getAllowance(id: string): Promise<allowanceDocument|null>{
         return await this.allowanceModel.findById(id);
     }
@@ -147,21 +155,25 @@ export class PayrollConfigurationService
 
 
     //////19- config policies for signing bonuses
-    async findSigningBonuses(id: string): Promise<signingBonusDocument|null>{
-        return await this.signingBonusModel.findById(id)
+    async findSigningBonuses(id: string): Promise<signingBonusDocument | null> {
+        return this.signingBonusModel.findById(id).exec();
+    }
+
+    async findAllSigningBonuses(): Promise<signingBonusDocument[]> {
+        return this.signingBonusModel.find().exec();
     }
 
     async editsigningBonus(id: string, updateData: editsigningBonusDTO): Promise<signingBonusDocument|null>{
         return await this.signingBonusModel.findByIdAndUpdate(id, updateData, { new: true });
     }
 
-    async createSigningBonuses(id:createsigningBonusesDTO): Promise<signingBonusDocument|null>{
+    async createSigningBonuses(id: createsigningBonusesDTO): Promise<signingBonusDocument | null> {
         const sb = new this.signingBonusModel(id);
         return sb.save();
     }
 
-    async removeSigningBonuses(id: string): Promise<signingBonusDocument|null>{
-        return this.signingBonusModel.findByIdAndDelete(id);
+    async removeSigningBonuses(id: string): Promise<signingBonusDocument | null> {
+        return this.signingBonusModel.findByIdAndDelete(id).exec();
     }
 
 
@@ -191,21 +203,25 @@ export class PayrollConfigurationService
 
 
     ////////21- config insurance brackets w defined salary ranges
-    async findInsuranceBrackets(id: string): Promise<insuranceBracketsDocument|null>{
-        return await this.insuranceBracketsModel.findById(id);
+    async findInsuranceBrackets(id: string): Promise<insuranceBracketsDocument | null> {
+        return this.insuranceBracketsModel.findById(id).exec();
     }
 
-    async createInsuranceBrackets(id: createInsuranceBracketsDTO):Promise <insuranceBracketsDocument|null>{
+    async findAllInsuranceBrackets(): Promise<insuranceBracketsDocument[]> {
+        return this.insuranceBracketsModel.find().exec();
+    }
+
+    async createInsuranceBrackets(id: createInsuranceBracketsDTO): Promise<insuranceBracketsDocument | null> {
         const ib = new this.insuranceBracketsModel(id);
         return ib.save();
     }
 
-    async editInsuranceBrackets (id: string, updateData: editInsuranceBracketsDTO): Promise<insuranceBracketsDocument|null>{
-        return await this.insuranceBracketsModel.findByIdAndUpdate(id, updateData, { new: true });
+    async editInsuranceBrackets(id: string, updateData: editInsuranceBracketsDTO): Promise<insuranceBracketsDocument | null> {
+        return this.insuranceBracketsModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
     }
 
-    async removeInsuranceBrackets(id: string): Promise<insuranceBracketsDocument|null>{
-        return await this.insuranceBracketsModel.findByIdAndDelete(id);
+    async removeInsuranceBrackets(id: string): Promise<insuranceBracketsDocument | null> {
+        return this.insuranceBracketsModel.findByIdAndDelete(id).exec();
     }
     
 
