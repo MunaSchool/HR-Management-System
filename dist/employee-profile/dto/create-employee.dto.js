@@ -21,6 +21,7 @@ class CreateEmployeeDto {
     department;
     jobTitle;
     directManagerId;
+    password;
     roles;
     permissions;
 }
@@ -65,6 +66,12 @@ __decorate([
     __metadata("design:type", String)
 ], CreateEmployeeDto.prototype, "directManagerId", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateEmployeeDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)

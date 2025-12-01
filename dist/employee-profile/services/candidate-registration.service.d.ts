@@ -8,8 +8,12 @@ export declare class CandidateRegistrationService {
         password: string;
         firstName: string;
         lastName: string;
+        nationalId: string;
         phoneNumber?: string;
         dateOfBirth?: Date;
+        positionId?: string;
+        departmentId?: string;
+        resumeUrl?: string;
     }): Promise<{
         success: boolean;
         message: string;
@@ -49,6 +53,7 @@ export declare class CandidateRegistrationService {
             __v: number;
         };
     }>;
+    private generateCandidateNumber;
     getCandidateByEmail(email: string): Promise<(import("mongoose").Document<unknown, {}, import("mongoose").Document<unknown, {}, Candidate, {}, {}> & Candidate & {
         _id: import("mongoose").Types.ObjectId;
     } & {

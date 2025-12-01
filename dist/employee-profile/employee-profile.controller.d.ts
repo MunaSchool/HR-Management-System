@@ -10,6 +10,7 @@ import { CreateChangeRequestDto } from './dto/create-change-request.dto';
 import { ProcessChangeRequestDto } from './dto/process-change-request.dto';
 import { UpdateEmployeeMasterDto } from './dto/update-employee-master.dto';
 import { AssignRoleDto } from './dto/assign-role.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 export declare class EmployeeProfileController {
     private readonly employeeProfileService;
     private readonly employeeRoleService;
@@ -133,6 +134,11 @@ export declare class EmployeeProfileController {
     } & {
         __v: number;
     })[]>;
+    createEmployee(createDto: CreateEmployeeDto): Promise<import("mongoose").Document<unknown, {}, import("./models/employee-profile.schema").EmployeeProfile, {}, {}> & import("./models/employee-profile.schema").EmployeeProfile & {
+        _id: import("mongoose").Types.ObjectId;
+    } & {
+        __v: number;
+    }>;
     searchEmployees(searchQuery?: string, status?: EmployeeStatus, departmentId?: string): Promise<(import("mongoose").Document<unknown, {}, import("./models/employee-profile.schema").EmployeeProfile, {}, {}> & import("./models/employee-profile.schema").EmployeeProfile & {
         _id: import("mongoose").Types.ObjectId;
     } & {

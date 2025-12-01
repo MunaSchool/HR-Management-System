@@ -57,26 +57,39 @@ let CandidateRegistrationService = class CandidateRegistrationService {
         this.candidateModel = candidateModel;
     }
     async registerCandidate(registerDto) {
-        if (!registerDto.email || !registerDto.password || !registerDto.firstName || !registerDto.lastName) {
-            throw new common_1.BadRequestException('Email, password, first name, and last name are required');
+        if (!registerDto.email || !registerDto.password || !registerDto.firstName || !registerDto.lastName || !registerDto.nationalId) {
+            throw new common_1.BadRequestException('Email, password, first name, last name, and national ID are required');
         }
         const existingCandidate = await this.candidateModel.findOne({
-            email: registerDto.email.toLowerCase()
+            personalEmail: registerDto.email.toLowerCase()
         }).exec();
         if (existingCandidate) {
             throw new common_1.ConflictException('A candidate with this email already exists');
         }
+        const existingNationalId = await this.candidateModel.findOne({
+            nationalId: registerDto.nationalId
+        }).exec();
+        if (existingNationalId) {
+            throw new common_1.ConflictException('A candidate with this national ID already exists');
+        }
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
+        const candidateNumber = await this.generateCandidateNumber();
         const candidate = await this.candidateModel.create({
-            email: registerDto.email.toLowerCase(),
+            candidateNumber,
+            personalEmail: registerDto.email.toLowerCase(),
             password: hashedPassword,
             firstName: registerDto.firstName,
             lastName: registerDto.lastName,
-            phoneNumber: registerDto.phoneNumber,
+            fullName: `${registerDto.firstName} ${registerDto.lastName}`,
+            nationalId: registerDto.nationalId,
+            mobilePhone: registerDto.phoneNumber,
             dateOfBirth: registerDto.dateOfBirth,
-            status: 'Registered',
-            registeredAt: new Date(),
+            positionId: registerDto.positionId,
+            departmentId: registerDto.departmentId,
+            resumeUrl: registerDto.resumeUrl,
+            status: 'APPLIED',
+            applicationDate: new Date(),
         });
         const { password, ...candidateWithoutPassword } = candidate.toObject();
         return {
@@ -85,8 +98,21 @@ let CandidateRegistrationService = class CandidateRegistrationService {
             data: candidateWithoutPassword,
         };
     }
+    async generateCandidateNumber() {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const startOfDay = new Date(year, date.getMonth(), date.getDate());
+        const endOfDay = new Date(year, date.getMonth(), date.getDate() + 1);
+        const count = await this.candidateModel.countDocuments({
+            applicationDate: { $gte: startOfDay, $lt: endOfDay }
+        });
+        const sequence = String(count + 1).padStart(3, '0');
+        return `CAN-${year}${month}${day}-${sequence}`;
+    }
     async getCandidateByEmail(email) {
-        return this.candidateModel.findOne({ email: email.toLowerCase() }).exec();
+        return this.candidateModel.findOne({ personalEmail: email.toLowerCase() }).exec();
     }
     async verifyPassword(plainPassword, hashedPassword) {
         return bcrypt.compare(plainPassword, hashedPassword);

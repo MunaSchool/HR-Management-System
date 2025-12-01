@@ -7,6 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
+const auth_module_1 = require("./auth/auth.module");
 const config_1 = require("@nestjs/config");
 const common_1 = require("@nestjs/common");
 const app_controller_1 = require("./app.controller");
@@ -29,6 +30,7 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             mongoose_1.MongooseModule.forRoot(process.env.DB_URL),
+            auth_module_1.AuthModule,
             time_management_module_1.TimeManagementModule, recruitment_module_1.RecruitmentModule, leaves_module_1.LeavesModule, payroll_execution_module_1.PayrollExecutionModule, payroll_configuration_module_1.PayrollConfigurationModule, payroll_tracking_module_1.PayrollTrackingModule, employee_profile_module_1.EmployeeProfileModule, organization_structure_module_1.OrganizationStructureModule, performance_module_1.PerformanceModule
         ],
         controllers: [app_controller_1.AppController],

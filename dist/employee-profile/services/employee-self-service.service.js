@@ -41,7 +41,13 @@ let EmployeeSelfServiceService = class EmployeeSelfServiceService {
         if (!profile) {
             throw new common_1.NotFoundException('Employee profile not found');
         }
-        const appraisalHistory = await this.performanceService.getEmployeeAppraisals(employeeId);
+        let appraisalHistory = [];
+        try {
+            appraisalHistory = await this.performanceService.getEmployeeAppraisals(employeeId);
+        }
+        catch (error) {
+            console.error('Failed to fetch appraisal history:', error.message);
+        }
         return {
             ...profile.toObject(),
             appraisalHistory,

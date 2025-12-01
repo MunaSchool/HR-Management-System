@@ -18,13 +18,9 @@ let AuthenticationMiddleware = class AuthenticationMiddleware {
         this.jwtService = jwtService;
     }
     async use(req, res, next) {
-        const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            throw new common_1.UnauthorizedException('No authorization header');
-        }
-        const [type, token] = authHeader.split(' ');
-        if (type !== 'Bearer' || !token) {
-            throw new common_1.UnauthorizedException('Invalid authorization format');
+        const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1];
+        if (!token) {
+            throw new common_1.UnauthorizedException('Authentication token missing');
         }
         try {
             const payload = await this.jwtService.verifyAsync(token, {
@@ -34,12 +30,12 @@ let AuthenticationMiddleware = class AuthenticationMiddleware {
                 employeeId: payload.userid,
                 employeeNumber: payload.employeeNumber,
                 email: payload.email,
-                roles: [payload.role],
+                roles: payload.roles || [payload.role],
             };
             next();
         }
         catch (error) {
-            throw new common_1.UnauthorizedException('Invalid token');
+            throw new common_1.UnauthorizedException('Invalid or expired token');
         }
     }
 };

@@ -74,7 +74,12 @@ let EmployeeRoleService = class EmployeeRoleService {
     async getEmployeeRoles(employeeId) {
         const resolvedId = await this.resolveEmployeeId(employeeId);
         const roleAssignment = await this.employeeRoleModel
-            .findOne({ employeeProfileId: resolvedId })
+            .findOne({
+            $or: [
+                { employeeProfileId: resolvedId },
+                { employeeProfileId: new mongoose_2.Types.ObjectId(resolvedId) }
+            ]
+        })
             .populate('employeeProfileId');
         if (!roleAssignment) {
             throw new common_1.NotFoundException('No role assignment found for this employee');
