@@ -46,6 +46,7 @@ import { OrganizationStructureModule } from '../organization-structure/organizat
     forwardRef(() => OrganizationStructureModule),
     TimeManagementModule,
   ],
+
   controllers: [EmployeeProfileController],
   providers: [
     EmployeeProfileService,
@@ -57,6 +58,15 @@ import { OrganizationStructureModule } from '../organization-structure/organizat
     HrAdminService,
     CandidateRegistrationService,
   ],
-  exports: [EmployeeProfileService, CandidateRegistrationService],
+  exports: [    
+    EmployeeProfileService,
+    EmployeeRoleService,
+    EmployeeCrudService,
+    EmployeeSelfServiceService,
+    ChangeRequestService,
+    FileUploadService,
+    HrAdminService,
+    CandidateRegistrationService,
+  ],
 })
 export class EmployeeProfileModule {}

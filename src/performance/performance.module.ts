@@ -41,7 +41,7 @@ import { TimeManagementModule } from '../time-management/time-management.module'
     ]),
     forwardRef(() => EmployeeProfileModule),
     OrganizationStructureModule,
-    TimeManagementModule,
+    forwardRef(() =>TimeManagementModule),
   ],
   controllers: [PerformanceController],
   providers: [PerformanceService],
