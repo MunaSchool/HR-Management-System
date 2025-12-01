@@ -10,7 +10,7 @@ export class NotificationLogService{
         @InjectModel(NotificationLog.name)
         private notificationLogModel: Model<NotificationLogDocument>,
     ){}
-    async sendNotification(notifData:NotificationLogCreateDto){
+    async sendNotification(notifData:NotificationLogCreateDto){ //Working!
         if(!notifData.to){
             throw new BadRequestException("Recepient cannot be empty!")
         }
@@ -24,12 +24,23 @@ export class NotificationLogService{
             data: notification
         }
     }
-    async getAllNotifications():Promise<NotificationLog[]>{
+    async getAllNotifications(){ //Working!
         const notifications = await this.notificationLogModel.find()
         if(!notifications) throw new NotFoundException("No notifications found!")
-        return notifications;
+        return{
+            success:true,
+            message:"All notifications displayed sucessfully!",
+            data: notifications
+        };
     }
-    async getEmployeeNotifications(recepientId:Types.ObjectId){
-        return this.notificationLogModel.find({to: recepientId})
+    async getEmployeeNotifications(recepientId:string){ //Working!
+        const notifications =  await this.notificationLogModel.find({to: recepientId})
+        if(!notifications) throw new NotFoundException('No employee notifications found!')
+        return{
+            success:true,
+            message:"Employee notifications displayed successfully!",
+            data: notifications
+        }
     }
+    //Ask about read status method
 }

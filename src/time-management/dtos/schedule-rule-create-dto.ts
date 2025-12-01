@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from "class-validator";
 
 
 export class ScheduleRuleCreateDto {
@@ -11,6 +11,6 @@ export class ScheduleRuleCreateDto {
     pattern: string;
 
     @IsOptional()
-    @IsString()
-    active?: string; 
+    @IsBoolean()
+    active?: boolean; 
 }

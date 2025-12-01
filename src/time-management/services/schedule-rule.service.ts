@@ -26,7 +26,7 @@ export class ScheduleRuleService {
   }
 
   
-  async getAllScheduleRules(): Promise<ScheduleRule[]> {
+  async getAllScheduleRules(){
     const rules = await this.scheduleRuleModel.find();
     if (!rules || rules.length === 0) {
       throw new NotFoundException("No schedule rules found");
@@ -35,7 +35,7 @@ export class ScheduleRuleService {
   }
 
   
-  async getScheduleRuleById(id: Types.ObjectId): Promise<ScheduleRule> {
+  async getScheduleRuleById(id: Types.ObjectId){
     const rule = await this.scheduleRuleModel.findById(id);
     if (!rule) {
       throw new NotFoundException(`Schedule rule with ID ${id} not found`);
@@ -44,7 +44,7 @@ export class ScheduleRuleService {
   }
 
  
-  async updateScheduleRule(id: Types.ObjectId, dto: ScheduleRuleUpdateDto): Promise<ScheduleRule> {
+  async updateScheduleRule(id: Types.ObjectId, dto: ScheduleRuleUpdateDto){
     const updated = await this.scheduleRuleModel.findByIdAndUpdate(id, dto, { new: true });
     if (!updated) {
       throw new NotFoundException(`Schedule rule with ID ${id} not found`);
@@ -52,12 +52,16 @@ export class ScheduleRuleService {
     return updated;
   }
 
-  // Delete schedule rule by ID
+
   async deleteScheduleRule(id: Types.ObjectId) {
     const deleted = await this.scheduleRuleModel.findByIdAndDelete(id);
     if (!deleted) {
       throw new NotFoundException(`Schedule rule with ID ${id} not found`);
     }
-    return { success: true, message: "Schedule rule deleted successfully" };
+    return { 
+        success: true,
+        message: "Schedule rule deleted successfully", 
+        data: deleted 
+      };
   }
 }
