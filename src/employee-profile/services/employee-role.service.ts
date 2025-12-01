@@ -3,9 +3,10 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, isValidObjectId } from 'mongoose';
 import {
   EmployeeSystemRole,
   EmployeeSystemRoleDocument,
@@ -23,55 +24,79 @@ export class EmployeeRoleService {
     private employeeProfileModel: Model<EmployeeProfile>,
   ) {}
 
+  /**
+   * Fix: Resolve employeeId.
+   * Accepts both ObjectId or employeeNumber.
+   */
+  private async resolveEmployeeId(employeeId: string): Promise<string> {
+    // If it's already a valid ObjectId → return it
+    if (isValidObjectId(employeeId)) {
+      return employeeId;
+    }
+
+    // If it's NOT an ObjectId, maybe it's employeeNumber
+    const employee = await this.employeeProfileModel.findOne({
+      employeeNumber: employeeId,
+    });
+
+    if (!employee) {
+      throw new BadRequestException(
+        `Invalid employee identifier: ${employeeId}`,
+      );
+    }
+
+    return employee._id.toString();
+  }
+
   // ==================== ROLE MANAGEMENT OPERATIONS ====================
 
-  // Assign roles to an employee (US-E7-05)
   async assignRolesToEmployee(
     employeeId: string,
     assignRoleDto: AssignRoleDto,
     assignedBy: string,
     assignerRole: string,
   ): Promise<EmployeeSystemRoleDocument> {
-    // Verify user has permission - Only HR Admin and System Admin can assign roles
+    // Permission check
     if (
       ![SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN].includes(
         assignerRole as SystemRole,
       )
     ) {
-      throw new ForbiddenException('Insufficient permissions to assign roles');
+      throw new ForbiddenException(
+        'Insufficient permissions to assign roles',
+      );
     }
 
+    // Resolve ID safely
+    const resolvedId = await this.resolveEmployeeId(employeeId);
+
     // Verify employee exists
-    const employee = await this.employeeProfileModel.findById(employeeId);
+    const employee = await this.employeeProfileModel.findById(resolvedId);
     if (!employee) {
       throw new NotFoundException('Employee not found');
     }
 
-    // Check if employee already has role assignment
+    // Check role assignment
     let roleAssignment = await this.employeeRoleModel.findOne({
-      employeeProfileId: new Types.ObjectId(employeeId),
+      employeeProfileId: resolvedId,
     });
 
     if (roleAssignment) {
-      // Update existing role assignment
       roleAssignment.roles = assignRoleDto.roles;
       roleAssignment.permissions = assignRoleDto.permissions || [];
       roleAssignment.isActive =
-        assignRoleDto.isActive !== undefined ? assignRoleDto.isActive : true;
+        assignRoleDto.isActive ?? true;
       await roleAssignment.save();
     } else {
-      // Create new role assignment
       roleAssignment = new this.employeeRoleModel({
-        employeeProfileId: new Types.ObjectId(employeeId),
+        employeeProfileId: resolvedId,
         roles: assignRoleDto.roles,
         permissions: assignRoleDto.permissions || [],
-        isActive:
-          assignRoleDto.isActive !== undefined ? assignRoleDto.isActive : true,
+        isActive: assignRoleDto.isActive ?? true,
       });
       await roleAssignment.save();
 
-      // Update employee profile with accessProfileId
-      await this.employeeProfileModel.findByIdAndUpdate(employeeId, {
+      await this.employeeProfileModel.findByIdAndUpdate(resolvedId, {
         accessProfileId: roleAssignment._id,
       });
     }
@@ -79,85 +104,88 @@ export class EmployeeRoleService {
     return roleAssignment;
   }
 
-  // Get employee's roles and permissions
   async getEmployeeRoles(
     employeeId: string,
   ): Promise<EmployeeSystemRoleDocument> {
+    const resolvedId = await this.resolveEmployeeId(employeeId);
+
     const roleAssignment = await this.employeeRoleModel
-      .findOne({ employeeProfileId: new Types.ObjectId(employeeId) })
+      .findOne({ employeeProfileId: resolvedId })
       .populate('employeeProfileId');
 
     if (!roleAssignment) {
-      throw new NotFoundException('No role assignment found for this employee');
+      throw new NotFoundException(
+        'No role assignment found for this employee',
+      );
     }
 
     return roleAssignment;
   }
 
-  // Get all employees with specific role
-  async getEmployeesByRole(role: SystemRole): Promise<EmployeeSystemRoleDocument[]> {
-    return await this.employeeRoleModel
+  async getEmployeesByRole(
+    role: SystemRole,
+  ): Promise<EmployeeSystemRoleDocument[]> {
+    return this.employeeRoleModel
       .find({ roles: role, isActive: true })
       .populate('employeeProfileId')
       .exec();
   }
 
-  // Remove roles from employee
   async removeRolesFromEmployee(
     employeeId: string,
     removedBy: string,
     removerRole: string,
   ): Promise<EmployeeSystemRoleDocument> {
-    // Verify user has permission
     if (
       ![SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN].includes(
         removerRole as SystemRole,
       )
     ) {
-      throw new ForbiddenException('Insufficient permissions to remove roles');
+      throw new ForbiddenException('Insufficient permissions');
     }
 
+    const resolvedId = await this.resolveEmployeeId(employeeId);
+
     const roleAssignment = await this.employeeRoleModel.findOne({
-      employeeProfileId: new Types.ObjectId(employeeId),
+      employeeProfileId: resolvedId,
     });
 
     if (!roleAssignment) {
-      throw new NotFoundException('No role assignment found for this employee');
+      throw new NotFoundException('Role assignment not found');
     }
 
-    // Deactivate instead of delete
     roleAssignment.isActive = false;
     await roleAssignment.save();
 
     return roleAssignment;
   }
 
-  // Add permission to employee
   async addPermissionToEmployee(
     employeeId: string,
     permission: string,
     assignedBy: string,
     assignerRole: string,
   ): Promise<EmployeeSystemRoleDocument> {
-    // Verify user has permission
     if (
       ![SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN].includes(
         assignerRole as SystemRole,
       )
     ) {
-      throw new ForbiddenException('Insufficient permissions to add permissions');
+      throw new ForbiddenException('Not allowed');
     }
 
+    const resolvedId = await this.resolveEmployeeId(employeeId);
+
     const roleAssignment = await this.employeeRoleModel.findOne({
-      employeeProfileId: new Types.ObjectId(employeeId),
+      employeeProfileId: resolvedId,
     });
 
     if (!roleAssignment) {
-      throw new NotFoundException('No role assignment found for this employee');
+      throw new NotFoundException('Role assignment not found');
     }
 
     if (roleAssignment.permissions.includes(permission)) {
-      throw new ConflictException('Permission already assigned');
+      throw new ConflictException('Permission already exists');
     }
 
     roleAssignment.permissions.push(permission);
@@ -166,28 +194,28 @@ export class EmployeeRoleService {
     return roleAssignment;
   }
 
-  // Remove permission from employee
   async removePermissionFromEmployee(
     employeeId: string,
     permission: string,
     removedBy: string,
     removerRole: string,
   ): Promise<EmployeeSystemRoleDocument> {
-    // Verify user has permission
     if (
       ![SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN].includes(
         removerRole as SystemRole,
       )
     ) {
-      throw new ForbiddenException('Insufficient permissions to remove permissions');
+      throw new ForbiddenException('Not allowed');
     }
 
+    const resolvedId = await this.resolveEmployeeId(employeeId);
+
     const roleAssignment = await this.employeeRoleModel.findOne({
-      employeeProfileId: new Types.ObjectId(employeeId),
+      employeeProfileId: resolvedId,
     });
 
     if (!roleAssignment) {
-      throw new NotFoundException('No role assignment found for this employee');
+      throw new NotFoundException('Role assignment not found');
     }
 
     roleAssignment.permissions = roleAssignment.permissions.filter(
@@ -198,20 +226,20 @@ export class EmployeeRoleService {
     return roleAssignment;
   }
 
-  // Get all role assignments (for admin view)
   async getAllRoleAssignments(
     userRole: string,
   ): Promise<EmployeeSystemRoleDocument[]> {
-    // Verify user has permission
     if (
-      ![SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN].includes(
-        userRole as SystemRole,
-      )
+      ![
+        SystemRole.HR_ADMIN,
+        SystemRole.HR_MANAGER,
+        SystemRole.SYSTEM_ADMIN,
+      ].includes(userRole as SystemRole)
     ) {
-      throw new ForbiddenException('Insufficient permissions to view role assignments');
+      throw new ForbiddenException('Not allowed');
     }
 
-    return await this.employeeRoleModel
+    return this.employeeRoleModel
       .find()
       .populate('employeeProfileId')
       .exec();

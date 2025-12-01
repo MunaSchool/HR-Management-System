@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EmployeeProfileController } from './employee-profile.controller';
 import { EmployeeProfileService } from './employee-profile.service';
@@ -8,6 +8,7 @@ import { EmployeeSelfServiceService } from './services/employee-self-service.ser
 import { ChangeRequestService } from './services/change-request.service';
 import { FileUploadService } from './services/file-upload.service';
 import { HrAdminService } from './services/hr-admin.service';
+import { CandidateRegistrationService } from './services/candidate-registration.service';
 import { Candidate, CandidateSchema } from './models/candidate.schema';
 import {
   EmployeeProfile,
@@ -40,7 +41,7 @@ import { TimeManagementModule } from '../time-management/time-management.module'
       },
       { name: EmployeeQualification.name, schema: EmployeeQualificationSchema },
     ]),
-    PerformanceModule,
+    forwardRef(() => PerformanceModule),
     TimeManagementModule,
   ],
   controllers: [EmployeeProfileController],
@@ -52,7 +53,8 @@ import { TimeManagementModule } from '../time-management/time-management.module'
     ChangeRequestService,
     FileUploadService,
     HrAdminService,
+    CandidateRegistrationService,
   ],
-  exports: [EmployeeProfileService],
+  exports: [EmployeeProfileService, CandidateRegistrationService],
 })
 export class EmployeeProfileModule {}

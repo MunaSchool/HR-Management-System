@@ -6,26 +6,30 @@ import { AppraisalCycle,   AppraisalCycleDocument } from './models/appraisal-cyc
 import { AppraisalAssignment,   AppraisalAssignmentDocument } from './models/appraisal-assignment.schema';
 import { AppraisalRecord,   AppraisalRecordDocument } from './models/appraisal-record.schema';
 import { AppraisalDispute, AppraisalDisputeDocument } from './models/appraisal-dispute.schema';
-import { EmployeeProfile } from '../employee-profile/models/employee-profile.schema';
+import { EmployeeProfile, EmployeeProfileDocument } from '../employee-profile/models/employee-profile.schema';
 import { Department } from '../organization-structure/models/department.schema';
-import { AppraisalCycleStatus,  AppraisalAssignmentStatus, 
+import { AppraisalCycleStatus,  AppraisalAssignmentStatus,
     AppraisalRecordStatus, AppraisalDisputeStatus,} from '../performance/enums/performance.enums';
+import { NotificationLogService } from '../time-management/services/notification-log.service';
 
 @Injectable()
 export class PerformanceService {
     constructor(
-        @InjectModel(AppraisalTemplate.name) 
+        @InjectModel(AppraisalTemplate.name)
         private appraisalTemplateModel: Model<AppraisalTemplateDocument>,
         @InjectModel(AppraisalCycle.name)
         private appraisalCycleModel: Model<AppraisalCycleDocument>,
-        @InjectModel(AppraisalAssignment.name) 
+        @InjectModel(AppraisalAssignment.name)
         private appraisalAssignmentModel: Model<AppraisalAssignmentDocument>,
-        @InjectModel(AppraisalRecord.name) 
+        @InjectModel(AppraisalRecord.name)
         private appraisalRecordModel: Model<AppraisalRecordDocument>,
-        @InjectModel(AppraisalDispute.name) 
+        @InjectModel(AppraisalDispute.name)
         private appraisalDisputeModel: Model<AppraisalDisputeDocument>,
-        @InjectModel(Department.name) 
+        @InjectModel(Department.name)
         private departmentModel: Model<Department>,
+        @InjectModel(EmployeeProfile.name)
+        private employeeProfileModel: Model<EmployeeProfileDocument>,
+        private notificationLogService: NotificationLogService,
     ) {}
 
     private toObjectId(value: any) {
@@ -240,6 +244,13 @@ export class PerformanceService {
 
             const saved = await newAssignment.save();
             createdAssignments.push(saved);
+
+            // Send notification to employee about new assignment
+            await this.notificationLogService.sendNotification({
+                to: new Types.ObjectId(emp._id.toString()),
+                type: 'Performance Appraisal Assignment',
+                message: `You have been assigned a new performance appraisal for cycle: ${cycle.name}. Your manager will evaluate your performance.`,
+            });
         }
 
         return createdAssignments;
@@ -368,7 +379,9 @@ export class PerformanceService {
             throw new NotFoundException('Invalid assignment ID');
         }
 
-        const record = await this.appraisalRecordModel.findOne({ assignmentId }).exec();
+        const record = await this.appraisalRecordModel.findOne({ assignmentId })
+            .populate('employeeProfileId')
+            .exec();
         if (!record) {
             throw new NotFoundException('Appraisal record not found');
         }
@@ -387,6 +400,19 @@ export class PerformanceService {
         })
         .exec();
 
+        // Send notification to HR about submission
+        const hrAdmins = await this.employeeProfileModel.find({
+            systemRoles: { $in: ['HR Admin', 'HR Manager'] }
+        }).exec();
+
+        for (const hrAdmin of hrAdmins) {
+            await this.notificationLogService.sendNotification({
+                to: new Types.ObjectId(hrAdmin._id.toString()),
+                type: 'Performance Appraisal Submitted',
+                message: `Manager has submitted performance appraisal for employee. Ready for HR review and publishing.`,
+            });
+        }
+
         return record;
     }
 
@@ -395,7 +421,10 @@ export class PerformanceService {
             throw new NotFoundException('Invalid assignment ID');
         }
 
-        const record = await this.appraisalRecordModel.findOne({ assignmentId }).exec();
+        const record = await this.appraisalRecordModel.findOne({ assignmentId })
+            .populate('employeeProfileId')
+            .populate('cycleId')
+            .exec();
         if (!record) {
             throw new NotFoundException('Appraisal record not found');
         }
@@ -413,6 +442,29 @@ export class PerformanceService {
             publishedAt: new Date(),
         })
         .exec();
+
+        // Save appraisal history to Employee Profile (BR 6)
+        await this.employeeProfileModel.findByIdAndUpdate(
+            record.employeeProfileId,
+            {
+                $push: {
+                    appraisalHistory: {
+                        appraisalId: record._id,
+                        cycleId: record.cycleId,
+                        totalScore: record.totalScore,
+                        appraisalDate: record.hrPublishedAt,
+                        status: record.status,
+                    }
+                }
+            }
+        ).exec();
+
+        // Send notification to employee
+        await this.notificationLogService.sendNotification({
+            to: new Types.ObjectId(record.employeeProfileId.toString()),
+            type: 'Performance Appraisal Published',
+            message: `Your performance appraisal has been published. Total score: ${record.totalScore}. You have 7 days to raise objections if needed.`,
+        });
 
         return record;
     }
@@ -475,6 +527,17 @@ export class PerformanceService {
             }
         }
 
+        // Check if dispute is within 7-day window (BR 31)
+        const appraisal = await this.appraisalRecordModel.findById(createDisputeDto.appraisalId).exec();
+        if (appraisal && appraisal.hrPublishedAt) {
+            const daysSincePublished = Math.floor(
+                (new Date().getTime() - appraisal.hrPublishedAt.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (daysSincePublished > 7) {
+                throw new BadRequestException('Objection period has expired. Disputes must be raised within 7 days of publication.');
+            }
+        }
+
         // ⭐ FIX #1 — MANUALLY GENERATE _id BECAUSE SCHEMA OVERRIDES IT
         const _id = new Types.ObjectId();
 
@@ -492,7 +555,22 @@ export class PerformanceService {
         };
 
         const dispute = new this.appraisalDisputeModel(dto);
-        return await dispute.save();
+        const savedDispute = await dispute.save();
+
+        // Send notification to HR about new dispute
+        const hrAdmins = await this.employeeProfileModel.find({
+            systemRoles: { $in: ['HR Admin', 'HR Manager'] }
+        }).exec();
+
+        for (const hrAdmin of hrAdmins) {
+            await this.notificationLogService.sendNotification({
+                to: new Types.ObjectId(hrAdmin._id.toString()),
+                type: 'Performance Appraisal Dispute',
+                message: `New performance appraisal dispute raised. Reason: ${createDisputeDto.reason}. Please review and resolve.`,
+            });
+        }
+
+        return savedDispute;
     }
 
 
@@ -516,8 +594,8 @@ export class PerformanceService {
     }
 
     async updateDisputeStatus(
-  disputeId: string, 
-  status: AppraisalDisputeStatus, 
+  disputeId: string,
+  status: AppraisalDisputeStatus,
   resolutionData?: any
 ) {
     // 1. Validate disputeId BEFORE ANYTHING
@@ -531,13 +609,13 @@ export class PerformanceService {
     const updateData: any = { status };
 
     // 3. Only add resolved info IF status requires it
-    if (status === AppraisalDisputeStatus.ADJUSTED || 
+    if (status === AppraisalDisputeStatus.ADJUSTED ||
         status === AppraisalDisputeStatus.REJECTED) {
 
         updateData.resolvedAt = new Date();
 
         // ⚠ FIX: Only convert if valid string
-        if (resolutionData?.resolvedByEmployeeId && 
+        if (resolutionData?.resolvedByEmployeeId &&
             Types.ObjectId.isValid(resolutionData.resolvedByEmployeeId)) {
 
             updateData.resolvedByEmployeeId = new Types.ObjectId(
@@ -553,11 +631,21 @@ export class PerformanceService {
     // 4. Run update with safe ObjectId
     const dispute = await this.appraisalDisputeModel
         .findOneAndUpdate({ _id }, updateData, { new: true })
+        .populate('raisedByEmployeeId')
         .exec();
 
     // 5. STILL not found? → real 404
     if (!dispute) {
         throw new NotFoundException('Appraisal dispute not found');
+    }
+
+    // Send notification to employee about dispute resolution
+    if (status === AppraisalDisputeStatus.ADJUSTED || status === AppraisalDisputeStatus.REJECTED) {
+        await this.notificationLogService.sendNotification({
+            to: new Types.ObjectId(dispute.raisedByEmployeeId.toString()),
+            type: 'Performance Appraisal Dispute Resolved',
+            message: `Your performance appraisal dispute has been ${status.toLowerCase()}. ${resolutionData?.resolutionSummary || ''}`,
+        });
     }
 
     return dispute;
@@ -619,6 +707,159 @@ export class PerformanceService {
         }
 
         return dispute;
+    }
+
+    // Analytics and Dashboard Methods (REQ-AE-10, REQ-OD-08, REQ-OD-06)
+    async getPerformanceAnalytics(cycleId?: string) {
+        const query: any = {};
+        if (cycleId && Types.ObjectId.isValid(cycleId)) {
+            query.cycleId = new Types.ObjectId(cycleId);
+        }
+
+        const assignments = await this.appraisalAssignmentModel.find(query).exec();
+        const records = await this.appraisalRecordModel.find(query).exec();
+
+        const totalAssignments = assignments.length;
+        const completedAssignments = assignments.filter(
+            a => a.status === AppraisalAssignmentStatus.PUBLISHED
+        ).length;
+        const inProgressAssignments = assignments.filter(
+            a => a.status === AppraisalAssignmentStatus.IN_PROGRESS ||
+                 a.status === AppraisalAssignmentStatus.SUBMITTED
+        ).length;
+        const notStartedAssignments = assignments.filter(
+            a => a.status === AppraisalAssignmentStatus.NOT_STARTED
+        ).length;
+
+        const completionRate = totalAssignments > 0 ?
+            (completedAssignments / totalAssignments * 100).toFixed(2) : 0;
+
+        const averageScore = records.length > 0 ?
+            (records.reduce((sum, r) => sum + (r.totalScore || 0), 0) / records.length).toFixed(2) : 0;
+
+        return {
+            totalAssignments,
+            completedAssignments,
+            inProgressAssignments,
+            notStartedAssignments,
+            completionRate: `${completionRate}%`,
+            averageScore,
+            totalRecords: records.length,
+        };
+    }
+
+    async getDepartmentPerformanceAnalytics(departmentId: string, cycleId?: string) {
+        if (!Types.ObjectId.isValid(departmentId)) {
+            throw new BadRequestException('Invalid department ID');
+        }
+
+        const query: any = { departmentId: new Types.ObjectId(departmentId) };
+        if (cycleId && Types.ObjectId.isValid(cycleId)) {
+            query.cycleId = new Types.ObjectId(cycleId);
+        }
+
+        const assignments = await this.appraisalAssignmentModel.find(query)
+            .populate('employeeProfileId', 'firstName lastName')
+            .exec();
+
+        const records = await this.appraisalRecordModel.find(query).exec();
+
+        const totalEmployees = assignments.length;
+        const completedEvaluations = assignments.filter(
+            a => a.status === AppraisalAssignmentStatus.PUBLISHED
+        ).length;
+
+        const completionRate = totalEmployees > 0 ?
+            (completedEvaluations / totalEmployees * 100).toFixed(2) : 0;
+
+        const averageScore = records.length > 0 ?
+            (records.reduce((sum, r) => sum + (r.totalScore || 0), 0) / records.length).toFixed(2) : 0;
+
+        return {
+            departmentId,
+            totalEmployees,
+            completedEvaluations,
+            pendingEvaluations: totalEmployees - completedEvaluations,
+            completionRate: `${completionRate}%`,
+            averageScore,
+            assignments: assignments.map(a => ({
+                employeeId: a.employeeProfileId?._id,
+                employeeName: a.employeeProfileId ?
+                    `${(a.employeeProfileId as any).firstName} ${(a.employeeProfileId as any).lastName}` : 'N/A',
+                status: a.status,
+                assignedAt: a.assignedAt,
+                completedAt: a.publishedAt,
+            })),
+        };
+    }
+
+    async getHistoricalTrendAnalysis(employeeProfileId?: string) {
+        const query: any = { status: AppraisalRecordStatus.HR_PUBLISHED };
+        if (employeeProfileId && Types.ObjectId.isValid(employeeProfileId)) {
+            query.employeeProfileId = new Types.ObjectId(employeeProfileId);
+        }
+
+        const records = await this.appraisalRecordModel.find(query)
+            .populate('cycleId', 'name cycleType startDate endDate')
+            .populate('employeeProfileId', 'firstName lastName')
+            .sort({ hrPublishedAt: 1 })
+            .exec();
+
+        const trends = records.map(record => ({
+            employeeId: record.employeeProfileId?._id,
+            employeeName: record.employeeProfileId ?
+                `${(record.employeeProfileId as any).firstName} ${(record.employeeProfileId as any).lastName}` : 'N/A',
+            cycleName: (record.cycleId as any)?.name || 'N/A',
+            cycleType: (record.cycleId as any)?.cycleType || 'N/A',
+            totalScore: record.totalScore,
+            publishedDate: record.hrPublishedAt,
+        }));
+
+        return {
+            totalRecords: records.length,
+            trends,
+        };
+    }
+
+    async exportPerformanceReport(cycleId?: string) {
+        const query: any = {};
+        if (cycleId && Types.ObjectId.isValid(cycleId)) {
+            query.cycleId = new Types.ObjectId(cycleId);
+        }
+
+        const records = await this.appraisalRecordModel.find(query)
+            .populate('cycleId', 'name cycleType startDate endDate')
+            .populate('employeeProfileId', 'firstName lastName position departmentId')
+            .populate('managerProfileId', 'firstName lastName')
+            .populate('templateId', 'name templateType')
+            .sort({ hrPublishedAt: -1 })
+            .exec();
+
+        const reportData = records.map(record => ({
+            employeeName: record.employeeProfileId ?
+                `${(record.employeeProfileId as any).firstName} ${(record.employeeProfileId as any).lastName}` : 'N/A',
+            position: (record.employeeProfileId as any)?.position || 'N/A',
+            managerName: record.managerProfileId ?
+                `${(record.managerProfileId as any).firstName} ${(record.managerProfileId as any).lastName}` : 'N/A',
+            cycleName: (record.cycleId as any)?.name || 'N/A',
+            cycleType: (record.cycleId as any)?.cycleType || 'N/A',
+            templateName: (record.templateId as any)?.name || 'N/A',
+            totalScore: record.totalScore,
+            status: record.status,
+            managerSubmittedAt: record.managerSubmittedAt,
+            hrPublishedAt: record.hrPublishedAt,
+            ratings: record.ratings,
+            managerSummary: record.managerSummary,
+            strengths: record.strengths,
+            improvementAreas: record.improvementAreas,
+        }));
+
+        return {
+            generatedAt: new Date(),
+            totalRecords: reportData.length,
+            cycleId: cycleId || 'All Cycles',
+            data: reportData,
+        };
     }
 
 
