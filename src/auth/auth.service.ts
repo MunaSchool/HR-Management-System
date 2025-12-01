@@ -81,6 +81,11 @@ export class AuthService {
     employeeNumber: string,
     password: string
   ): Promise<{ access_token: string; payload: { userid: Types.ObjectId; roles: string[]; status: string } }> {
+    // Check if password is empty
+    if (!password || password.trim() === '') {
+      throw new UnauthorizedException('Password is required');
+    }
+
     const employee = await this.employeeProfileModel
       .findOne({ employeeNumber })
       .populate('accessProfileId');

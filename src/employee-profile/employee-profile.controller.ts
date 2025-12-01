@@ -80,7 +80,7 @@ export class EmployeeProfileController {
   // ==================== SEARCH ROUTES ====================
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getAllEmployees() {
     return this.employeeProfileService.findAll();
   }
@@ -94,7 +94,7 @@ export class EmployeeProfileController {
 
   @Get('search')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async searchEmployees(
     @Query('q') searchQuery?: string,
     @Query('status') status?: EmployeeStatus,
@@ -203,7 +203,7 @@ export class EmployeeProfileController {
   // ==================== CHANGE REQUEST MANAGEMENT ====================
   @Get('change-requests/pending')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getPendingChangeRequests() {
     return this.employeeProfileService.getPendingChangeRequests();
   }
@@ -216,7 +216,7 @@ export class EmployeeProfileController {
 
   @Patch('change-requests/:requestId/process')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async processChangeRequest(
     @CurrentUser() user: CurrentUserData,
     @Param('requestId') requestId: string,
@@ -233,14 +233,14 @@ export class EmployeeProfileController {
   // ==================== STATIC ROLE ROUTES (MUST COME FIRST) ====================
   @Get('roles/by-role/:role')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getEmployeesByRole(@Param('role') role: SystemRole) {
     return await this.employeeRoleService.getEmployeesByRole(role);
   }
 
   @Get('roles/all')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getAllRoleAssignments(@CurrentUser() user: CurrentUserData) {
     return await this.employeeRoleService.getAllRoleAssignments(
       user.roles?.[0] || '',
@@ -257,7 +257,7 @@ export class EmployeeProfileController {
   // ==================== DYNAMIC ROUTES (ALWAYS LAST!) ====================
   @Get(':id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getEmployeeById(@Param('id') id: string) {
     return this.employeeProfileService.findById(id);
 
@@ -265,14 +265,14 @@ export class EmployeeProfileController {
 
   @Get(':id/roles')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getEmployeeRoles(@Param('id') id: string) {
     return await this.employeeRoleService.getEmployeeRoles(id);
   }
 
   @Post(':id/roles/assign')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN)
   async assignRoles(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
@@ -288,7 +288,7 @@ export class EmployeeProfileController {
 
   @Delete(':id/roles/remove')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN)
   async removeRoles(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
@@ -302,7 +302,7 @@ export class EmployeeProfileController {
 
   @Patch(':id/permissions/add')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN)
   async addPermission(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
@@ -318,7 +318,7 @@ export class EmployeeProfileController {
 
   @Patch(':id/permissions/remove')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN)
   async removePermission(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
@@ -334,7 +334,7 @@ export class EmployeeProfileController {
 
   @Patch(':id/status')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async updateEmployeeStatus(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
@@ -351,7 +351,7 @@ export class EmployeeProfileController {
 
   @Put(':id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async updateEmployeeMasterData(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,

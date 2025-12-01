@@ -13,6 +13,8 @@ export class ScheduleRuleService {
   ) {}
 
   
+
+  
   async createScheduleRule(dto: ScheduleRuleCreateDto) {
     if (!dto.name) {
       throw new BadRequestException("Name cannot be empty");

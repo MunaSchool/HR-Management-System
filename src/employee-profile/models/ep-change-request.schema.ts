@@ -27,21 +27,6 @@ export class EmployeeProfileChangeRequest {
   })
   status: ProfileChangeStatus;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  requestedBy?: Types.ObjectId;
-
-  @Prop({ type: Date, default: () => new Date() })
-  requestDate: Date;
-
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  reviewedBy?: Types.ObjectId;
-
-  @Prop({ type: Date })
-  reviewDate?: Date;
-
-  @Prop({ type: String })
-  reviewComments?: string;
-
   @Prop({ type: Date, default: () => new Date() })
   submittedAt: Date;
 

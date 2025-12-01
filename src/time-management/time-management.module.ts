@@ -26,6 +26,9 @@ import { AttendanceCorrectionRequestService } from './services/attendance-correc
 import { HolidayService } from './services/holiday.service';
 import { ShiftTypeService } from './services/shift-type.service';
 import { ShiftService } from './services/shift.service';
+import { LatenessRuleService } from './services/lateness-rule.service';
+import { OvertimeRuleService } from './services/overtime-rule.service';
+import { TimeExceptionService } from './services/time-exception.service';
 
 
 
@@ -49,7 +52,33 @@ import { ShiftService } from './services/shift.service';
 
   ],
   controllers: [TimeManagementController],
-  providers: [TimeManagementService, NotificationLogService,ShiftAssignmentService, ScheduleRuleService, ShiftTypeService, ShiftService, AttendanceCorrectionRequestService, HolidayService],
-  exports: [TimeManagementService, NotificationLogService,ShiftAssignmentService, ScheduleRuleService, ShiftTypeService, ShiftService, AttendanceCorrectionRequestService, HolidayService]
+  providers: [    
+    TimeManagementService,
+    NotificationLogService,
+    ShiftAssignmentService,
+    ScheduleRuleService,
+    ShiftTypeService,
+    ShiftService,
+    AttendanceCorrectionRequestService,
+    HolidayService,
+    LatenessRuleService,
+    OvertimeRuleService,
+    TimeExceptionService,
+    AttendanceRecordService
+  ],
+  exports: [
+        TimeManagementService,
+    NotificationLogService,
+    ShiftAssignmentService,
+    ScheduleRuleService,
+    ShiftTypeService,
+    ShiftService,
+    AttendanceCorrectionRequestService,
+    HolidayService,
+    LatenessRuleService,
+    OvertimeRuleService,
+    TimeExceptionService,
+    AttendanceRecordService
+  ]
 })
 export class TimeManagementModule {}

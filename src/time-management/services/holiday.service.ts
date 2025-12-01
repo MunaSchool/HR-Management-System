@@ -39,4 +39,22 @@ export class HolidayService {
       data: holidays,
     };
   }
+
+  async getActiveHolidays() {
+    const today = new Date();
+    const activeHolidays = await this.holidayModel.find({
+      startDate: { $lte: today },
+      endDate: { $gte: today },
+    }).exec();
+
+    if (!activeHolidays || activeHolidays.length === 0) {
+      throw new NotFoundException('No active holidays found.');
+    }
+
+    return {
+      success: true,
+      message: 'Active holidays fetched successfully!',
+      data: activeHolidays,
+    };
+  }
 }

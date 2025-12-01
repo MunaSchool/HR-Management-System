@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -18,6 +18,34 @@ export class EmployeeCrudService {
   // Create a new employee profile with role assignment
   async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
     const { roles, permissions, password, ...profileData } = employeeData;
+
+    // Check if employee number already exists
+    const existingEmployeeNumber = await this.employeeProfileModel.findOne({
+      employeeNumber: profileData.employeeNumber,
+    });
+    if (existingEmployeeNumber) {
+      throw new ConflictException(`Employee number '${profileData.employeeNumber}' already exists`);
+    }
+
+    // Check if national ID already exists
+    if (profileData.nationalId) {
+      const existingNationalId = await this.employeeProfileModel.findOne({
+        nationalId: profileData.nationalId,
+      });
+      if (existingNationalId) {
+        throw new ConflictException(`National ID '${profileData.nationalId}' already exists`);
+      }
+    }
+
+    // Check if work email already exists
+    if (profileData.workEmail) {
+      const existingEmail = await this.employeeProfileModel.findOne({
+        workEmail: profileData.workEmail,
+      });
+      if (existingEmail) {
+        throw new ConflictException(`Work email '${profileData.workEmail}' already exists`);
+      }
+    }
 
     // Hash password if provided
     const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
