@@ -44,7 +44,7 @@ import { OrganizationStructureModule } from '../organization-structure/organizat
     ]),
     forwardRef(() => PerformanceModule),
     forwardRef(() => OrganizationStructureModule),
-    TimeManagementModule,
+    forwardRef(() => TimeManagementModule),
   ],
 
   controllers: [EmployeeProfileController],
