@@ -7,16 +7,11 @@ export class AuthenticationMiddleware implements NestMiddleware {
   constructor(private jwtService: JwtService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const authHeader = req.headers.authorization;
+    // Get token from cookie or Authorization header
+    const token = req.cookies?.token || req.headers['authorization']?.split(' ')[1];
 
-    if (!authHeader) {
-      throw new UnauthorizedException('No authorization header');
-    }
-
-    const [type, token] = authHeader.split(' ');
-
-    if (type !== 'Bearer' || !token) {
-      throw new UnauthorizedException('Invalid authorization format');
+    if (!token) {
+      throw new UnauthorizedException('Authentication token missing');
     }
 
     try {
@@ -29,12 +24,12 @@ export class AuthenticationMiddleware implements NestMiddleware {
         employeeId: payload.userid,
         employeeNumber: payload.employeeNumber,
         email: payload.email,
-        roles: [payload.role],
+        roles: payload.roles || [payload.role],
       };
 
       next();
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }

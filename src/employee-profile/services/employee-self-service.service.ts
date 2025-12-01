@@ -32,8 +32,14 @@ export class EmployeeSelfServiceService {
       throw new NotFoundException('Employee profile not found');
     }
 
-    // Retrieve appraisal history from Performance module
-    const appraisalHistory = await this.performanceService.getEmployeeAppraisals(employeeId);
+    // Retrieve appraisal history from Performance module with error handling
+    let appraisalHistory: any[] = [];
+    try {
+      appraisalHistory = await this.performanceService.getEmployeeAppraisals(employeeId);
+    } catch (error) {
+      // If performance service fails, return empty array for appraisal history
+      console.error('Failed to fetch appraisal history:', error.message);
+    }
 
     return {
       ...profile.toObject(),

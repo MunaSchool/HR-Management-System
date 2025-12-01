@@ -12,7 +12,7 @@ export class CandidateRegistrationService {
   ) {}
 
   /**
-   * Register a new candidate user
+   * Register a new candidate user (when they apply to a job)
    * This allows candidates to create their own account in the system
    */
   async registerCandidate(registerDto: {
@@ -20,37 +20,59 @@ export class CandidateRegistrationService {
     password: string;
     firstName: string;
     lastName: string;
+    nationalId: string;
     phoneNumber?: string;
     dateOfBirth?: Date;
+    positionId?: string;
+    departmentId?: string;
+    resumeUrl?: string;
   }) {
     // Validate required fields
-    if (!registerDto.email || !registerDto.password || !registerDto.firstName || !registerDto.lastName) {
-      throw new BadRequestException('Email, password, first name, and last name are required');
+    if (!registerDto.email || !registerDto.password || !registerDto.firstName || !registerDto.lastName || !registerDto.nationalId) {
+      throw new BadRequestException('Email, password, first name, last name, and national ID are required');
     }
 
     // Check if candidate with this email already exists
     const existingCandidate = await this.candidateModel.findOne({
-      email: registerDto.email.toLowerCase()
+      personalEmail: registerDto.email.toLowerCase()
     }).exec();
 
     if (existingCandidate) {
       throw new ConflictException('A candidate with this email already exists');
     }
 
+    // Check if national ID already exists
+    const existingNationalId = await this.candidateModel.findOne({
+      nationalId: registerDto.nationalId
+    }).exec();
+
+    if (existingNationalId) {
+      throw new ConflictException('A candidate with this national ID already exists');
+    }
+
     // Hash the password
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
 
+    // Auto-generate candidate number (e.g., CAN-20250101-001)
+    const candidateNumber = await this.generateCandidateNumber();
+
     // Create new candidate
     const candidate = await this.candidateModel.create({
-      email: registerDto.email.toLowerCase(),
+      candidateNumber,
+      personalEmail: registerDto.email.toLowerCase(),
       password: hashedPassword,
       firstName: registerDto.firstName,
       lastName: registerDto.lastName,
-      phoneNumber: registerDto.phoneNumber,
+      fullName: `${registerDto.firstName} ${registerDto.lastName}`,
+      nationalId: registerDto.nationalId,
+      mobilePhone: registerDto.phoneNumber,
       dateOfBirth: registerDto.dateOfBirth,
-      status: 'Registered', // Initial status for self-registered candidates
-      registeredAt: new Date(),
+      positionId: registerDto.positionId,
+      departmentId: registerDto.departmentId,
+      resumeUrl: registerDto.resumeUrl,
+      status: 'APPLIED', // Status when they apply to a job
+      applicationDate: new Date(),
     });
 
     // Return candidate without password
@@ -63,10 +85,31 @@ export class CandidateRegistrationService {
   }
 
   /**
+   * Generate unique candidate number
+   */
+  private async generateCandidateNumber(): Promise<string> {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    // Count candidates today to get sequence number
+    const startOfDay = new Date(year, date.getMonth(), date.getDate());
+    const endOfDay = new Date(year, date.getMonth(), date.getDate() + 1);
+
+    const count = await this.candidateModel.countDocuments({
+      applicationDate: { $gte: startOfDay, $lt: endOfDay }
+    });
+
+    const sequence = String(count + 1).padStart(3, '0');
+    return `CAN-${year}${month}${day}-${sequence}`;
+  }
+
+  /**
    * Get candidate by email (for login purposes)
    */
   async getCandidateByEmail(email: string) {
-    return this.candidateModel.findOne({ email: email.toLowerCase() }).exec();
+    return this.candidateModel.findOne({ personalEmail: email.toLowerCase() }).exec();
   }
 
   /**
