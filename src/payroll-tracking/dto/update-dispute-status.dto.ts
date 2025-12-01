@@ -8,4 +8,8 @@ export class UpdateDisputeStatusDto {
   @IsOptional()
   @IsString()
   remarks?: string;
+
+  @IsString()
+  @IsOptional()
+  resolutionComment?:string
 }
