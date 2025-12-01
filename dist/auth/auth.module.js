@@ -14,6 +14,7 @@ const auth_service_1 = require("./auth.service");
 const auth_controller_1 = require("./auth.controller");
 const employee_profile_schema_1 = require("../employee-profile/models/employee-profile.schema");
 const employee_system_role_schema_1 = require("../employee-profile/models/employee-system-role.schema");
+const authentication_middleware_1 = require("./middleware/authentication.middleware");
 const auth_guard_1 = require("./guards/auth.guard");
 const roles_guard_1 = require("./guards/roles.guard");
 let AuthModule = class AuthModule {
@@ -28,14 +29,13 @@ exports.AuthModule = AuthModule = __decorate([
                 { name: employee_system_role_schema_1.EmployeeSystemRole.name, schema: employee_system_role_schema_1.EmployeeSystemRoleSchema },
             ]),
             jwt_1.JwtModule.register({
-                global: true,
                 secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
                 signOptions: { expiresIn: '24h' },
             }),
         ],
-        providers: [auth_service_1.AuthService, auth_guard_1.AuthGuard, roles_guard_1.RolesGuard],
+        providers: [auth_service_1.AuthService, authentication_middleware_1.AuthenticationMiddleware, auth_guard_1.AuthGuard, roles_guard_1.RolesGuard],
         controllers: [auth_controller_1.AuthController],
-        exports: [auth_service_1.AuthService, jwt_1.JwtModule, auth_guard_1.AuthGuard, roles_guard_1.RolesGuard],
+        exports: [auth_service_1.AuthService, jwt_1.JwtModule, authentication_middleware_1.AuthenticationMiddleware, auth_guard_1.AuthGuard, roles_guard_1.RolesGuard],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map
