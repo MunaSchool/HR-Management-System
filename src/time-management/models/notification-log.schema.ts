@@ -14,6 +14,9 @@ export class NotificationLog {
 
     @Prop()
     message?: string;
+
+    @Prop({default: false})
+    readStatus:boolean
 }
 
 export const NotificationLogSchema = SchemaFactory.createForClass(NotificationLog);

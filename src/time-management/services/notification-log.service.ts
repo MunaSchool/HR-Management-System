@@ -42,5 +42,26 @@ export class NotificationLogService{
             data: notifications
         }
     }
+    async getNotificationById(notifId:string){
+        const notification = await this.notificationLogModel.findById(notifId)
+        if(!notification) throw new NotFoundException("Notification not found!")
+        this.readNotif(notifId)
+        return{
+            success:true,
+            message: "Notification retrieved successfully!",
+            data:notification
+        }
+    }
+    async readNotif(notifId:string){
+        const notification = await this.notificationLogModel.findByIdAndUpdate(notifId, {readStatus:true})
+        if(!notification){
+            throw new NotFoundException("Notification not found!")
+        }
+        return{
+            success:true,
+            message: "Notification Read!",
+            data:notification
+        }
+    }
     //Ask about read status method
 }

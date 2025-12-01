@@ -110,11 +110,18 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard)
+    @Get('notification-log/:notifId')
+    async getNotificationbyId(@Param('notifId')notifId:string){
+        return this.notificationLogService.getNotificationById(notifId)
+    }
+
+    @UseGuards(AuthGuard)
     @Roles(SystemRole.HR_ADMIN)
-    @Get('notification-log/:id') 
+    @Get('notification-log/employee/:id') 
     async getEmployeeNotifications(@Param('id') employeeId:string){
         return this.notificationLogService.getEmployeeNotifications(employeeId)
     }
+
 
     // Schedule Rule Functions
     @UseGuards(AuthGuard)
@@ -128,6 +135,7 @@ export class TimeManagementController {
             data: createdRule
         };
     }
+
 
     @UseGuards(AuthGuard)
     @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
