@@ -223,16 +223,6 @@ export class PayrollConfigurationController {
         return this.payrollConfigurationService.removeInsuranceBrackets(id);
     }
 
-    // @Post('insurance-brackets/calculate')
-    // async calculateInsurance(
-    //     @Body() data: { employeeRate: number; minSalary: number; maxSalary: number }
-    // ): Promise<number> {
-    //     return this.payrollConfigurationService.calculateInsurance(
-    //         data.employeeRate,
-    //         data.minSalary,
-    //         data.maxSalary
-    //     );
-    // }
 
     /////////////////  PAYROLL MANAGER  /////////////////////
 

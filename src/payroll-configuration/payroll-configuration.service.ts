@@ -208,34 +208,6 @@ export class PayrollConfigurationService
         return await this.insuranceBracketsModel.findByIdAndDelete(id);
     }
     
-    /*
-
-    //calculate employee & employer social insurance
-    //not saved to db fa ask ab that
-    calculateInsurance(employeeRate: number, minSalary: number, maxSalary: number): number {
-    const salaryRange = maxSalary - minSalary;
-    const socialInsurance = employeeRate * salaryRange;
-    return socialInsurance;
-    }
-    */
-
-    /*chatgpts version(delete later)
-    async calculateEmployeeInsurance(bracketId: string): Promise<InsuranceBracketDocument> {
-  // Step 1: Fetch insurance bracket
-  const bracket = await this.insuranceBracketsModel.findById(bracketId).exec();
-  if (!bracket) throw new Error("Insurance bracket not found");
-
-  // Step 2: Calculate
-  const salaryRange = bracket.maxSalary - bracket.minSalary;
-  const insurance = bracket.employeeRate * salaryRange;
-
-  // Step 3: Save to the document
-  bracket.employeeInsurance = insurance;
-
-  // Step 4: Save to DB
-  return bracket.save();
-}
-    */ 
 
 
 
