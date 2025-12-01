@@ -7,6 +7,10 @@ import { PunchType } from '../models/enums/index';
 import { EmployeeProfileService } from '../../employee-profile/employee-profile.service';
 import { ScheduleRule, ScheduleRuleDocument } from '../models/schedule-rule.schema';
 import { ShiftAssignment, ShiftAssignmentDocument } from '../models/shift-assignment.schema';
+import { LatenessRuleService } from './lateness-rule.service';
+import { CreateAttendanceRecordDto } from '../dtos/attendance-record-dto';
+import { UpdateAttendanceRecordDto } from '../dtos/update-attendance-record-dto';
+
 @Injectable()
 export class AttendanceRecordService {
   constructor(
@@ -17,8 +21,59 @@ export class AttendanceRecordService {
     private scheduleRuleModel: Model<ScheduleRuleDocument>,
     @InjectModel(ShiftAssignment.name)
     private shiftAssignmentModel: Model<ShiftAssignmentDocument>,
+    private latenessRuleService: LatenessRuleService,
 
   ) {}
+
+  async createAttendanceRecord(dto: CreateAttendanceRecordDto) {
+    if (!dto.employeeId) {
+      throw new BadRequestException('Employee ID is required.');
+    }
+
+    const record = await this.attendanceModel.create(dto);
+
+    return {
+      success: true,
+      message: 'Attendance record created successfully!',
+      data: record,
+    };
+  }
+  
+
+  async updateAttendanceRecord(id: string, dto: UpdateAttendanceRecordDto) {
+    const record = await this.attendanceModel.findById(id);
+    if (!record) throw new NotFoundException('Attendance record not found!');
+
+    
+    if (dto.employeeId !== undefined) record.employeeId = dto.employeeId;
+    if (dto.punches !== undefined) record.punches = dto.punches;
+    if (dto.totalWorkMinutes !== undefined) record.totalWorkMinutes = dto.totalWorkMinutes;
+    if (dto.hasMissedPunch !== undefined) record.hasMissedPunch = dto.hasMissedPunch;
+    if (dto.exceptionIds !== undefined) record.exceptionIds = dto.exceptionIds;
+    if (dto.finalisedForPayroll !== undefined) record.finalisedForPayroll = dto.finalisedForPayroll;
+
+    await record.save();
+
+    return {
+      success: true,
+      message: 'Attendance record updated successfully!',
+      data: record,
+    };
+  }
+
+  
+  async flagRepeatedLateness(employeeId: string) {
+    const records = await this.attendanceModel.find({ employee: new Types.ObjectId(employeeId) });
+    if (!records.length) throw new NotFoundException('No attendance records found for this employee.');
+
+    const repeated = await this.latenessRuleService.detectRepeatedLateness(employeeId);
+
+    return {
+      success: true,
+      message: repeated ? 'Employee has repeated lateness.' : 'Employee lateness is within acceptable limits.',
+      data: { repeated },
+    };
+  }
 
   
   async recordClockIn(dto: CreateAttendancePunchDto) {
