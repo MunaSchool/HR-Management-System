@@ -109,8 +109,14 @@ export class EmployeeRoleService {
   ): Promise<EmployeeSystemRoleDocument> {
     const resolvedId = await this.resolveEmployeeId(employeeId);
 
+    // Try both string and ObjectId formats to find the role assignment
     const roleAssignment = await this.employeeRoleModel
-      .findOne({ employeeProfileId: resolvedId })
+      .findOne({
+        $or: [
+          { employeeProfileId: resolvedId },
+          { employeeProfileId: new Types.ObjectId(resolvedId) }
+        ]
+      })
       .populate('employeeProfileId');
 
     if (!roleAssignment) {
