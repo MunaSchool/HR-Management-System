@@ -29,6 +29,7 @@ import { EmployeeRoleService } from 'src/employee-profile/services/employee-role
 import { AuthService } from 'src/auth/auth.service';
 import { PayrollConfigurationService } from 'src/payroll-configuration/payroll-configuration.service';
 import { ConfigStatus } from 'src/payroll-configuration/enums/payroll-configuration-enums';
+import { PayRollStatus } from 'src/payroll-execution/enums/payroll-execution-enum';
 
 @Injectable()
 export class OnboardingService {
@@ -64,7 +65,7 @@ export class OnboardingService {
 
     private readonly employeeCrudService: EmployeeProfileService ,
 
-    private readonly payrollExectutionService : PayrollExecutionService ,
+    private readonly payrollExecutionService : PayrollExecutionService ,
 
     private readonly employeeRoleService : EmployeeRoleService ,
 
@@ -206,20 +207,56 @@ export class OnboardingService {
       //As a HR Manager, I want the system to automatically process signing bonuses based on contract after a new hire is signed. which means you need to trigger service that fills collection that relates user to signing Bonuswhich is in payroll execution module
 
       //will call a new signing bonus and call the approve signing bonus to execute it automatically
-        if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
-         
-         const newSigningBonus = await this.payrollConfigurationService.createSigningBonuses({
-          positionName : updatedContract.role ,
-          amount:updatedContract.signingBonus ,
-          status: ConfigStatus.DRAFT
-        }) ;
+      try {
+          if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
+            
+            const newSigningBonus = await this.payrollConfigurationService.createSigningBonuses({
+              positionName: updatedContract.role,
+              amount: updatedContract.signingBonus,
+              status: ConfigStatus.DRAFT
+            });
 
-        await this.payrollExectutionService.approveSigningBonus(newSigningBonus?.id) ;
-        }
+            await this.payrollExecutionService.approveSigningBonus(newSigningBonus?.id);
+          }
+        } catch (error) {
+          console.error('Error processing signing bonus:', error);
+      }
 
       //As a HR Manager, I want the system to automatically handle payroll initiation based on the contract signing day for the current payroll cycle. just setting start date if done in any prev phase you can skip since it is handled
 
-      
+      //As a HR Manager, I want the system to automatically handle payroll initiation based on the contract signing day for the current payroll cycle.
+      try {
+        const contractSigningDate = updatedContract.employerSignedAt || new Date();
+        
+        // Calculate the payroll period end date (last day of the current month)
+        const payrollPeriodEnd = new Date(contractSigningDate.getFullYear(),
+          contractSigningDate.getMonth() + 1,
+          0 // Last day of the month
+        );
+
+        // Find existing draft payroll run for this period
+        const existingPayrollRun = await this.payrollRunsModel.findOne({ 
+          payrollPeriod: payrollPeriodEnd,
+          status: PayRollStatus.DRAFT
+        }).exec();
+
+        if (!existingPayrollRun) {
+          console.warn('No draft payroll run found for this period.');
+        } else {
+          console.log(`Found existing draft payroll run: ${existingPayrollRun.runId}`);
+          
+          // Start payroll initiation
+          const initiationResult = await this.payrollExecutionService.startPayrollInitiation({
+            payrollRunId: existingPayrollRun._id.toString(),
+            payrollSpecialistId: payrollManager.id.toString(),
+          });
+          
+          console.log(`Payroll initiation started: ${initiationResult.message}`);
+        }
+
+      } catch (error) {
+        console.error('Error handling payroll initiation:', error);
+      }
 
       }
     }
