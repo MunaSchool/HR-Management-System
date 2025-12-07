@@ -2,6 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Res, Get, Req 
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { CandidateLoginDto } from './dto/candidate-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -29,6 +30,27 @@ export class AuthController {
     return {
       statusCode: HttpStatus.OK,
       message: 'Login successful',
+      user: result.payload,
+    };
+  }
+
+  @Post('candidate-login')
+  @HttpCode(HttpStatus.OK)
+  async candidateLogin(@Body() candidateLoginDto: CandidateLoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.candidateLogin(candidateLoginDto.email, candidateLoginDto.password);
+
+    // Set JWT in httpOnly cookie
+    res.cookie('token', result.access_token, {
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    // Return user info (without token in body)
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Candidate login successful',
       user: result.payload,
     };
   }
