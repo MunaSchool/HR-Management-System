@@ -57,7 +57,7 @@ export class AuthController {
 
   @Post('register')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -74,8 +74,21 @@ export class AuthController {
   @UseGuards(AuthGuard)
   async getMe(@Req() req: Request) {
     const user: any = req['user'];
+
+    // Return different data based on user type
+    if (user?.userType === 'candidate') {
+      return {
+        userid: user?.userId,
+        userType: 'candidate',
+        candidateNumber: user?.candidateNumber,
+        email: user?.email,
+        status: user?.status,
+      };
+    }
+
+    // Employee
     return {
-      userid: user?.userid,
+      userid: user?.employeeId,
       employeeNumber: user?.employeeNumber,
       email: user?.email,
       roles: user?.roles,

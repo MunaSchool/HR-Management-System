@@ -11,11 +11,15 @@ import axiosInstance, { registerUnauthenticatedHandler } from "@/app/utils/ApiCl
 import { usePathname, useRouter } from "next/navigation";
 
 type User = {
-  id: string;
-  role: string;
-  name: string;
+  id?: string;
+  role?: string;
+  roles?: string[];
+  name?: string;
   email: string;
-  age:number
+  age?: number;
+  userType?: string;
+  candidateNumber?: string;
+  employeeNumber?: string;
 };
 
 type AuthContextType = {
@@ -54,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleUnauthenticated= () => {
     console.log('registering unauthorized handler')
     setUser(null);
-    router.replace("/signin");
+    router.replace("/login");
     return
   };
   // Register this function with the axios file
@@ -65,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 2️⃣ Revalidate auth on every route change
   useEffect(() => {
     // pathname is undefined on very first render sometimes - just guard
-    if (!pathname || pathname=='/signin' || pathname=='/register' ) return;
+    if (!pathname || pathname=='/login' || pathname=='/register' ) return;
     console.log("Route changed, revalidating /auth/me",pathname);
     // We do NOT touch `loading` here, to avoid global spinner flicker
     axiosInstance
@@ -77,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // If cookie expired → /auth/me fails → user becomes null
         setUser(null);
         // optional: you *can* redirect here if you want auto-kick:
-       router.replace("/signin");
+       router.replace("/login");
       });
   }, [pathname]); 
 
@@ -97,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // even if request fails, we clear UI state
     }
     setUser(null);
-    router.replace("/signin");
+    router.replace("/login");
 
   };
 

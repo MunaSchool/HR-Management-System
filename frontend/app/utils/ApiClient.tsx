@@ -18,11 +18,11 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     console.log('error status', status);
-    if (status === 403 && !window.location.href.includes('/signin')
+    if (status === 403 && !window.location.href.includes('/login')
       && !window.location.href.includes('/register')) {
       redirect('/unauthorized')
     }
-    if ((status === 401) && !window.location.href.includes('/signin')
+    if ((status === 401) && !window.location.href.includes('/login')
        && !window.location.href.includes('/register')) {
       onUnAuthenticated();
 
