@@ -11,14 +11,24 @@ import { TerminationStatus } from 'src/recruitment/enums/termination-status.enum
 import { TerminationInitiation } from 'src/recruitment/enums/termination-initiation.enum';
 import { ApprovalStatus } from 'src/recruitment/enums/approval-status.enum';
 
+//Employee services
 import { EmployeeStatus, SystemRole } from 'src/employee-profile/enums/employee-profile.enums';
-import { NotificationLogService } from 'src/time-management/services/notification-log.service';
-
-//ERRORS WILL DISSAPEAR ONCE ALL IS MERGED INTO MAIN -DO NOT REMOVE ANYTHING
 import { EmployeeCrudService } from 'src/employee-profile/services/employee-crud.service';
 import { EmployeeRoleService } from 'src/employee-profile/services/employee-role.service';
 import { HrAdminService } from 'src/employee-profile/services/hr-admin.service';
 import { PerformanceService } from 'src/performance/performance.service';
+
+//notification service
+import { NotificationLogService } from 'src/time-management/services/notification-log.service';
+
+//payroll services and models and enums
+import { EmployeeTerminationResignation , EmployeeTerminationResignationDocument } from 'src/payroll-execution/models/EmployeeTerminationResignation.schema';
+import { PayrollConfigurationService } from 'src/payroll-configuration/payroll-configuration.service';
+import { terminationAndResignationBenefits , terminationAndResignationBenefitsDocument} from 'src/payroll-configuration/models/terminationAndResignationBenefits';
+import { PayrollExecutionService } from 'src/payroll-execution/payroll-execution.service';
+import { ConfigStatus } from 'src/payroll-configuration/enums/payroll-configuration-enums';
+import { BenefitStatus } from 'src/payroll-execution/enums/payroll-execution-enum';
+
 
 @Injectable()
 export class OffboardingService {
@@ -30,24 +40,31 @@ export class OffboardingService {
     @InjectModel(ClearanceChecklist.name)
     private clearanceChecklistModel: Model<ClearanceChecklistDocument>,
 
+    //payroll models injection
+    @InjectModel(EmployeeTerminationResignation.name)
+    private exitBenefitsModel: Model<EmployeeTerminationResignationDocument>,
+  
+    @InjectModel(terminationAndResignationBenefits.name) 
+    private exitBenefitsConfigModel: Model<terminationAndResignationBenefitsDocument>,
+
     //Time-Management services
     private readonly notificationLogService: NotificationLogService,
-    
 
     //Employee services
     private readonly hrAdminService: HrAdminService,
-    private readonly employeeCrudService : EmployeeCrudService ,
+    //private readonly employeeCrudService : EmployeeCrudService ,
     private readonly employeeRoleService : EmployeeRoleService ,
 
-    //  payroll services
-    private readonly performanceService : PerformanceService 
+    //  performance services
+    private readonly performanceService : PerformanceService ,
 
+    //  payroll services
+    private readonly payrollExecutionService : PayrollExecutionService,
+    private readonly payrollConfigService : PayrollConfigurationService,
 
     //TODO , INJECT LEAVES SERVICES
 
   ) {}
-
-  // TERMINATION REQUEST SERVICES
 
   async createTerminationRequest(terminationRequestData: CreateTerminationRequestDto): Promise<TerminationRequestDocument> {
     let shouldCreateRequest = false;
@@ -74,7 +91,7 @@ export class OffboardingService {
 
             // Get the appraisal record
             const appraisalRecord = await this.performanceService.getAppraisalRecordById(
-              latestAppraisal.latestAppraisalId.toString()
+              latestAppraisal.latestAppraisalId.toString()/*latestAppraisalId.toString()*/
             );
 
             // Check if record exists and has valid data
@@ -95,13 +112,14 @@ export class OffboardingService {
 
                 // Send performance-related notifications
                 await this.notificationLogService.sendNotification({
-                  to: savedRequest.employeeId,
+                  to: newTerminationRequest.employeeId,
                   type: 'Termination Notice - Poor Performance',
                   message: `A termination request has been initiated due to performance below minimum acceptable standards. Your latest appraisal score: ${appraisalRecord.totalScore}/${template.ratingScale.max} (Minimum required: ${template.ratingScale.min}). Reason: ${savedRequest.reason}. Please contact HR immediately.`,
                 });
 
                 // Notify HR
                 const hrManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.HR_MANAGER);
+
                 if (hrManagers && hrManagers.length > 0) {
                   await this.notificationLogService.sendNotification({
                     to: hrManagers[0].id,
@@ -164,7 +182,6 @@ export class OffboardingService {
       return savedRequest;
     }
 
-    // If we get here, something went wrong
     throw new BadRequestException('Invalid termination request');
   }
 
@@ -208,16 +225,6 @@ export class OffboardingService {
       message: `Your resignation request has been approved. Your last working day will be ${terminationDateStr}. Please complete your clearance checklist before departure.`,
     });
 
-    // Notify Payroll Manager for final pay calculation 
-    const payrollManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.PAYROLL_MANAGER);
-    if (payrollManagers && payrollManagers.length > 0) {
-      await this.notificationLogService.sendNotification({
-        to: payrollManagers[0].id,
-        type: 'Final Pay Calculation Required',
-        message: `Employee ${updatedTerminationRequest.employeeId} termination approved. Last working day: ${terminationDateStr}. Please calculate: unused leave days, final salary, deductions, and prepare settlement. Termination ID: ${id}`,
-      });
-    }
-
     // Notify HR Manager for benefits termination
     const hrManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.HR_MANAGER);
     if (hrManagers && hrManagers.length > 0) {
@@ -247,30 +254,57 @@ export class OffboardingService {
       });
     }
 
-    //Deactivate employee/revoke system access profile using HrAdminService if hr initiated it and if employee is on leave
-     //if (updatedTerminationRequest.initiator === TerminationInitiation.HR){
-    const systemAdminUserId = systemAdmins && systemAdmins.length > 0 ? systemAdmins[0].employeeProfileId.toString() : 'SYSTEM';
+    //As a System Admin, I want to revoke system and account access upon termination, so security is maintained. Deactivate employee/revoke system access profile using HrAdminService if hr initiated it and if employee is on leave
+     if (updatedTerminationRequest.initiator === TerminationInitiation.HR){
+
+     // const systemAdminUserId = systemAdmins && systemAdmins.length > 0 ? systemAdmins[0].employeeProfileId.toString() : 'SYSTEM';
     
     await this.hrAdminService.deactivateEmployee(
       updatedTerminationRequest.employeeId.toString(),
-      systemAdminUserId,
+      systemAdmins[0].id,
       SystemRole.SYSTEM_ADMIN,
       EmployeeStatus.TERMINATED,
       updatedTerminationRequest.terminationDate || new Date(),
     );
-  //}
+    }
 
     // Delete employee profile using EmployeeCrudService if hr initiated it 
     // if (updatedTerminationRequest.initiator === TerminationInitiation.HR)
   //   await this.employeeCrudService.delete(updatedTerminationRequest.employeeId.toString());
+
+
+    //As HR Manager, I want to send offboarding notification to trigger benefits termination and final pay calc (unused leave, deductions), so settlements are accurate. which means you need to trigger service that fills collection that relates user to benefit which is in payroll execution module
+
+    
+    // Find the approved exit benefits template from payroll configuration
+    const approvedExitBenefitTemplate = await this.exitBenefitsConfigModel.findOne({ status: ConfigStatus.APPROVED }).exec();
+
+    if (!approvedExitBenefitTemplate) throw new NotFoundException('cannot find benefit template') ;
+        
+      // Create the employee-specific exit benefits record in payroll execution
+      const exitBenefitsRecord = new this.exitBenefitsModel({
+        employeeId: updatedTerminationRequest.employeeId,
+        benefitId: approvedExitBenefitTemplate._id, 
+        terminationId: updatedTerminationRequest._id,
+        status: BenefitStatus.PENDING,
+      });
+
+      await exitBenefitsRecord.save();
+      
+      const payrollManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.PAYROLL_MANAGER);
+      // Notify Payroll Manager about new exit benefit requiring Phase 0 approval
+      if (payrollManagers && payrollManagers.length > 0) {
+        await this.notificationLogService.sendNotification({
+          to: payrollManagers[0].id,
+          type: 'Exit Benefits Approval Required',
+          message: ` Exit benefits record auto-created for employee ${updatedTerminationRequest.employeeId}.(Base Amount: ${approvedExitBenefitTemplate.amount} . Require signing`,
+        }); }
+      
   }
 
-
   // NOTIFICATION: Status changed to REJECTED - employee tracks termination status
-  if (
-    currentTerminationRequest.status !== TerminationStatus.REJECTED && 
-    updatedTerminationRequest.status === TerminationStatus.REJECTED
-  ) {
+  if (currentTerminationRequest.status !== TerminationStatus.REJECTED && updatedTerminationRequest.status === TerminationStatus.REJECTED) {
+
     await this.notificationLogService.sendNotification({
       to: updatedTerminationRequest.employeeId,
       type: 'Resignation Request Rejected',
