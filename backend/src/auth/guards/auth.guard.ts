@@ -20,23 +20,33 @@ export class AuthGuard implements CanActivate {
         secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
       });
 
-      // BR-3j: Check employee status - only ACTIVE employees can access system
-      // Status is included in JWT payload during login
-      const allowedStatuses = ['ACTIVE', 'PROBATION'];
-      if (payload.status && !allowedStatuses.includes(payload.status)) {
-        throw new UnauthorizedException(
-          `Access denied. Employee status: ${payload.status}. Only ACTIVE or PROBATION employees can access the system.`,
-        );
-      }
+      // Check if this is a candidate or employee
+      if (payload.userType === 'candidate') {
+        // Candidate login
+        request.user = {
+          userId: payload.userid,
+          userType: 'candidate',
+          candidateNumber: payload.candidateNumber,
+          email: payload.email,
+          status: payload.status,
+        };
+      } else {
+        // Employee login - BR-3j: Check employee status
+        const allowedStatuses = ['ACTIVE', 'PROBATION'];
+        if (payload.status && !allowedStatuses.includes(payload.status)) {
+          throw new UnauthorizedException(
+            `Access denied. Employee status: ${payload.status}. Only ACTIVE or PROBATION employees can access the system.`,
+          );
+        }
 
-      // Attach user to request
-      request.user = {
-        employeeId: payload.userid,
-        employeeNumber: payload.employeeNumber,
-        email: payload.email,
-        roles: payload.roles || ['department employee'],
-        status: payload.status,
-      };
+        request.user = {
+          employeeId: payload.userid,
+          employeeNumber: payload.employeeNumber,
+          email: payload.email,
+          roles: payload.roles || ['department employee'],
+          status: payload.status,
+        };
+      }
 
       return true;
     } catch (error) {

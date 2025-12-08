@@ -2,6 +2,7 @@ import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Res, Get, Req 
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { CandidateLoginDto } from './dto/candidate-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -33,9 +34,30 @@ export class AuthController {
     };
   }
 
+  @Post('candidate-login')
+  @HttpCode(HttpStatus.OK)
+  async candidateLogin(@Body() candidateLoginDto: CandidateLoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.candidateLogin(candidateLoginDto.email, candidateLoginDto.password);
+
+    // Set JWT in httpOnly cookie
+    res.cookie('token', result.access_token, {
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    // Return user info (without token in body)
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Candidate login successful',
+      user: result.payload,
+    };
+  }
+
   @Post('register')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
@@ -52,8 +74,21 @@ export class AuthController {
   @UseGuards(AuthGuard)
   async getMe(@Req() req: Request) {
     const user: any = req['user'];
+
+    // Return different data based on user type
+    if (user?.userType === 'candidate') {
+      return {
+        userid: user?.userId,
+        userType: 'candidate',
+        candidateNumber: user?.candidateNumber,
+        email: user?.email,
+        status: user?.status,
+      };
+    }
+
+    // Employee
     return {
-      userid: user?.userid,
+      userid: user?.employeeId,
       employeeNumber: user?.employeeNumber,
       email: user?.email,
       roles: user?.roles,
