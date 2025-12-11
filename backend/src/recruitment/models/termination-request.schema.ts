@@ -10,7 +10,6 @@ export class TerminationRequest {
   employeeId: Types.ObjectId;
 
   @Prop({
-    type: String,
     enum: TerminationInitiation,
     required: true
   })
@@ -26,7 +25,6 @@ export class TerminationRequest {
   hrComments?: string;
 
   @Prop({
-    type: String,
     enum: TerminationStatus,
     default: TerminationStatus.PENDING
   })

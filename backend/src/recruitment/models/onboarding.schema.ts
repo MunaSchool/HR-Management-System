@@ -5,7 +5,6 @@ import { OnboardingTaskStatus } from '../enums/onboarding-task-status.enum';
 @Schema({ timestamps: true })
 export class Onboarding {
 
-<<<<<<< HEAD:backend/src/recruitment/models/onboarding.schema.ts
   @Prop({ type: Types.ObjectId, ref: 'EmployeeProfile', required: true })
   employeeId: Types.ObjectId;
 
@@ -21,16 +20,6 @@ export class Onboarding {
         enum: Object.values(OnboardingTaskStatus),
         default: OnboardingTaskStatus.PENDING,
       },
-=======
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  employeeId: Types.ObjectId;
-
-  @Prop([
-    {
-      name: String, // Task name: “Upload ID”, “Set up Email”
-      department: String, // HR, IT, Admin
-      status: { type: String, enum: Object.values(OnboardingTaskStatus), default: OnboardingTaskStatus.PENDING },
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:src/recruitment/models/onboarding.schema.ts
       deadline: Date,
       completedAt: Date,
       documentId: { type: Types.ObjectId, ref: 'Document' },

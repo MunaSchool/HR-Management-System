@@ -17,7 +17,7 @@ export class AttendanceCorrectionRequest{
     @Prop()
     reason?: string;
 
-    @Prop({ type: String, enum: CorrectionRequestStatus, default: CorrectionRequestStatus.SUBMITTED })
+    @Prop({ enum: CorrectionRequestStatus, default: CorrectionRequestStatus.SUBMITTED })
     status: CorrectionRequestStatus;
 }
 

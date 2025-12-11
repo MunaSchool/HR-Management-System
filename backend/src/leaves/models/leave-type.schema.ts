@@ -28,9 +28,7 @@ export class LeaveType {
   @Prop({ default: false })
   requiresAttachment: boolean;
 
-  @Prop({ 
-    type: String,
-    enum: AttachmentType })
+  @Prop({ enum: AttachmentType })
   attachmentType?: AttachmentType;
 
   @Prop({ default: null })

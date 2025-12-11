@@ -14,14 +14,8 @@ export class LeaveAdjustment {
   @Prop({ type: Types.ObjectId, ref: 'LeaveType', required: true })
   leaveTypeId: Types.ObjectId;
 
-<<<<<<< HEAD:backend/src/leaves/models/leave-adjustment.schema.ts
   // ADD / DEDUCT / CORRECTION
   @Prop({ enum: AdjustmentType, required: true })
-=======
-  @Prop({ 
-    type: String,
-    enum: AdjustmentType, required: true })
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:src/leaves/models/leave-adjustment.schema.ts
   adjustmentType: AdjustmentType;
 
   // NUMBER OF DAYS (+ OR -)

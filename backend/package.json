@@ -1,5 +1,5 @@
 {
-  "name": "hr-system",
+  "name": "time-management",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -8,11 +8,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-<<<<<<< HEAD:backend/package.json
     "start": "nodemon --exec ts-node -r tsconfig-paths/register src/main.ts",
-=======
-    "start": "nest start",
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:package.json
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -21,14 +17,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed": "ts-node src/seeds/seed.ts",
-    "seed:employee-profile": "ts-node -r tsconfig-paths/register src/employee-profile/seed.ts"
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.1",
+    "@nestjs/common": "^11.1.9",
     "@nestjs/config": "^4.0.2",
-<<<<<<< HEAD:backend/package.json
     "@nestjs/core": "^11.1.9",
     "@nestjs/jwt": "^11.0.1",
     "@nestjs/mapped-types": "^2.1.0",
@@ -36,39 +29,23 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.9",
     "@nestjs/swagger": "^11.2.2",
-=======
-    "@nestjs/core": "^11.0.1",
-    "@nestjs/jwt": "^11.0.1",
-    "@nestjs/mongoose": "^11.0.3",
-    "@nestjs/passport": "^11.0.5",
-    "@nestjs/platform-express": "^11.0.1",
-    "@nestjs/swagger": "^11.2.3",
-    "@types/bcrypt": "^6.0.0",
-    "@types/multer": "^2.0.0",
-    "@types/passport-jwt": "^4.0.1",
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:package.json
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cookie-parser": "^1.4.7",
-<<<<<<< HEAD:backend/package.json
     "mongoose": "^8.20.1",
     "multer": "^2.0.2",
     "nestjs": "^0.0.1",
-=======
-    "mongoose": "^8.20.0",
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:package.json
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
     "@nestjs/cli": "^11.0.14",
     "@nestjs/schematics": "^11.0.0",
-<<<<<<< HEAD:backend/package.json
     "@nestjs/testing": "^11.0.1",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
@@ -78,24 +55,18 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^22.19.1",
     "@types/passport-jwt": "^4.0.1",
-=======
-    "@nestjs/testing": "^11.1.9",
-    "@types/cookie-parser": "^1.4.10",
-    "@types/express": "^5.0.5",
-    "@types/express-serve-static-core": "^5.1.0",
-    "@types/jest": "^30.0.0",
-    "@types/multer": "^2.0.0",
-    "@types/node": "^22.10.7",
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:package.json
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
+    "install": "^0.13.0",
     "jest": "^30.0.0",
+    "nodemon": "^3.1.11",
+    "npm": "^11.6.2",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
-    "supertest": "^7.1.4",
+    "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",

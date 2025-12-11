@@ -42,7 +42,6 @@ export class Offer {
   deadline: Date;
 
   @Prop({
-    type: String,
     enum: OfferResponseStatus,
     default: OfferResponseStatus.PENDING
   })
@@ -60,7 +59,6 @@ export class Offer {
   approvers: any[];
 
   @Prop({
-    type: String,
     enum: OfferFinalStatus,
     default: OfferFinalStatus.PENDING
   })

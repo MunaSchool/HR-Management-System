@@ -23,10 +23,7 @@ import {
 import { EmployeeProfile, EmployeeProfileSchema } from '../employee-profile/models/employee-profile.schema';
 import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
 import { TimeManagementModule } from '../time-management/time-management.module';
-<<<<<<< HEAD:backend/src/organization-structure/organization-structure.module.ts
 import { AuthModule } from 'src/auth/auth.module';
-=======
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:src/organization-structure/organization-structure.module.ts
 
 @Module({
   imports: [
@@ -43,12 +40,8 @@ import { AuthModule } from 'src/auth/auth.module';
       { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
     ]),
     forwardRef(() => EmployeeProfileModule),
-<<<<<<< HEAD:backend/src/organization-structure/organization-structure.module.ts
     forwardRef(() =>TimeManagementModule),
     AuthModule
-=======
-    TimeManagementModule,
->>>>>>> 40db564390103036b6212b59a4e1b86d395093a2:src/organization-structure/organization-structure.module.ts
   ],
   controllers: [OrganizationStructureController],
   providers: [OrganizationStructureService],

@@ -28,7 +28,7 @@ export class ShiftAssignment{
     @Prop()
     endDate?: Date; //null means ongoing
 
-    @Prop({ type: String, enum: ShiftAssignmentStatus, default: ShiftAssignmentStatus.PENDING })
+    @Prop({enum: ShiftAssignmentStatus, default: ShiftAssignmentStatus.PENDING})
     status: ShiftAssignmentStatus;
 }
 

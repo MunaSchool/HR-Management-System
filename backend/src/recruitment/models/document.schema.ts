@@ -9,7 +9,6 @@ export class Document {
   ownerId: Types.ObjectId;
 
   @Prop({
-    type: String,
     enum: DocumentType,
     required: true
   })
