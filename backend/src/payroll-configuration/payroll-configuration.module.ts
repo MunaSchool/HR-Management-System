@@ -28,9 +28,6 @@ import { payGrade } from './models/payGrades.schema';
   ],
   controllers: [PayrollConfigurationController],
   providers: [PayrollConfigurationService],
-  exports:[PayrollConfigurationService, 
-           MongooseModule // Export MongooseModule so other modules (recruitment) can access the models
-
-  ]
+  exports:[PayrollConfigurationService]
 })
 export class PayrollConfigurationModule { }

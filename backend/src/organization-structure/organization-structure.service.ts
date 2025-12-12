@@ -125,7 +125,7 @@ export class OrganizationStructureService {
   // 📌 GET ALL POSITIONS
   // ======================
   async getAllPositions() {
-    return this.positionModel.find().exec();
+    return this.positionModel.find().populate('departmentId', 'name code').exec();
   }
 
   // ======================

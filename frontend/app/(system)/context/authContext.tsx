@@ -10,20 +10,17 @@ import {
 import axiosInstance, { registerUnauthenticatedHandler } from "@/app/utils/ApiClient";
 import { usePathname, useRouter } from "next/navigation";
 
-export type User = {
-  userid: string;         // employeeId or userId
+type User = {
+  id?: string;
+  role?: string;
+  roles?: string[];
+  name?: string;
   email: string;
-  status?: string;
-
-  // candidate fields
-  userType?: "candidate";
+  age?: number;
+  userType?: string;
   candidateNumber?: string;
-
-  // employee fields
   employeeNumber?: string;
-  roles?: string[];       // SystemRole[]
 };
-
 
 type AuthContextType = {
   user: User | null;
