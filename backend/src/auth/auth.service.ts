@@ -160,8 +160,9 @@ export class AuthService {
     }
 
     const payload = {
-      userid: candidate._id,
+      userid: candidate._id, //to match decorator interface in current user decorator
       userType: 'candidate',
+      roles: ['candidate'], // mismatch caused candidate gaurds to mullfunction -change to match decorator interface in current user decorator so that gaurds work
       candidateNumber: candidate.candidateNumber,
       email: candidate.personalEmail,
       status: candidate.status,
