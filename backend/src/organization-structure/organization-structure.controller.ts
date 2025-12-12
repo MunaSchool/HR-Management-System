@@ -33,7 +33,7 @@ export class OrganizationStructureController {
   // ======================
 
   @Post('departments')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //aded the HRAdmin engy
   createDepartment(@Body() dto: CreateDepartmentDto) {
     return this.organizationStructureService.createDepartment(dto);
   }
@@ -52,7 +52,7 @@ export class OrganizationStructureController {
   }
 
   @Put('departments/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) // added HRaddmin by engy
   updateDepartment(
     @Param('id') id: string,
     @Body() dto: UpdateDepartmentDto,
@@ -61,7 +61,7 @@ export class OrganizationStructureController {
   }
 
   @Patch('departments/:id/deactivate')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //aded the HRAdmin engy
   deactivateDepartment(@Param('id') id: string) {
     return this.organizationStructureService.deactivateDepartment(id);
   }
@@ -71,7 +71,7 @@ export class OrganizationStructureController {
   // ======================
 
   @Post('positions')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)// added the HRAdmin engy
   createPosition(@Body() dto: any) {
     return this.organizationStructureService.createPosition(dto);
   }
@@ -89,25 +89,25 @@ export class OrganizationStructureController {
   }
 
   @Put('positions/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added HRAdmin engy
   updatePosition(@Param('id') id: string, @Body() dto: any) {
     return this.organizationStructureService.updatePosition(id, dto);
   }
 
   @Put('positions/:id/reporting-line')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added HRAdmin engy
   updateReportingLine(@Param('id') id: string, @Body() dto: any) {
     return this.organizationStructureService.updateReportingLine(id, dto);
   }
 
   @Put('positions/:id/move')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added HRAdmin
   movePosition(@Param('id') id: string, @Body() dto: any) {
     return this.organizationStructureService.movePosition(id, dto);
   }
 
   @Patch('positions/:id/delimit')
-@Roles(SystemRole.SYSTEM_ADMIN)
+@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added HRAdmin
 delimitPosition(@Param('id') id: string) {
   return this.organizationStructureService.delimitPosition(id);
 }
