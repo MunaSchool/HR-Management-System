@@ -159,14 +159,14 @@ export default function ChangeRequestPage() {
               >
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-white font-semibold capitalize">
-                    {request.fieldName.replace(/([A-Z])/g, " $1").trim()}
+                    {request.fieldName ? request.fieldName.replace(/([A-Z])/g, " $1").trim() : "N/A"}
                   </h3>
                   <span
                     className={`text-sm font-medium ${getStatusColor(
-                      request.status
+                      request.status || "pending"
                     )}`}
                   >
-                    {request.status.toUpperCase()}
+                    {request.status ? request.status.toUpperCase() : "PENDING"}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-2">

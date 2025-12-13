@@ -88,18 +88,54 @@ export class EmployeeCrudService {
   }
 
   // Get all employee profiles
-  async findAll(): Promise<EmployeeProfileDocument[]> {
-    const employees = await this.employeeProfileModel.find();
-    return employees;
+  async findAll(): Promise<any[]> {
+    const employees = await this.employeeProfileModel
+      .find()
+      .populate('accessProfileId')
+      .populate('primaryDepartmentId')
+      .populate('primaryPositionId')
+      .populate('payGradeId')
+      .exec();
+
+    // Map employees to include roles and properly formatted data
+    return employees.map(emp => {
+      const empObj = emp.toObject();
+      const roles = (empObj.accessProfileId as any)?.roles || [];
+      const payGrade = (empObj.payGradeId as any)?.grade || null;
+
+      return {
+        ...empObj,
+        email: empObj.workEmail, // Add email field for frontend compatibility
+        roles, // Add roles at top level
+        payGrade, // Add payGrade name for display
+      };
+    });
   }
 
   // Get an employee profile by ID
-  async findById(id: string): Promise<EmployeeProfileDocument> {
-    const employee = await this.employeeProfileModel.findById(id);
+  async findById(id: string): Promise<any> {
+    const employee = await this.employeeProfileModel
+      .findById(id)
+      .populate('accessProfileId')
+      .populate('primaryDepartmentId')
+      .populate('primaryPositionId')
+      .populate('payGradeId')
+      .exec();
+
     if (!employee) {
       throw new NotFoundException('Employee profile not found');
     }
-    return employee;
+
+    const empObj = employee.toObject();
+    const roles = (empObj.accessProfileId as any)?.roles || [];
+    const payGrade = (empObj.payGradeId as any)?.grade || null;
+
+    return {
+      ...empObj,
+      email: empObj.workEmail, // Add email field for frontend compatibility
+      roles, // Add roles at top level
+      payGrade, // Add payGrade name for display
+    };
   }
 
   // Update an employee profile by ID
