@@ -121,7 +121,7 @@ delimitPosition(@Param('id') id: string) {
   // ======================
 
   @Post('change-requests')
-  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // hradmon added by engy
   submitChangeRequest(@Body() dto: any, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.submitChangeRequest(dto, user.employeeId);
   }
@@ -139,13 +139,13 @@ delimitPosition(@Param('id') id: string) {
   }
 
   @Put('change-requests/:id/approve')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added hr admin by engy
   approveChangeRequest(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.approveChangeRequest(id, user.employeeId);
   }
 
-  @Put('change-requests/:id/reject')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Put('change-requests/:id/reject') //added hr admin by engy
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
   rejectChangeRequest(@Param('id') id: string, @Body() dto: any, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.rejectChangeRequest(id, dto.reason, user.employeeId);
   }

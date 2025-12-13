@@ -185,7 +185,7 @@ export class OrganizationStructureService {
     const changeRequest = await this.changeRequestModel.create({
       ...dto,
       requestedByEmployeeId: new Types.ObjectId(requestedBy),
-      status: 'Pending',
+      status: 'SUBMITTED', //fixed 
       submittedAt: new Date(),
     });
 
@@ -248,7 +248,7 @@ export class OrganizationStructureService {
     const updated = await this.changeRequestModel.findByIdAndUpdate(
       id,
       {
-        status: 'Approved',
+        status: 'APPROVED', //fixed
         approvedAt: new Date(),
       },
       { new: true }
@@ -274,7 +274,7 @@ export class OrganizationStructureService {
     const updated = await this.changeRequestModel.findByIdAndUpdate(
       id,
       {
-        status: 'Rejected',
+        status: 'REJECTED',
         rejectedAt: new Date(),
         rejectionReason: reason,
       },

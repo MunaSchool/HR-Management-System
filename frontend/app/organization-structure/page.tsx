@@ -16,6 +16,9 @@ export default function OrgStructurePage() {
         <Link href="/organization-structure/positions">
           <button>View Positions</button>
         </Link>
+              <Link href="/organization-structure/change-requests">
+          <button>View Change Requests</button>
+        </Link>
       </div>
     </div>
   );
