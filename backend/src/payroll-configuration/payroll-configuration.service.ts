@@ -63,10 +63,14 @@ export class PayrollConfigurationService
         const newPolicy = new this.payrollPoliciesModel(policyData);
         return newPolicy.save();
     }
-
-    async updatePolicy(id: string, updateData: updatePayrollPoliciesDto): Promise<payrollPoliciesDocument|null> {
-        return await this.payrollPoliciesModel.findByIdAndUpdate(id, updateData, { new: true });  
-    }
+    //update only if draft
+  async updatePolicy(id: string, updateData: updatePayrollPoliciesDto): Promise<payrollPoliciesDocument|null> {
+    const policy = await this.payrollPoliciesModel.findById(id) as payrollPoliciesDocument;
+    if (policy.status !== 'draft') {
+      throw new Error('Only draft policies can be updated');
+    } else 
+  return await this.payrollPoliciesModel.findByIdAndUpdate(id, updateData, { new: true });  
+  }
 
     async deletePolicy(id: string): Promise<payrollPoliciesDocument|null> {
         return await this.payrollPoliciesModel.findByIdAndDelete(id); 
@@ -82,15 +86,20 @@ export class PayrollConfigurationService
         const newpg = new this.payGradeModel(payGrade);
         return newpg.save();
     }
-
+    //only if draft
     async editPayGrade(pg: string, updateData: editPayGradeDTO): Promise<payGradeDocument|null> {
-        return await this.payGradeModel.findByIdAndUpdate(pg, updateData, { new: true });  
+      const paygrade = await this.payGradeModel.findById(pg) as payGradeDocument;
+      if (paygrade.status !== 'draft') {
+        throw new Error('Only draft pay grades can be edited');
+      } else
+      return await this.payGradeModel.findByIdAndUpdate(pg, updateData, { new: true });  
     }
 
-    async remove(pg: string): Promise<payGradeDocument | null> {
+    async removePayGrade(pg: string): Promise<payGradeDocument | null> {
         return await this.payGradeModel.findByIdAndDelete(pg); 
     }
 
+/*
         //plsss go back to this!!!!!
   async calculateGrossSalary(payGradeId: string, allowanceId: string): Promise<number> {
     const payGrade = await this.payGradeModel.findById(payGradeId).exec();
@@ -104,7 +113,7 @@ export class PayrollConfigurationService
     await payGrade.save();
     return grossSalary;
   }
-
+*/
   ///edit position function?
 
 
@@ -119,8 +128,13 @@ export class PayrollConfigurationService
         return await this.payTypeModel.find().exec();
     }
 
+    //only if draft
     async editPayTypes (pt: string, updateData: editPayTypeDTO): Promise <payTypeDocument | null>{
-        return await this.payTypeModel.findByIdAndUpdate(pt, updateData, { new: true });  
+      const paytype = await this.payTypeModel.findById(pt) as payTypeDocument;
+      if (paytype.status !== 'draft') {
+        throw new Error('Only draft pay types can be edited');
+      } else
+      return await this.payTypeModel.findByIdAndUpdate(pt, updateData, { new: true });  
     }
 
     async createPayTypes (pt: createPayTypeDTO): Promise<payTypeDocument>{
@@ -128,7 +142,7 @@ export class PayrollConfigurationService
         return newPayType.save();
     }
 
-    async removePayType (pt: string): Promise<payTypeDocument|null>{
+    async removePayTypes (pt: string): Promise<payTypeDocument|null>{
         return await this.payTypeModel.findByIdAndDelete(pt);
     }
 
@@ -141,12 +155,24 @@ export class PayrollConfigurationService
         return newAllowance.save();
     }
 
+    async findAllAllowances(): Promise<allowanceDocument[]> {
+        return this.allowanceModel.find().exec();
+    }
+
     async getAllowance(id: string): Promise<allowanceDocument|null>{
         return await this.allowanceModel.findById(id);
     }
 
     async removeAllowance(id: string): Promise<allowanceDocument|null> {
         return await this.allowanceModel.findByIdAndDelete(id);  
+    }
+
+    async editAllowance(id: string, updateData: createAllowanceDto): Promise<allowanceDocument|null> {
+      const allowance = await this.allowanceModel.findById(id) as allowanceDocument;
+      if (allowance.status !== 'draft') {
+        throw new Error('Only draft allowances can be edited');
+      } else
+      return await this.allowanceModel.findByIdAndUpdate(id, updateData, { new: true });  
     }
 
 
@@ -156,8 +182,13 @@ export class PayrollConfigurationService
         return await this.signingBonusModel.findById(id)
     }
 
+    //only if draft
     async editsigningBonus(id: string, updateData: editsigningBonusDTO): Promise<signingBonusDocument|null>{
-        return await this.signingBonusModel.findByIdAndUpdate(id, updateData, { new: true });
+      const signingBonus = await this.signingBonusModel.findById(id) as signingBonusDocument;
+      if (signingBonus.status !== 'draft') {
+        throw new Error('Only draft signing bonuses can be edited');
+      } else
+      return await this.signingBonusModel.findByIdAndUpdate(id, updateData, { new: true });
     }
 
     async createSigningBonuses(id:createsigningBonusesDTO): Promise<signingBonusDocument|null>{
@@ -190,8 +221,13 @@ export class PayrollConfigurationService
         return await this.terminationAndResignationBenefitsModel.findById(id)
     }
 
+
     async updateTerminationAndResignationBenefits(id: string, updateData: createResigAndTerminBenefitsDTO): Promise<terminationAndResignationBenefitsDocument | null> {
-        return await this.terminationAndResignationBenefitsModel.findByIdAndUpdate(id, updateData, { new: true });
+      const terminationAndResignationBenefits = await this.terminationAndResignationBenefitsModel.findById(id) as terminationAndResignationBenefitsDocument;
+      if (terminationAndResignationBenefits.status !== 'draft') {
+        throw new Error('Only draft termination and resignation benefits can be edited');
+      }  
+      return await this.terminationAndResignationBenefitsModel.findByIdAndUpdate(id, updateData, { new: true });
     }
 
 
@@ -205,7 +241,12 @@ export class PayrollConfigurationService
         return ib.save();
     }
 
+    //only if draft
     async editInsuranceBrackets (id: string, updateData: editInsuranceBracketsDTO): Promise<insuranceBracketsDocument|null>{
+      const insuranceBrackets = await this.insuranceBracketsModel.findById(id) as insuranceBracketsDocument;
+      if (insuranceBrackets.status !== 'draft') {
+        throw new Error('Only draft insurance brackets can be edited');
+      } else
         return await this.insuranceBracketsModel.findByIdAndUpdate(id, updateData, { new: true });
     }
 
@@ -290,6 +331,7 @@ export class PayrollConfigurationService
     return this.companyWideSettingsModel.findById(id).exec();
   }
 
+
   async update(id: string, dto: UpdateCompanySettingsDto) {
     return this.companyWideSettingsModel.findByIdAndUpdate(id, dto, { new: true });
   }
@@ -340,6 +382,10 @@ export class PayrollConfigurationService
   }
 
   async updateTaxRule(id: string, updateData: editTaxRulesDTO): Promise<taxRulesDocument | null> {
+    const taxRule = await this.taxRulesModel.findById(id) as taxRulesDocument;
+    if (taxRule.status !== 'draft') {
+      throw new Error('Only draft tax rules can be updated');
+    } else
     return this.taxRulesModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 
@@ -365,6 +411,10 @@ export class PayrollConfigurationService
   }
 
   async updateTerminationAndResignationBenefit(id: string, updateData: createResigAndTerminBenefitsDTO): Promise<terminationAndResignationBenefitsDocument | null> {
+    const benefit = await this.terminationAndResignationBenefitsModel.findById(id) as terminationAndResignationBenefitsDocument;
+    if (benefit.status !== 'draft') {
+      throw new Error('Only draft termination and resignation benefits can be updated');
+    } else
     return this.terminationAndResignationBenefitsModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 

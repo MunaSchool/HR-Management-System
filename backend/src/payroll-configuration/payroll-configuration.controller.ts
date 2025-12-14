@@ -73,6 +73,155 @@ export class PayrollConfigurationController {
     return this.payrollConfigurationService.deletePolicy(id);
   }
 
+
+  // -------------------
+  // DEFINE PAY GRADES
+  // -------------------
+
+  @Post('pay-grades')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async addPayGrade(@Body() payGradeData: addPayGradeDTO) {
+    return this.payrollConfigurationService.AddPayGrade(payGradeData);
+  }
+
+  @Put('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async editPayGrade(@Param('id') id: string, @Body() updateData: editPayGradeDTO) {
+    return this.payrollConfigurationService.editPayGrade(id, updateData);
+  }
+
+  @Delete('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async deletePayGrade(@Param('id') id: string) {
+    return this.payrollConfigurationService.removePayGrade(id);
+  }
+
+  @Get('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async findPayGrade(@Param('id') id: string) {
+    return this.payrollConfigurationService.getPayGrade(id);
+  }
+
+
+  // -------------------
+  // DEFINE PAY TYPES
+  // -------------------
+
+  @Post('pay-types')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async createPayType(@Body() payTypeData: createPayTypeDTO) {
+    return this.payrollConfigurationService.createPayTypes(payTypeData);
+  }
+
+  @Put('pay-types/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async editPayType(@Param('id') id: string, @Body() updateData: editPayTypeDTO) {
+    return this.payrollConfigurationService.editPayTypes(id, updateData);
+  }
+
+  @Get('pay-types')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllPayTypes() {
+    return this.payrollConfigurationService.getAllPayTypes();
+  }
+
+  @Get('pay-types/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async findPayType(@Param('id') id: string) {
+    return this.payrollConfigurationService.getPayTypes(id);
+  }
+
+  @Delete('pay-types/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async deletePayType(@Param('id') id: string) {
+    return this.payrollConfigurationService.removePayTypes(id);
+  }
+
+
+  // -------------------
+  // ALLOWANCES
+  // -------------------
+
+  @Post('allowances')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async createAllowance(@Body() allowanceData: createAllowanceDto) {
+    return this.payrollConfigurationService.createAllowance(allowanceData);
+  }
+
+  @Get('allowances')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllAllowances() {
+    return this.payrollConfigurationService.findAllAllowances();
+  }
+
+  @Delete('allowances/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async deleteAllowance(@Param('id') id: string) {
+    return this.payrollConfigurationService.removeAllowance(id);
+  }
+
+  @Put('allowances/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async editAllowance(@Param('id') id: string, @Body() updateData: createAllowanceDto) {
+    return this.payrollConfigurationService.editAllowance(id, updateData);
+  }
+
+  @Get('allowances/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async findAllowance(@Param('id') id: string) {
+    return this.payrollConfigurationService.getAllowance(id);
+  }
+
+
+  // -------------------
+  // SIGNING BONUSES
+  // -------------------
+
+  @Post('signing-bonuses')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async createSigningBonus(@Body() bonusData: createsigningBonusesDTO) {
+    return this.payrollConfigurationService.createSigningBonuses(bonusData);
+  }
+
+  @Put('signing-bonuses/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async editSigningBonus(@Param('id') id: string, @Body() updateData: editsigningBonusDTO) {
+    return this.payrollConfigurationService.editsigningBonus(id, updateData);
+  }
+
+  @Delete('signing-bonuses/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async deleteSigningBonus(@Param('id') id: string) {
+    return this.payrollConfigurationService.removeSigningBonuses(id);
+  }
+
+  @Get('signing-bonuses/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async findSigningBonus(@Param('id') id: string) {
+    return this.payrollConfigurationService.findSigningBonuses(id);
+  }
+
+
+
+
   // -------------------
   // INSURANCE BRACKETS
   // -------------------
@@ -107,6 +256,53 @@ export class PayrollConfigurationController {
   async removeInsuranceBracket(@Param('id') id: string) {
     return this.payrollConfigurationService.removeInsuranceBrackets(id);
   }
+
+  
+
+
+
+  // -------------------
+  // TERMINATION & RESIGNATION BENEFITS
+  // -------------------
+
+  @Get('termination-resignation-benefits')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllTerminationAndResignationBenefits() {
+    return this.payrollConfigurationService.getAllTerminationAndResignationBenefits();
+  }
+
+  @Get('termination-resignation-benefits/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getTerminationAndResignationBenefitById(@Param('id') id: string) {
+    return this.payrollConfigurationService.getTerminationAndResignationBenefitById(id);
+  }
+
+  @Post('termination-resignation-benefits')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async createTerminationAndResignationBenefit(@Body() benefitsData: createResigAndTerminBenefitsDTO) {
+    return this.payrollConfigurationService.createTerminationAndResignationBenefit(benefitsData);
+  }
+
+  @Put('termination-resignation-benefits/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async updateTerminationAndResignationBenefit(
+    @Param('id') id: string,
+    @Body() updateData: createResigAndTerminBenefitsDTO
+  ) {
+    return this.payrollConfigurationService.updateTerminationAndResignationBenefit(id, updateData);
+  }
+
+  @Delete('termination-resignation-benefits/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async deleteTerminationAndResignationBenefit(@Param('id') id: string) {
+    return this.payrollConfigurationService.deleteTerminationAndResignationBenefit(id);
+  }
+
 
   // -------------------
   // PAYROLL MANAGER APPROVAL
@@ -239,48 +435,6 @@ export class PayrollConfigurationController {
   @Roles(SystemRole.LEGAL_POLICY_ADMIN)
   async deleteTaxRule(@Param('id') id: string) {
     return this.payrollConfigurationService.deleteTaxRule(id);
-  }
-
-  // -------------------
-  // PAYROLL SPECIALIST - TERMINATION & RESIGNATION BENEFITS
-  // -------------------
-
-  @Get('termination-resignation-benefits')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
-  async getAllTerminationAndResignationBenefits() {
-    return this.payrollConfigurationService.getAllTerminationAndResignationBenefits();
-  }
-
-  @Get('termination-resignation-benefits/:id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
-  async getTerminationAndResignationBenefitById(@Param('id') id: string) {
-    return this.payrollConfigurationService.getTerminationAndResignationBenefitById(id);
-  }
-
-  @Post('termination-resignation-benefits')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
-  async createTerminationAndResignationBenefit(@Body() benefitsData: createResigAndTerminBenefitsDTO) {
-    return this.payrollConfigurationService.createTerminationAndResignationBenefit(benefitsData);
-  }
-
-  @Put('termination-resignation-benefits/:id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
-  async updateTerminationAndResignationBenefit(
-    @Param('id') id: string,
-    @Body() updateData: createResigAndTerminBenefitsDTO
-  ) {
-    return this.payrollConfigurationService.updateTerminationAndResignationBenefit(id, updateData);
-  }
-
-  @Delete('termination-resignation-benefits/:id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
-  async deleteTerminationAndResignationBenefit(@Param('id') id: string) {
-    return this.payrollConfigurationService.deleteTerminationAndResignationBenefit(id);
   }
 
   // -------------------
