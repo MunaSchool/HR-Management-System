@@ -1,4 +1,3 @@
-//this page will display a form(name,code,status)
 "use client";
 
 import { useState } from "react";
@@ -16,18 +15,24 @@ export default function CreateDepartmentPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ===============================
+  // 🔥 SUBMIT
+  // ===============================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("http://localhost:4000/organization-structure/departments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(form),
-      });
+      const response = await fetch(
+        "http://localhost:4000/organization-structure/departments",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(form),
+        }
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -42,55 +47,107 @@ export default function CreateDepartmentPage() {
     }
   };
 
+  // ===============================
+  // 🔥 UI
+  // ===============================
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Create Department</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-6 py-8">
 
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        <div>
-          <label className="block mb-1">Name</label>
-          <input
-            type="text"
-            required
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full px-3 py-2 border rounded"
-          />
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Create Department
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Add a new department to the organization
+          </p>
         </div>
 
-        <div>
-          <label className="block mb-1">Code</label>
-          <input
-            type="text"
-            required
-            value={form.code}
-            onChange={(e) => setForm({ ...form, code: e.target.value })}
-            className="w-full px-3 py-2 border rounded"
-          />
+        {/* Card */}
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 max-w-xl">
+
+          {error && (
+            <div className="mb-4 text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Name */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Name
+              </label>
+              <input
+                type="text"
+                required
+                value={form.name}
+                onChange={(e) =>
+                  setForm({ ...form, name: e.target.value })
+                }
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+              />
+            </div>
+
+            {/* Code */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Code
+              </label>
+              <input
+                type="text"
+                required
+                value={form.code}
+                onChange={(e) =>
+                  setForm({ ...form, code: e.target.value })
+                }
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Status
+              </label>
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm({ ...form, status: e.target.value })
+                }
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+              >
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {loading ? "Creating..." : "Create Department"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  router.push("/organization-structure/departments")
+                }
+                className="px-4 py-2 border rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                Cancel
+              </button>
+            </div>
+
+          </form>
         </div>
-
-        <div>
-          <label className="block mb-1">Status</label>
-          <select
-            value={form.status}
-            onChange={(e) => setForm({ ...form, status: e.target.value })}
-            className="w-full px-3 py-2 border rounded"
-          >
-            <option>Active</option>
-            <option>Inactive</option>
-          </select>
-        </div>
-
-        {error && <p className="text-red-600">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          {loading ? "Creating..." : "Create Department"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
