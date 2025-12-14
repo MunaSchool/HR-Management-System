@@ -23,12 +23,15 @@ interface EmployeeProfile {
   positionId?: string;
   payGrade?: string;
   roles?: any[];
+  biography?: string;
 }
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
+  const [editBioMode, setEditBioMode] = useState(false);
+  const [biography, setBiography] = useState("");
   const [contactInfo, setContactInfo] = useState({
     mobilePhone: "",
     personalEmail: "",
@@ -49,6 +52,7 @@ export default function ProfilePage() {
     try {
       const response = await axiosInstance.get("/employee-profile/me");
       setProfile(response.data);
+      setBiography(response.data.biography || "");
       setContactInfo({
         mobilePhone: response.data.mobilePhone || "",
         personalEmail: response.data.personalEmail || "",
@@ -73,6 +77,17 @@ export default function ProfilePage() {
       fetchProfile();
     } catch (error: any) {
       alert(error?.response?.data?.message || "Failed to update contact information");
+    }
+  };
+
+  const handleUpdateBiography = async () => {
+    try {
+      await axiosInstance.patch("/employee-profile/me", { biography });
+      alert("Biography updated successfully");
+      setEditBioMode(false);
+      fetchProfile();
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Failed to update biography");
     }
   };
 
@@ -195,6 +210,14 @@ export default function ProfilePage() {
             <p className="text-white">{profile.nationalId || "N/A"}</p>
           </div>
         </div>
+      </div>
+
+      {/* Biography */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Biography</h2>
+        <p className="text-neutral-300 whitespace-pre-wrap">
+          {profile.biography || "No biography added yet."}
+        </p>
       </div>
 
       {/* Contact Information (Editable) */}
@@ -342,10 +365,9 @@ export default function ProfilePage() {
             <label className="text-sm text-neutral-400">System Roles</label>
             <p className="text-white">
               {profile.roles && profile.roles.length > 0
-                ? profile.roles
-                    .map((r: any) => r.roles || r.roleName || r)
-                    .flat()
-                    .join(", ")
+                ? Array.isArray(profile.roles)
+                  ? profile.roles.join(", ")
+                  : "N/A"
                 : "N/A"}
             </p>
           </div>

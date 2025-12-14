@@ -14,6 +14,11 @@ import { TerminationRequest,TerminationRequestSchema } from './models/terminatio
 import { ClearanceChecklist,ClearanceChecklistSchema } from './models/clearance-checklist.schema';
 import { Onboarding, OnboardingSchema } from './models/onboarding.schema';
 
+//TO KEEP
+import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
+// import time management module and remove time management schema
+import { TimeManagementModule } from 'src/time-management/time-management.module';
+
 import { RecruitmentController } from 'src/recruitment/controllers/recruitment.controller';
 import { OnboardingController } from 'src/recruitment/controllers/onboarding.controller';
 import { OffboardingController } from 'src/recruitment/controllers/offboarding.controller';
@@ -23,18 +28,17 @@ import { OnboardingService } from 'src/recruitment/services/onboarding.service';
 import { OffboardingService } from 'src/recruitment/services/offboarding.service';
 import { AuthModule } from 'src/auth/auth.module';
 
-//external modules
 import { PerformanceModule } from 'src/performance/performance.module'; 
 import { PayrollExecutionModule } from 'src/payroll-execution/payroll-execution.module';
 import { PayrollConfigurationModule } from 'src/payroll-configuration/payroll-configuration.module';
-import { EmployeeProfileModule } from '../employee-profile/employee-profile.module';
-import { TimeManagementModule } from 'src/time-management/time-management.module';
 
 // Import payroll schemas
-// import { employeeSigningBonus, employeeSigningBonusSchema } from '../payroll-execution/models/EmployeeSigningBonus.schema';
-// import { employeePayrollDetails, employeePayrollDetailsSchema } from '../payroll-execution/models/employeePayrollDetails.schema';
-// import { payrollRuns, payrollRunsSchema } from '../payroll-execution/models/payrollRuns.schema';
-// import { signingBonus, signingBonusSchema } from '../payroll-configuration/models/signingBonus.schema';
+import { employeeSigningBonus, employeeSigningBonusSchema } from '../payroll-execution/models/EmployeeSigningBonus.schema';
+import { employeePayrollDetails, employeePayrollDetailsSchema } from '../payroll-execution/models/employeePayrollDetails.schema';
+import { payrollRuns, payrollRunsSchema } from '../payroll-execution/models/payrollRuns.schema';
+import { signingBonus, signingBonusSchema } from '../payroll-configuration/models/signingBonus.schema';
+import { EmployeeTerminationResignation, EmployeeTerminationResignationSchema } from '../payroll-execution/models/EmployeeTerminationResignation.schema';
+import { terminationAndResignationBenefits, terminationAndResignationBenefitsSchema } from '../payroll-configuration/models/terminationAndResignationBenefits';
 
 @Module({
   imports:[
@@ -53,11 +57,13 @@ import { TimeManagementModule } from 'src/time-management/time-management.module
       { name: TerminationRequest.name, schema: TerminationRequestSchema },
       { name: ClearanceChecklist.name, schema: ClearanceChecklistSchema },
       
-      // Payroll schemas for OnboardingService
-      // { name: employeeSigningBonus.name, schema: employeeSigningBonusSchema },
-      // { name: employeePayrollDetails.name, schema: employeePayrollDetailsSchema },
-      // { name: payrollRuns.name, schema: payrollRunsSchema },
-      // { name: signingBonus.name, schema: signingBonusSchema },
+      // Payroll schemas for OnboardingService and OffboardingService
+      { name: employeeSigningBonus.name, schema: employeeSigningBonusSchema },
+      { name: employeePayrollDetails.name, schema: employeePayrollDetailsSchema },
+      { name: payrollRuns.name, schema: payrollRunsSchema },
+      { name: signingBonus.name, schema: signingBonusSchema },
+      { name: EmployeeTerminationResignation.name, schema: EmployeeTerminationResignationSchema },
+      { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
     ]), 
     EmployeeProfileModule,
     TimeManagementModule, 

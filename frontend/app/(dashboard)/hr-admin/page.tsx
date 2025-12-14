@@ -60,6 +60,7 @@ export default function HRAdminPage() {
   const fetchEmployees = async () => {
     try {
       const response = await axiosInstance.get("/employee-profile");
+      console.log("Employee data received:", response.data);
       setEmployees(response.data);
     } catch (error) {
       console.error("Error fetching employees:", error);

@@ -88,18 +88,85 @@ export class EmployeeCrudService {
   }
 
   // Get all employee profiles
-  async findAll(): Promise<EmployeeProfileDocument[]> {
-    const employees = await this.employeeProfileModel.find();
-    return employees;
+  async findAll(): Promise<any[]> {
+    const employees = await this.employeeProfileModel
+      .find()
+      .populate('accessProfileId')
+      .populate('primaryDepartmentId')
+      .populate('primaryPositionId')
+      .exec();
+
+    // Manually populate payGradeId only for valid ObjectIds
+    const populatedEmployees = await Promise.all(
+      employees.map(async (emp) => {
+        const empObj = emp.toObject();
+
+        // Only populate payGradeId if it's a valid ObjectId
+        if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
+          const populated = await this.employeeProfileModel
+            .findById(emp._id)
+            .populate('payGradeId')
+            .exec();
+          return populated || emp;
+        }
+        return emp;
+      })
+    );
+
+    // Map employees to include roles and properly formatted data
+    return populatedEmployees.map(emp => {
+      const empObj = emp.toObject();
+      const roles = (empObj.accessProfileId as any)?.roles || [];
+      const payGrade = (empObj.payGradeId as any)?.grade || null;
+
+      return {
+        ...empObj,
+        email: empObj.workEmail, // Add email field for frontend compatibility
+        roles, // Add roles at top level
+        payGrade, // Add payGrade name for display
+      };
+    });
   }
 
   // Get an employee profile by ID
-  async findById(id: string): Promise<EmployeeProfileDocument> {
-    const employee = await this.employeeProfileModel.findById(id);
+  async findById(id: string): Promise<any> {
+    let employee = await this.employeeProfileModel
+      .findById(id)
+      .populate('accessProfileId')
+      .populate('primaryDepartmentId')
+      .populate('primaryPositionId')
+      .exec();
+
     if (!employee) {
       throw new NotFoundException('Employee profile not found');
     }
-    return employee;
+
+    // Only populate payGradeId if it's a valid ObjectId
+    const empObj = employee.toObject();
+    if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
+      const populatedEmployee = await this.employeeProfileModel
+        .findById(id)
+        .populate('accessProfileId')
+        .populate('primaryDepartmentId')
+        .populate('primaryPositionId')
+        .populate('payGradeId')
+        .exec();
+
+      if (populatedEmployee) {
+        employee = populatedEmployee;
+      }
+    }
+
+    const finalEmpObj = employee.toObject();
+    const roles = (finalEmpObj.accessProfileId as any)?.roles || [];
+    const payGrade = (finalEmpObj.payGradeId as any)?.grade || null;
+
+    return {
+      ...finalEmpObj,
+      email: finalEmpObj.workEmail, // Add email field for frontend compatibility
+      roles, // Add roles at top level
+      payGrade, // Add payGrade name for display
+    };
   }
 
   // Update an employee profile by ID

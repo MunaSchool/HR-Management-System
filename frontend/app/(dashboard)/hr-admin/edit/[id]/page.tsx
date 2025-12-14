@@ -13,7 +13,11 @@ interface EmployeeProfile {
   lastName: string;
   email: string;
   phone?: string;
-  address?: string;
+  address?: {
+    streetAddress?: string;
+    city?: string;
+    country?: string;
+  };
   dateOfBirth?: string;
   gender?: string;
   maritalStatus?: string;
@@ -23,6 +27,7 @@ interface EmployeeProfile {
   payGrade?: string;
   departmentId?: string;
   positionId?: string;
+  roles?: string[];
 }
 
 export default function EditEmployeePage() {
@@ -33,6 +38,8 @@ export default function EditEmployeePage() {
   const [employee, setEmployee] = useState<EmployeeProfile | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [hasAccess, setHasAccess] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [savingRoles, setSavingRoles] = useState(false);
 
   useEffect(() => {
     checkAccess();
@@ -61,6 +68,7 @@ export default function EditEmployeePage() {
     try {
       const response = await axiosInstance.get(`/employee-profile/${params.id}`);
       setEmployee(response.data);
+      setSelectedRoles(response.data.roles || []);
       setFormData({
         firstName: response.data.firstName || "",
         middleName: response.data.middleName || "",
@@ -124,6 +132,43 @@ export default function EditEmployeePage() {
     } catch (error: any) {
       alert(error?.response?.data?.message || "Failed to update status");
     }
+  };
+
+  const handleRoleAssignment = async () => {
+    if (selectedRoles.length === 0) {
+      alert("Please select at least one role");
+      return;
+    }
+
+    setSavingRoles(true);
+    try {
+      await axiosInstance.post(`/employee-profile/${params.id}/roles/assign`, {
+        roles: selectedRoles,
+        isActive: true,
+      });
+      alert("Roles updated successfully");
+      fetchEmployee();
+    } catch (error: any) {
+      alert(error?.response?.data?.message || "Failed to update roles");
+    } finally {
+      setSavingRoles(false);
+    }
+  };
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((prev) => {
+      const newRoles = prev.includes(role)
+        ? prev.filter((r) => r !== role)
+        : [...prev, role];
+
+      // Prevent deselecting all roles - at least one must be selected
+      if (newRoles.length === 0) {
+        alert("At least one role must be selected");
+        return prev;
+      }
+
+      return newRoles;
+    });
   };
 
   if (loading || !hasAccess) {
@@ -272,9 +317,8 @@ export default function EditEmployeePage() {
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
               </select>
             </div>
             <div>
@@ -289,10 +333,10 @@ export default function EditEmployeePage() {
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select</option>
-                <option value="Single">Single</option>
-                <option value="Married">Married</option>
-                <option value="Divorced">Divorced</option>
-                <option value="Widowed">Widowed</option>
+                <option value="SINGLE">Single</option>
+                <option value="MARRIED">Married</option>
+                <option value="DIVORCED">Divorced</option>
+                <option value="WIDOWED">Widowed</option>
               </select>
             </div>
             <div>
@@ -459,6 +503,64 @@ export default function EditEmployeePage() {
           </button>
         </div>
       </form>
+
+      {/* Role Management Section */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4 text-white">System Roles & Permissions</h2>
+        <p className="text-neutral-400 text-sm mb-4">
+          Assign roles to this employee. Changes are applied immediately.
+        </p>
+
+        <div className="space-y-3 mb-4">
+          {[
+            { value: "HR Admin", label: "HR Admin" },
+            { value: "System Admin", label: "System Admin" },
+            { value: "department employee", label: "Department Employee" },
+            { value: "department head", label: "Department Head" },
+            { value: "DEPARTMENT_MANAGER", label: "Department Manager" },
+            { value: "HR Manager", label: "HR Manager" },
+            { value: "HR Employee", label: "HR Employee" },
+            { value: "Payroll Specialist", label: "Payroll Specialist" },
+            { value: "Payroll Manager", label: "Payroll Manager" },
+            { value: "Recruiter", label: "Recruiter" },
+            { value: "Finance Staff", label: "Finance Staff" },
+          ].map((role) => (
+            <label
+              key={role.value}
+              className="flex items-center space-x-3 cursor-pointer hover:bg-neutral-800 p-2 rounded"
+            >
+              <input
+                type="checkbox"
+                checked={selectedRoles.includes(role.value)}
+                onChange={() => toggleRole(role.value)}
+                className="w-4 h-4 rounded border-neutral-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-neutral-900"
+              />
+              <span className="text-white">{role.label}</span>
+            </label>
+          ))}
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <button
+            type="button"
+            onClick={handleRoleAssignment}
+            disabled={savingRoles || selectedRoles.length === 0}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            {savingRoles ? "Saving Roles..." : "Update Roles"}
+          </button>
+          <span className="text-sm text-neutral-400">
+            {selectedRoles.length} role(s) selected
+          </span>
+        </div>
+
+        {employee?.roles && employee.roles.length > 0 && (
+          <div className="mt-4 p-3 bg-neutral-800 rounded">
+            <p className="text-xs text-neutral-400 mb-1">Current Roles:</p>
+            <p className="text-white text-sm">{employee.roles.join(", ")}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
