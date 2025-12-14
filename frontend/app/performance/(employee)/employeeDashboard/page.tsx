@@ -155,16 +155,6 @@ export default function EmployeeDashboard() {
         </div>
       )}
 
-      {/* Debug Info (remove in production) */}
-      {user && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-          <p className="text-sm font-medium">Debug User Info:</p>
-          <pre className="text-xs mt-1 overflow-auto">
-            {JSON.stringify(user, null, 2)}
-          </pre>
-        </div>
-      )}
-
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border rounded-lg p-6 shadow-sm">
