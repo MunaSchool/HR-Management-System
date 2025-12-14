@@ -3,16 +3,16 @@
 import { useAuth } from "@/app/(system)/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Link from "next/link";//engy added this so it navigates to /dep
+import Link from "next/link";
 
 export default function HomePage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [showCreateUser, setShowCreateUser] = useState(false);
 
-  // Check if user is HR Admin (case-insensitive check)
+  // Check if user is HR Admin
   const isHRAdmin = user?.roles?.some(role =>
-    role.toLowerCase() === 'hr admin' || role.toLowerCase() === 'system admin'
+    role === 'HR Admin' || role === 'System Admin'
   );
 
   const handleLogout = async () => {
@@ -79,11 +79,13 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Employee Profile */}
-            <DashboardCard
-              title="Employee Profile"
-              description="View and manage employee information"
-              icon="👤"
-            />
+            <Link href="/profile">
+              <DashboardCard
+                title="Employee Profile"
+                description="View and manage employee information"
+                icon="👤"
+              />
+            </Link>
 
             {/* Recruitment */}
             <DashboardCard
@@ -114,21 +116,33 @@ export default function HomePage() {
             />
 
             {/* Performance */}
-            <DashboardCard
-              title="Performance"
-              description="Track goals and reviews"
-              icon="📈"
-            />
-             {/* ⭐ NEW — Organization Structure (Departments) engy*/} 
-  <Link href="/organization-structure">
-    <div>
-      <DashboardCard
-        title="Organization Structure"
-        description="Manage departments and positions"
-        icon="🏛️"
-      />
-    </div>
-  </Link>
+            <Link href="/performance">
+              <DashboardCard
+                title="Performance"
+                description="Track goals and reviews"
+                icon="📈"
+              />
+            </Link>
+
+            {/* Organization Structure */}
+            <Link href="/organization-structure">
+              <DashboardCard
+                title="Organization Structure"
+                description="Manage departments and positions"
+                icon="🏛️"
+              />
+            </Link>
+
+            {/* Change Requests - Only for HR Admin */}
+            {isHRAdmin && (
+              <Link href="/change-requests">
+                <DashboardCard
+                  title="Change Requests"
+                  description="Review and approve employee changes"
+                  icon="📝"
+                />
+              </Link>
+            )}
           </div>
 
           {/* User Info */}
@@ -137,7 +151,7 @@ export default function HomePage() {
               Your Information
             </h3>
             <div className="space-y-2 text-gray-700 dark:text-gray-300">
-              <p><strong>Role:</strong> {user.role}</p>
+              <p><strong>Roles:</strong> {user.roles && user.roles.length > 0 ? user.roles.join(", ") : "N/A"}</p>
               <p><strong>Email:</strong> {user.email}</p>
               {user.age && <p><strong>Age:</strong> {user.age}</p>}
             </div>
@@ -157,6 +171,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     workEmail: '',
     password: '',
     firstName: '',
+    middleName: '',
     lastName: '',
     nationalId: '',
     dateOfHire: '',
@@ -290,6 +305,18 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Middle Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.middleName}
+                  onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   National ID *
                 </label>
                 <input
@@ -310,6 +337,110 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
                   required
                   value={formData.dateOfHire}
                   onChange={(e) => setFormData({ ...formData, dateOfHire: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Gender
+                </label>
+                <select
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Marital Status
+                </label>
+                <select
+                  value={formData.maritalStatus}
+                  onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select</option>
+                  <option value="SINGLE">Single</option>
+                  <option value="MARRIED">Married</option>
+                  <option value="DIVORCED">Divorced</option>
+                  <option value="WIDOWED">Widowed</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Mobile Phone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.mobilePhone}
+                  onChange={(e) => setFormData({ ...formData, mobilePhone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Personal Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.personalEmail}
+                  onChange={(e) => setFormData({ ...formData, personalEmail: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Street Address
+                </label>
+                <input
+                  type="text"
+                  value={formData.address.streetAddress}
+                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, streetAddress: e.target.value }})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  City
+                </label>
+                <input
+                  type="text"
+                  value={formData.address.city}
+                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value }})}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  value={formData.address.country}
+                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, country: e.target.value }})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>

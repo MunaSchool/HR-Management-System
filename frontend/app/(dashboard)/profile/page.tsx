@@ -9,24 +9,18 @@ interface EmployeeProfile {
   firstName: string;
   middleName?: string;
   lastName: string;
-  workEmail?: string;
-  personalEmail?: string;
-  mobilePhone?: string;
-  homePhone?: string;
-  address?: {
-    city?: string;
-    streetAddress?: string;
-    country?: string;
-  };
+  email: string;
+  phone?: string;
+  address?: string;
   dateOfBirth?: string;
   gender?: string;
   maritalStatus?: string;
   nationalId?: string;
-  dateOfHire?: string;
+  hireDate?: string;
   status: string;
   profilePictureUrl?: string;
-  primaryDepartmentId?: any;
-  primaryPositionId?: any;
+  departmentId?: string;
+  positionId?: string;
   payGrade?: string;
   roles?: any[];
   biography?: string;
@@ -88,7 +82,7 @@ export default function ProfilePage() {
 
   const handleUpdateBiography = async () => {
     try {
-      await axiosInstance.patch("/employee-profile/me/profile", { biography });
+      await axiosInstance.patch("/employee-profile/me", { biography });
       alert("Biography updated successfully");
       setEditBioMode(false);
       fetchProfile();
@@ -220,49 +214,10 @@ export default function ProfilePage() {
 
       {/* Biography */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Biography</h2>
-          {!editBioMode && (
-            <button
-              onClick={() => setEditBioMode(true)}
-              className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200"
-            >
-              Edit Biography
-            </button>
-          )}
-        </div>
-        {editBioMode ? (
-          <div className="space-y-4">
-            <textarea
-              value={biography}
-              onChange={(e) => setBiography(e.target.value)}
-              rows={6}
-              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
-              placeholder="Write a short biography about yourself..."
-            />
-            <div className="flex gap-4">
-              <button
-                onClick={handleUpdateBiography}
-                className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200"
-              >
-                Save Biography
-              </button>
-              <button
-                onClick={() => {
-                  setEditBioMode(false);
-                  setBiography(profile?.biography || "");
-                }}
-                className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="text-neutral-300 whitespace-pre-wrap">
-            {profile.biography || "No biography added yet."}
-          </p>
-        )}
+        <h2 className="text-xl font-semibold mb-4">Biography</h2>
+        <p className="text-neutral-300 whitespace-pre-wrap">
+          {profile.biography || "No biography added yet."}
+        </p>
       </div>
 
       {/* Contact Information (Editable) */}
@@ -355,26 +310,31 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-neutral-400">Work Email</label>
-              <p className="text-white">{profile.workEmail || "N/A"}</p>
+              <p className="text-white">{profile.email || "N/A"}</p>
             </div>
             <div>
               <label className="text-sm text-neutral-400">Personal Email</label>
-              <p className="text-white">{profile.personalEmail || "N/A"}</p>
+              <p className="text-white">{(profile as any).personalEmail || "N/A"}</p>
             </div>
             <div>
               <label className="text-sm text-neutral-400">Mobile Phone</label>
-              <p className="text-white">{profile.mobilePhone || "N/A"}</p>
+              <p className="text-white">{(profile as any).mobilePhone || "N/A"}</p>
             </div>
             <div>
               <label className="text-sm text-neutral-400">Home Phone</label>
-              <p className="text-white">{profile.homePhone || "N/A"}</p>
+              <p className="text-white">{(profile as any).homePhone || "N/A"}</p>
             </div>
             <div className="md:col-span-2">
               <label className="text-sm text-neutral-400">Address</label>
               <p className="text-white">
-                {profile.address?.streetAddress || profile.address?.city || profile.address?.country
-                  ? `${profile.address.streetAddress || ""} ${profile.address.city || ""}, ${profile.address.country || ""}`.trim()
-                  : "N/A"}
+                {(profile as any).address?.streetAddress && (
+                  <>
+                    {(profile as any).address.streetAddress}
+                    {(profile as any).address.city && `, ${(profile as any).address.city}`}
+                    {(profile as any).address.country && `, ${(profile as any).address.country}`}
+                  </>
+                )}
+                {!(profile as any).address?.streetAddress && "N/A"}
               </p>
             </div>
           </div>
@@ -388,8 +348,8 @@ export default function ProfilePage() {
           <div>
             <label className="text-sm text-neutral-400">Hire Date</label>
             <p className="text-white">
-              {profile.dateOfHire
-                ? new Date(profile.dateOfHire).toLocaleDateString()
+              {profile.hireDate
+                ? new Date(profile.hireDate).toLocaleDateString()
                 : "N/A"}
             </p>
           </div>

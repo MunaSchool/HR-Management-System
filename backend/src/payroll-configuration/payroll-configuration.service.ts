@@ -74,16 +74,12 @@ export class PayrollConfigurationService
 
 
     //////2- config pay grades
-    async getAllPayGrades(): Promise<payGradeDocument[]> {
-        return await this.payGradeModel.find().exec();
-    }
-
     async getPayGrade(id: string): Promise<payGradeDocument|null> {
-        return await this.payGradeModel.findById(id);
+        return await this.payGradeModel.findById({ id });
     }
 
     async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument|null> {
-        const newpg = new this.payGradeModel(pg);
+        const newpg = new this.payGradeModel(payGrade);
         return newpg.save();
     }
 

@@ -25,6 +25,11 @@ import { employeePayrollDetails } from 'src/payroll-execution/models/employeePay
 import { employeeSigningBonus } from 'src/payroll-execution/models/EmployeeSigningBonus.schema';
 import { signingBonus } from 'src/payroll-configuration/models/signingBonus.schema';
 //import { PayrollExecutionService } from 'src/external-controller-services/services/payroll-execution-service.service';
+import { EmployeeRoleService } from 'src/employee-profile/services/employee-role.service';
+import { AuthService } from 'src/auth/auth.service';
+import { PayrollConfigurationService } from 'src/payroll-configuration/payroll-configuration.service';
+import { ConfigStatus } from 'src/payroll-configuration/enums/payroll-configuration-enums';
+import { PayRollStatus } from 'src/payroll-execution/enums/payroll-execution-enum';
 
 @Injectable()
 export class OnboardingService {
@@ -60,7 +65,14 @@ export class OnboardingService {
 
     private readonly employeeCrudService: EmployeeProfileService ,
 
-    private readonly payrollExectutionService : PayrollExecutionService ,
+    private readonly payrollExecutionService : PayrollExecutionService ,
+
+    private readonly employeeRoleService : EmployeeRoleService ,
+
+    private readonly authService : AuthService  ,
+
+    private readonly payrollConfigurationService :PayrollConfigurationService 
+    
 
   ) {}
 
@@ -87,22 +99,17 @@ export class OnboardingService {
 
   
   async updateContract(contractId: string, contractData: UpdateContractDto): Promise<ContractDocument> {
+
     const currentContract = await this.contractModel.findById(contractId);
-    if (!currentContract) {
-      throw new NotFoundException(`Contract with ID ${contractId} not found`);
-    }
+    if (!currentContract) {throw new NotFoundException(`Contract with ID ${contractId} not found`);}
 
     const updatedContract = await this.contractModel.findByIdAndUpdate(contractId, contractData, { new: true });
 
-    if (!updatedContract) {
-      throw new NotFoundException(`Contract with ID ${contractId} not found`);
-    }
+    if (!updatedContract) {throw new NotFoundException(`Contract with ID ${contractId} not found`);}
 
     // Get offer details
     const offer = await this.offerModel.findById(currentContract.offerId).exec();
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
+    if (!offer) { throw new NotFoundException('Offer not found');}
 
     const candidateID = offer.candidateId;
     const hrManagerID = offer.hrEmployeeId;
@@ -126,105 +133,131 @@ export class OnboardingService {
     }
 
     // Trigger: Both signatures complete - update to HIRED and trigger all systems
-    if (
-      updatedContract.employeeSignedAt &&
-      updatedContract.employerSignedAt &&
-      (!currentContract.employeeSignedAt || !currentContract.employerSignedAt)
-    ) {
+    if ( updatedContract.employeeSignedAt && updatedContract.employerSignedAt &&
+      (!currentContract.employeeSignedAt || !currentContract.employerSignedAt)) {
+
+      //update application to hired
       const application = await this.applicationModel.findById(offer.applicationId);
       if (application) {
-        await this.applicationModel.findByIdAndUpdate(
-          offer.applicationId,
+        await this.applicationModel.findByIdAndUpdate(offer.applicationId,
           { status: ApplicationStatus.HIRED },
           { new: true }
         );
 
-        // 1. CREATE SIGNING BONUS RECORD IF CONTRACT HAS SIGNING BONUS
-        if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
-          // Find the active/approved signing bonus template from payroll config
-          const signingBonusConfig = await this.signingBonusConfigModel
-            .findOne({
-              status: 'APPROVED',
-            })
-            .sort({ createdAt: -1 })
-            .exec();
+        //  provision system access (payroll, email, internal systems), so that the employee can work via notification
 
-          if (!signingBonusConfig) {
-            throw new NotFoundException('No approved signing bonus configuration found');
-          }
+        const payrollManagers = await this.employeeRoleService.getEmployeesByRole(SystemRole.PAYROLL_MANAGER);
 
-          const signingBonusRecord = await this.employeeSigningBonusModel.create({
-            employeeId: candidateID,
-            signingBonusId: signingBonusConfig._id,
-            givenAmount: updatedContract.signingBonus,
-            paymentDate: null,
-            status: 'PENDING',
+        if (!payrollManagers || payrollManagers.length === 0) throw new NotFoundException('Payroll Managers not found');
+
+        const payrollManager = payrollManagers[0];
+
+        const systemAdmins = await this.employeeRoleService.getEmployeesByRole(SystemRole.SYSTEM_ADMIN);
+
+        if (!systemAdmins || systemAdmins.length === 0) throw new NotFoundException('System Admins managers not found');
+
+        const systemAdmin = systemAdmins[0];
+
+          //send notification to a payroll mananger
+         await this.notificationLogService.sendNotification({
+            to: payrollManager.id,
+            type: 'Payroll provisioning required',
+            message: `Require payroll provisioning for new hire ${candidateID}`,
           });
 
-          // Notify payroll to review signing bonus
+          //send notification for system access provisioning
+           await this.notificationLogService.sendNotification({
+            to: systemAdmin.id,
+            type: 'System access provisioning required',
+            message: `Require requires system access provisioning for new hire ${candidateID}`,
+          }); 
+
+          //send notification for email access provisioning
+           await this.notificationLogService.sendNotification({
+            to: systemAdmin._id,
+            type: 'Email access provisioning required',
+            message: `Require Email system access provisioning for new hire ${candidateID}`,
+          }); 
+
           await this.notificationLogService.sendNotification({
-            to: hrManagerID,
-            type: 'Signing Bonus Approval Required',
-            message: `New hire signing bonus of ${updatedContract.signingBonus} requires approval for employee ${candidateID}`,
-          });
-        }
-
-        // 2. HANDLE PAYROLL CYCLE START DATE
-        const currentDate = new Date();
-        const currentPayrollRun = await this.payrollRunsModel.findOne({
-          payrollPeriod: {
-            $gte: new Date(currentDate.getFullYear(), currentDate.getMonth(), 1),
-            $lt: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1),
-          },
-          status: { $in: ['DRAFT', 'IN_PROGRESS'] },
-        });
-
-        if (currentPayrollRun) {
-          await this.employeePayrollDetailsModel.create({
-            employeeId: candidateID,
-            payrollRunId: currentPayrollRun._id,
-            baseSalary: updatedContract.grossSalary,
-            allowances: 0,
-            deductions: 0,
-            netSalary: updatedContract.grossSalary,
-            netPay: updatedContract.grossSalary,
-            bankStatus: 'MISSING',
-            bonus: updatedContract.signingBonus || 0,
-            benefit: 0,
-            exceptions: `New hire - Start date: ${updatedContract.employerSignedAt}`,
-          });
-        }
-
-        // Equipment and system setup notifications
-        await this.notificationLogService.sendNotification({
-          to: hrManagerID,
+          to: systemAdmin.id,
           type: 'New Hire Equipment Setup Required',
           message: `New hire equipment and workspace setup needed for employee ID: ${offer.candidateId}. Please reserve: desk, laptop, access card, and other equipment.`,
         });
 
-        await this.notificationLogService.sendNotification({
-          to: hrManagerID,
-          type: 'System Access Provisioning Required',
-          message: `New hire requires system access provisioning for employee ID: ${offer.candidateId}. Please set up: Email account, Payroll system access, Internal systems access, VPN credentials, and other required system permissions.`,
-        });
+        //As a HR Manager, I want automated account provisioning (SSO/email/tools) on start date and scheduled revocation on exit, so access is consistent and secure. Will regsiter a new employee account automatically
 
-        await this.notificationLogService.sendNotification({
-          to: hrManagerID,
-          type: 'Email Account Setup Required',
-          message: `Please create email account and configure access for new hire (Employee ID: ${offer.candidateId}). Ensure email is active before Day 1.`,
+        try {
+          //will create it blank with no details and admin should edit their employee details internally
+        await this.authService.register({
+          employeeNumber: '--', // Must be uniqu
+          workEmail: '--', // Must be unique and valid format
+          password: '--',
+          firstName: '--',
+          lastName: '--',
+          nationalId:  '--', // Must be unique
+          dateOfHire: new Date().toISOString() ,
         });
+        
+        console.log('Employee account provisioned with placeholder data');
+      } catch (error) {
+        console.error('Failed to provision employee account:', error);
+      }
+      
+      //As a HR Manager, I want the system to automatically process signing bonuses based on contract after a new hire is signed. which means you need to trigger service that fills collection that relates user to signing Bonuswhich is in payroll execution module
 
-        await this.notificationLogService.sendNotification({
-          to: hrManagerID,
-          type: 'Payroll System Access Required',
-          message: `New hire needs payroll system access (Employee ID: ${offer.candidateId}). Please provision account and send credentials securely.`,
-        });
+      //will call a new signing bonus and call the approve signing bonus to execute it automatically
+      try {
+          if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
+            
+            const newSigningBonus = await this.payrollConfigurationService.createSigningBonuses({
+              positionName: updatedContract.role,
+              amount: updatedContract.signingBonus,
+              status: ConfigStatus.DRAFT
+            });
 
-        await this.notificationLogService.sendNotification({
-          to: candidateID,
-          type: 'Welcome! System Setup in Progress',
-          message: 'Welcome to the team! Our IT team is setting up your email, payroll access, and internal systems. You will receive your credentials before your start date.',
-        });
+            await this.payrollExecutionService.approveSigningBonus(newSigningBonus?.id);
+          }
+        } catch (error) {
+          console.error('Error processing signing bonus:', error);
+      }
+
+      //As a HR Manager, I want the system to automatically handle payroll initiation based on the contract signing day for the current payroll cycle. just setting start date if done in any prev phase you can skip since it is handled
+
+      //As a HR Manager, I want the system to automatically handle payroll initiation based on the contract signing day for the current payroll cycle.
+      try {
+        const contractSigningDate = updatedContract.employerSignedAt || new Date();
+        
+        // Calculate the payroll period end date (last day of the current month)
+        const payrollPeriodEnd = new Date(contractSigningDate.getFullYear(),
+          contractSigningDate.getMonth() + 1,
+          0 // Last day of the month
+        );
+
+        // Find existing draft payroll run for this period
+        const existingPayrollRun = await this.payrollRunsModel.findOne({ 
+          payrollPeriod: payrollPeriodEnd,
+          status: PayRollStatus.DRAFT
+        }).exec();
+
+        if (!existingPayrollRun) {
+          console.warn('No draft payroll run found for this period.');
+        } else {
+          console.log(`Found existing draft payroll run: ${existingPayrollRun.runId}`);
+          
+          // Start payroll initiation
+          const initiationResult = await this.payrollExecutionService.startPayrollInitiation({
+            payrollRunId: existingPayrollRun._id.toString(),
+            payrollSpecialistId: payrollManager.id.toString(),
+          });
+          
+          console.log(`Payroll initiation started: ${initiationResult.message}`);
+        }
+
+      } catch (error) {
+        console.error('Error handling payroll initiation:', error);
+      }
+
       }
     }
 
