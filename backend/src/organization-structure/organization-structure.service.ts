@@ -105,6 +105,22 @@ export class OrganizationStructureService {
     if (!updated) throw new NotFoundException("Department not found");
     return updated;
   }
+  // ============================
+// 📌 ACTIVATE DEPARTMENT
+// ============================
+async activateDepartment(id: string) {
+  const updated = await this.departmentModel.findByIdAndUpdate(
+    id,
+    { isActive: true },
+    { new: true }
+  );
+
+  if (!updated) {
+    throw new NotFoundException("Department not found");
+  }
+
+  return updated;
+}
 
   // ======================
   // 📌 CREATE POSITION
@@ -177,6 +193,19 @@ export class OrganizationStructureService {
     if (!updated) throw new NotFoundException("Position not found");
     return updated;
   }
+  // ======================
+// 📌 ACTIVATE POSITION
+// ======================
+async activatePosition(id: string) {
+  const updated = await this.positionModel.findByIdAndUpdate(
+    id,
+    { isActive: true },
+    { new: true }
+  );
+
+  if (!updated) throw new NotFoundException("Position not found");
+  return updated;
+}
 
   // ======================
   // 📌 SUBMIT CHANGE REQUEST

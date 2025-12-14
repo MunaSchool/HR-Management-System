@@ -68,6 +68,15 @@ export class OrganizationStructureController {
   deactivateDepartment(@Param('id') id: string) {
     return this.organizationStructureService.deactivateDepartment(id);
   }
+  // ============================
+// 📌 ACTIVATE DEPARTMENT
+// ============================
+@Patch('departments/:id/activate')
+@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+activateDepartment(@Param('id') id: string) {
+  return this.organizationStructureService.activateDepartment(id);
+}
+
 
   // ======================
   // 📌 POSITIONS
@@ -109,12 +118,17 @@ export class OrganizationStructureController {
     return this.organizationStructureService.movePosition(id, dto);
   }
 
-  @Patch('positions/:id/delimit')
-@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added HRAdmin
-delimitPosition(@Param('id') id: string) {
-  return this.organizationStructureService.delimitPosition(id);
+@Patch('positions/:id/deactivate')
+@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+deactivatePosition(@Param('id') id: string) {
+  return this.organizationStructureService.deactivatePosition(id);
 }
 
+@Patch('positions/:id/activate')
+@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+activatePosition(@Param('id') id: string) {
+  return this.organizationStructureService.activatePosition(id);
+}
 
   // ======================
   // 📌 STRUCTURE CHANGE REQUESTS

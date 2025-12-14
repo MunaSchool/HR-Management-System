@@ -12,7 +12,7 @@ export default function DepartmentsPage() {
   const fetchDepartments = async () => {
     try {
       const res = await axiosInstance.get(
-        "/organization-structure/departments"
+        "/organization-structure/departments?includeInactive=true"
       );
 
       setDepartments(res.data);
@@ -24,7 +24,7 @@ export default function DepartmentsPage() {
     }
   };
   // ⭐ NEW FUNCTION — deactivate or activate a department
-  const deactivateDepartment = async (id: string, isActive: boolean) => {
+  const toggleDepartmentStatus = async (id: string, isActive: boolean) => {
   const action = isActive ? "deactivate" : "activate";
 
   const confirmed = confirm(
@@ -34,9 +34,11 @@ export default function DepartmentsPage() {
   if (!confirmed) return;
 
   try {
-    await axiosInstance.patch(
-      `/organization-structure/departments/${id}/deactivate`
-    );
+      const endpoint = isActive
+      ? `/organization-structure/departments/${id}/deactivate`
+      : `/organization-structure/departments/${id}/activate`;
+
+    await axiosInstance.patch(endpoint);
 
     fetchDepartments(); // Refresh list
   } catch (err: any) {
@@ -94,7 +96,7 @@ export default function DepartmentsPage() {
                   </Link>
                   {/* Deactivate button */}
       <button
-  onClick={() => deactivateDepartment(dept._id, dept.isActive)}
+  onClick={() => toggleDepartmentStatus(dept._id, dept.isActive)}
   style={{ marginLeft: 10, color: "red" }}
 >
   {dept.isActive ? "Deactivate" : "Activate"}

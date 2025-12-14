@@ -31,9 +31,11 @@ export default function PositionsPage() {
     if (!confirmed) return;
 
     try {
-      await axiosInstance.patch(
-        `/organization-structure/positions/${id}/delimit`
-      );
+     const endpoint = isActive
+      ? `/organization-structure/positions/${id}/deactivate`
+      : `/organization-structure/positions/${id}/activate`;
+
+    await axiosInstance.patch(endpoint);
       fetchPositions(); // Refresh list
     } catch (err: any) {
       console.error(err);
@@ -89,10 +91,10 @@ export default function PositionsPage() {
                   </Link>
                     {/* ACTIVATE / DEACTIVATE BUTTON */}
                   <button
-  onClick={() => togglePositionStatus(pos._id)}
+  onClick={() => togglePositionStatus(pos._id, pos.isActive)}
   style={{ marginLeft: 10, color: "red" }}
 >
-  Deactivate
+  {pos.isActive ? "Deactivate" : "Activate"}
 </button>
 
                 </td>
