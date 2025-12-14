@@ -160,7 +160,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     lastName: '',
     nationalId: '',
     dateOfHire: '',
-    roles: [] as string[],
+    role: 'department employee',
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -195,16 +195,24 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const toggleRole = (role: string) => {
-    setFormData(prev => ({
-      ...prev,
-      roles: prev.roles.includes(role)
-        ? prev.roles.filter(r => r !== role)
-        : [...prev.roles, role]
-    }));
+  const handleRoleChange = (role: string) => {
+    setFormData({ ...formData, role });
   };
 
-  const availableRoles = ['hr admin', 'system admin', 'department employee', 'manager'];
+  const availableRoles = [
+    'department employee',
+    'department head',
+    'DEPARTMENT_MANAGER',
+    'HR Admin',
+    'HR Manager',
+    'HR Employee',
+    'Payroll Specialist',
+    'Payroll Manager',
+    'System Admin',
+    'Legal & Policy Admin',
+    'Recruiter',
+    'Finance Staff',
+  ];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -323,18 +331,19 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Roles (select at least one)
+                Role (select one)
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {availableRoles.map((role) => (
-                  <label key={role} className="flex items-center space-x-2 cursor-pointer">
+                {availableRoles.map((roleOption) => (
+                  <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
                     <input
-                      type="checkbox"
-                      checked={formData.roles.includes(role)}
-                      onChange={() => toggleRole(role)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      type="radio"
+                      name="role"
+                      checked={formData.role === roleOption}
+                      onChange={() => handleRoleChange(roleOption)}
+                      className="border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{role}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{roleOption}</span>
                   </label>
                 ))}
               </div>
@@ -349,7 +358,7 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
             <div className="flex gap-3 pt-4">
               <button
                 type="submit"
-                disabled={loading || formData.roles.length === 0}
+                disabled={loading}
                 className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {loading ? 'Creating...' : 'Create User'}

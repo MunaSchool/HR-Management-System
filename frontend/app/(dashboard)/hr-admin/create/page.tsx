@@ -32,26 +32,11 @@ export default function CreateEmployeePage() {
     status: "ACTIVE",
     payGrade: "",
     password: "",
-    roles: ["department employee"], // Default role
+    role: "department employee", // Single role
   });
 
-  const toggleRole = (role: string) => {
-    setFormData((prev) => {
-      const newRoles = prev.roles.includes(role)
-        ? prev.roles.filter((r) => r !== role)
-        : [...prev.roles, role];
-
-      // Prevent deselecting all roles - at least one must be selected
-      if (newRoles.length === 0) {
-        alert("At least one role must be selected");
-        return prev;
-      }
-
-      return {
-        ...prev,
-        roles: newRoles,
-      };
-    });
+  const handleRoleChange = (role: string) => {
+    setFormData({ ...formData, role });
   };
 
   useEffect(() => {
@@ -407,45 +392,47 @@ export default function CreateEmployeePage() {
           </div>
         </div>
 
-        {/* System Roles */}
+        {/* System Role */}
         <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 text-white">System Roles *</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white">System Role *</h2>
           <p className="text-neutral-400 text-sm mb-4">
-            Select one or more roles for this employee. At least one role is required.
+            Select one role for this employee.
           </p>
 
           <div className="space-y-3">
             {[
-              { value: "HR Admin", label: "HR Admin" },
-              { value: "System Admin", label: "System Admin" },
               { value: "department employee", label: "Department Employee" },
               { value: "department head", label: "Department Head" },
               { value: "DEPARTMENT_MANAGER", label: "Department Manager" },
+              { value: "HR Admin", label: "HR Admin" },
               { value: "HR Manager", label: "HR Manager" },
               { value: "HR Employee", label: "HR Employee" },
               { value: "Payroll Specialist", label: "Payroll Specialist" },
               { value: "Payroll Manager", label: "Payroll Manager" },
+              { value: "System Admin", label: "System Admin" },
+              { value: "Legal & Policy Admin", label: "Legal & Policy Admin" },
               { value: "Recruiter", label: "Recruiter" },
               { value: "Finance Staff", label: "Finance Staff" },
-            ].map((role) => (
+            ].map((roleOption) => (
               <label
-                key={role.value}
+                key={roleOption.value}
                 className="flex items-center space-x-3 cursor-pointer hover:bg-neutral-800 p-2 rounded"
               >
                 <input
-                  type="checkbox"
-                  checked={formData.roles.includes(role.value)}
-                  onChange={() => toggleRole(role.value)}
-                  className="w-4 h-4 rounded border-neutral-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-neutral-900"
+                  type="radio"
+                  name="role"
+                  checked={formData.role === roleOption.value}
+                  onChange={() => handleRoleChange(roleOption.value)}
+                  className="w-4 h-4 border-neutral-600 text-blue-600 focus:ring-blue-500 focus:ring-offset-neutral-900"
                 />
-                <span className="text-white">{role.label}</span>
+                <span className="text-white">{roleOption.label}</span>
               </label>
             ))}
           </div>
 
           <div className="mt-4 p-3 bg-neutral-800 rounded">
             <p className="text-sm text-neutral-400">
-              {formData.roles.length} role(s) selected: {formData.roles.join(", ")}
+              Selected role: {formData.role}
             </p>
           </div>
         </div>
@@ -454,7 +441,7 @@ export default function CreateEmployeePage() {
         <div className="flex space-x-4">
           <button
             type="submit"
-            disabled={saving || formData.roles.length === 0}
+            disabled={saving}
             className="px-6 py-2 bg-white text-black rounded-lg hover:bg-neutral-200 disabled:opacity-50 font-medium"
           >
             {saving ? "Creating..." : "Create Employee"}

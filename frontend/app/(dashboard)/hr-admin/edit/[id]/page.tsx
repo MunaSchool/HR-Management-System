@@ -540,15 +540,16 @@ export default function EditEmployeePage() {
 
         <div className="space-y-3 mb-4">
           {[
-            { value: "HR Admin", label: "HR Admin" },
-            { value: "System Admin", label: "System Admin" },
             { value: "department employee", label: "Department Employee" },
             { value: "department head", label: "Department Head" },
             { value: "DEPARTMENT_MANAGER", label: "Department Manager" },
+            { value: "HR Admin", label: "HR Admin" },
             { value: "HR Manager", label: "HR Manager" },
             { value: "HR Employee", label: "HR Employee" },
             { value: "Payroll Specialist", label: "Payroll Specialist" },
             { value: "Payroll Manager", label: "Payroll Manager" },
+            { value: "System Admin", label: "System Admin" },
+            { value: "Legal & Policy Admin", label: "Legal & Policy Admin" },
             { value: "Recruiter", label: "Recruiter" },
             { value: "Finance Staff", label: "Finance Staff" },
           ].map((role) => (
