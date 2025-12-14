@@ -19,17 +19,32 @@ export class EmployeeSelfServiceService {
 
   // Get my employee profile (US-E2-04)
   async getMyProfile(employeeId: string): Promise<any> {
-    const profile = await this.employeeProfileModel
+    let profile = await this.employeeProfileModel
       .findById(employeeId)
       .populate('accessProfileId')
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
       .populate('supervisorPositionId')
-      .populate('payGradeId')
       .exec();
 
     if (!profile) {
       throw new NotFoundException('Employee profile not found');
+    }
+
+    // Only populate payGradeId if it's a valid ObjectId
+    const tempObj = profile.toObject();
+    if (tempObj.payGradeId && Types.ObjectId.isValid(tempObj.payGradeId)) {
+      const populatedProfile = await this.employeeProfileModel
+        .findById(employeeId)
+        .populate('accessProfileId')
+        .populate('primaryPositionId')
+        .populate('primaryDepartmentId')
+        .populate('supervisorPositionId')
+        .populate('payGradeId')
+        .exec();
+      if (populatedProfile) {
+        profile = populatedProfile;
+      }
     }
 
     // Retrieve appraisal history from Performance module with error handling
@@ -46,9 +61,13 @@ export class EmployeeSelfServiceService {
     // Extract roles from accessProfileId for easier access
     const roles = (profileObj.accessProfileId as any)?.roles || [];
 
+    // Extract pay grade name from payGradeId for easier access
+    const payGrade = (profileObj.payGradeId as any)?.grade || null;
+
     return {
       ...profileObj,
       roles, // Add roles at top level for convenience
+      payGrade, // Add payGrade name for display
       appraisalHistory,
     };
   }

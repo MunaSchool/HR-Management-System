@@ -15,8 +15,10 @@ export default function CreateEmployeePage() {
     firstName: "",
     middleName: "",
     lastName: "",
-    email: "",
-    phone: "",
+    workEmail: "",
+    personalEmail: "",
+    mobilePhone: "",
+    homePhone: "",
     address: {
       streetAddress: "",
       city: "",
@@ -265,24 +267,46 @@ export default function CreateEmployeePage() {
           <h2 className="text-xl font-semibold mb-4 text-white">Contact Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-neutral-400 block mb-1">Email *</label>
+              <label className="text-sm text-neutral-400 block mb-1">Work Email *</label>
               <input
                 type="email"
-                value={formData.email}
+                value={formData.workEmail}
                 onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
+                  setFormData({ ...formData, workEmail: e.target.value })
                 }
                 required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />
             </div>
             <div>
-              <label className="text-sm text-neutral-400 block mb-1">Phone</label>
+              <label className="text-sm text-neutral-400 block mb-1">Mobile Phone</label>
               <input
                 type="tel"
-                value={formData.phone}
+                value={formData.mobilePhone}
                 onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
+                  setFormData({ ...formData, mobilePhone: e.target.value })
+                }
+                className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-neutral-400 block mb-1">Personal Email</label>
+              <input
+                type="email"
+                value={formData.personalEmail}
+                onChange={(e) =>
+                  setFormData({ ...formData, personalEmail: e.target.value })
+                }
+                className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-neutral-400 block mb-1">Home Phone</label>
+              <input
+                type="tel"
+                value={formData.homePhone}
+                onChange={(e) =>
+                  setFormData({ ...formData, homePhone: e.target.value })
                 }
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />

@@ -183,7 +183,7 @@ export class EmployeeProfileController {
   // ==================== MANAGER ROUTES ====================
   @Get('team')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_MANAGER)
   async getTeamMembers(@CurrentUser() user: CurrentUserData) {
     const managerPositionId = user['managerPositionId'] || user.employeeId;
     return this.employeeProfileService.getTeamMembers(managerPositionId);
@@ -191,7 +191,7 @@ export class EmployeeProfileController {
 
   @Get('team/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_MANAGER)
   async getTeamMemberProfile(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,

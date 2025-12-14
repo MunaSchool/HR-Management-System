@@ -40,6 +40,7 @@ export default function EditEmployeePage() {
   const [hasAccess, setHasAccess] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [savingRoles, setSavingRoles] = useState(false);
+  const [payGrades, setPayGrades] = useState<any[]>([]);
 
   useEffect(() => {
     checkAccess();
@@ -58,9 +59,20 @@ export default function EditEmployeePage() {
 
       setHasAccess(true);
       fetchEmployee();
+      fetchPayGrades();
     } catch (error) {
       console.error("Error checking access:", error);
       router.push("/profile");
+    }
+  };
+
+  const fetchPayGrades = async () => {
+    try {
+      const response = await axiosInstance.get("/payroll-configuration/pay-grades");
+      setPayGrades(response.data);
+    } catch (error) {
+      console.error("Error fetching pay grades:", error);
+      // Continue without pay grades if endpoint doesn't exist
     }
   };
 
@@ -470,17 +482,32 @@ export default function EditEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Pay Grade ID
+                Pay Grade
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.payGradeId}
                 onChange={(e) =>
                   setFormData({ ...formData, payGradeId: e.target.value })
                 }
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
-                placeholder="MongoDB ObjectId"
-              />
+              >
+                <option value="">Select Pay Grade</option>
+                {payGrades.map((grade) => (
+                  <option key={grade._id} value={grade._id}>
+                    {grade.grade}
+                    {grade.minSalary && grade.maxSalary
+                      ? ` (Min: $${grade.minSalary?.toLocaleString()} - Max: $${grade.maxSalary?.toLocaleString()})`
+                      : grade.baseSalary
+                      ? ` (Base: $${grade.baseSalary?.toLocaleString()})`
+                      : ''}
+                  </option>
+                ))}
+              </select>
+              {payGrades.length === 0 && (
+                <p className="text-xs text-neutral-500 mt-1">
+                  No pay grades available. Contact Payroll Admin to create pay grades.
+                </p>
+              )}
             </div>
           </div>
         </div>

@@ -74,6 +74,47 @@ export class PayrollConfigurationController {
   }
 
   // -------------------
+  // PAY GRADES
+  // -------------------
+
+  @Get('pay-grades')
+  @UseGuards(AuthGuard)
+  async getAllPayGrades() {
+    return this.payrollConfigurationService.getAllPayGrades();
+  }
+
+  @Get('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.HR_ADMIN)
+  async getPayGrade(@Param('id') id: string) {
+    return this.payrollConfigurationService.getPayGrade(id);
+  }
+
+  @Post('pay-grades')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async addPayGrade(@Body() payGradeData: addPayGradeDTO) {
+    return this.payrollConfigurationService.AddPayGrade(payGradeData);
+  }
+
+  @Put('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async editPayGrade(
+    @Param('id') id: string,
+    @Body() updateData: editPayGradeDTO
+  ) {
+    return this.payrollConfigurationService.editPayGrade(id, updateData);
+  }
+
+  @Delete('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async removePayGrade(@Param('id') id: string) {
+    return this.payrollConfigurationService.remove(id);
+  }
+
+  // -------------------
   // INSURANCE BRACKETS
   // -------------------
 
