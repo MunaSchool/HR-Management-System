@@ -58,10 +58,14 @@ export class AuthService {
       workEmail: registerDto.workEmail,
       password: hashedPassword,
       firstName: registerDto.firstName,
+      middleName: registerDto.middleName,
       lastName: registerDto.lastName,
       nationalId: registerDto.nationalId,
       dateOfHire: new Date(registerDto.dateOfHire),
-      fullName: `${registerDto.firstName} ${registerDto.lastName}`,
+      fullName: `${registerDto.firstName} ${registerDto.middleName ? registerDto.middleName + ' ' : ''}${registerDto.lastName}`,
+      gender: registerDto.gender,
+      maritalStatus: registerDto.maritalStatus,
+      address: registerDto.address,
     });
 
     // Create role assignment with provided roles or default

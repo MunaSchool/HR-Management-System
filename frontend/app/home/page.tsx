@@ -40,7 +40,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-gray-700 dark:text-gray-300">
-                Welcome, {user.name || user.email}
+                Welcome, {user.firstName || user.email}
               </span>
               {isHRAdmin && (
                 <button
@@ -176,6 +176,15 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     nationalId: '',
     dateOfHire: '',
     role: 'department employee',
+    address: {
+      streetAddress: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: ''
+    },
+    gender: 'MALE',
+    maritalStatus: 'SINGLE',
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -187,11 +196,18 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     setLoading(true);
 
     try {
+      // Convert role (string) to roles (array) for backend
+      const payload = {
+        ...formData,
+        roles: [formData.role], // Backend expects roles as array
+      };
+      delete (payload as any).role; // Remove singular role field
+
       const response = await fetch('http://localhost:4000/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -214,19 +230,21 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     setFormData({ ...formData, role });
   };
 
+  // Must match EXACTLY with backend SystemRole enum values
   const availableRoles = [
-    'department employee',
-    'department head',
-    'DEPARTMENT_MANAGER',
-    'HR Admin',
-    'HR Manager',
-    'HR Employee',
-    'Payroll Specialist',
-    'Payroll Manager',
-    'System Admin',
-    'Legal & Policy Admin',
-    'Recruiter',
-    'Finance Staff',
+    'department employee',     // DEPARTMENT_EMPLOYEE
+    'department head',         // DEPARTMENT_HEAD
+    'DEPARTMENT_MANAGER',      // DEPARTMENT_MANAGER
+    'HR Manager',              // HR_MANAGER ⚠️ Capital H, M
+    'HR Admin',                // HR_ADMIN ⚠️ Capital H, A
+    'HR Employee',             // HR_EMPLOYEE
+    'Payroll Specialist',      // PAYROLL_SPECIALIST
+    'Payroll Manager',         // PAYROLL_MANAGER
+    'System Admin',            // SYSTEM_ADMIN
+    'Legal & Policy Admin',    // LEGAL_POLICY_ADMIN
+    'Recruiter',               // RECRUITER
+    'Finance Staff',           // FINANCE_STAFF
+    'Job Candidate',           // JOB_CANDIDATE
   ];
 
   return (
@@ -415,9 +433,10 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
                 </label>
                 <input
                   type="text"
-                  value={formData.address.streetAddress}
+                  value={formData.address?.streetAddress || ''}
                   onChange={(e) => setFormData({ ...formData, address: { ...formData.address, streetAddress: e.target.value }})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="123 Main St"
                 />
               </div>
 
@@ -427,9 +446,10 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
                 </label>
                 <input
                   type="text"
-                  value={formData.address.city}
+                  value={formData.address?.city || ''}
                   onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value }})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Cairo"
                 />
               </div>
 
@@ -439,9 +459,10 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
                 </label>
                 <input
                   type="text"
-                  value={formData.address.country}
+                  value={formData.address?.country || ''}
                   onChange={(e) => setFormData({ ...formData, address: { ...formData.address, country: e.target.value }})}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Egypt"
                 />
               </div>
 

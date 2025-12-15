@@ -66,7 +66,14 @@ export default function CreateEmployeePage() {
     setSaving(true);
 
     try {
-      await axiosInstance.post("/employee-profile", formData);
+      // Convert role (string) to systemRoles (array) for backend
+      const payload = {
+        ...formData,
+        systemRoles: [formData.role], // Backend expects systemRoles as array
+      };
+      delete (payload as any).role; // Remove singular role field
+
+      await axiosInstance.post("/employee-profile", payload);
       alert("Employee created successfully");
       router.push("/hr-admin");
     } catch (error: any) {

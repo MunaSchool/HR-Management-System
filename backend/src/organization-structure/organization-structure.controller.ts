@@ -68,6 +68,15 @@ export class OrganizationStructureController {
   deactivateDepartment(@Param('id') id: string) {
     return this.organizationStructureService.deactivateDepartment(id);
   }
+  // ============================
+// 📌 ACTIVATE DEPARTMENT
+// ============================
+@Patch('departments/:id/activate')
+@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+activateDepartment(@Param('id') id: string) {
+  return this.organizationStructureService.activateDepartment(id);
+}
+
 
   // ======================
   // 📌 POSITIONS
@@ -109,25 +118,38 @@ export class OrganizationStructureController {
     return this.organizationStructureService.movePosition(id, dto);
   }
 
-  @Patch('positions/:id/delimit')
-@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added HRAdmin
-delimitPosition(@Param('id') id: string) {
-  return this.organizationStructureService.delimitPosition(id);
+@Patch('positions/:id/deactivate')
+@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+deactivatePosition(@Param('id') id: string) {
+  return this.organizationStructureService.deactivatePosition(id);
 }
 
+@Patch('positions/:id/activate')
+@Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+activatePosition(@Param('id') id: string) {
+  return this.organizationStructureService.activatePosition(id);
+}
 
   // ======================
   // 📌 STRUCTURE CHANGE REQUESTS
   // ======================
 
   @Post('change-requests')
-  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // hradmon added by engy
   submitChangeRequest(@Body() dto: any, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.submitChangeRequest(dto, user.employeeId);
   }
 
+  // ⚠️ IMPORTANT: Specific routes MUST come before parameterized routes
+
+  @Get('change-requests/my-requests')
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // Managers can view their own requests
+  getMyChangeRequests(@CurrentUser() user: CurrentUserData) {
+    return this.organizationStructureService.getMyChangeRequests(user.employeeId);
+  }
+
   @Get('change-requests')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can view all organizational structure change requests (REQ-OSM-04)
   getAllChangeRequests() {
     return this.organizationStructureService.getAllChangeRequests();
   }
@@ -139,13 +161,13 @@ delimitPosition(@Param('id') id: string) {
   }
 
   @Put('change-requests/:id/approve')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can approve organizational structure changes (REQ-OSM-04)
   approveChangeRequest(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.approveChangeRequest(id, user.employeeId);
   }
 
   @Put('change-requests/:id/reject')
-  @Roles(SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can reject organizational structure changes (REQ-OSM-04)
   rejectChangeRequest(@Param('id') id: string, @Body() dto: any, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.rejectChangeRequest(id, dto.reason, user.employeeId);
   }
@@ -155,7 +177,7 @@ delimitPosition(@Param('id') id: string) {
   // ======================
 
   @Get('hierarchy/organization')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_EMPLOYEE) // needed to add employee
   getOrganizationHierarchy() {
     return this.organizationStructureService.getOrganizationHierarchy();
   }
@@ -167,7 +189,7 @@ delimitPosition(@Param('id') id: string) {
   }
 
   @Get('hierarchy/my-team')
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // added hr amanager THE FRADMIN IS A TEMP FOR TESTING BY ENGY
   getMyTeamHierarchy(@CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.getMyTeamHierarchy(user.employeeId);
   }
