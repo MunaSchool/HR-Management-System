@@ -106,6 +106,13 @@ export class PayrollConfigurationController {
     return this.payrollConfigurationService.getPayGrade(id);
   }
 
+  @Get('pay-grades')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllPayGrades() {
+    return this.payrollConfigurationService.getAllPayGrades();
+  }
+
 
   // -------------------
   // DEFINE PAY TYPES

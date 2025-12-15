@@ -99,6 +99,10 @@ export class PayrollConfigurationService
         return await this.payGradeModel.findByIdAndDelete(pg); 
     }
 
+    async getAllPayGrades(): Promise<payGradeDocument[]> {
+        return await this.payGradeModel.find().exec();
+    }
+
 /*
         //plsss go back to this!!!!!
   async calculateGrossSalary(payGradeId: string, allowanceId: string): Promise<number> {
