@@ -3,10 +3,9 @@
 import axios from 'axios';
 import { redirect } from 'next/navigation';
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:4000", // Backend NestJS server
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
   withCredentials: true, // Include cookies if needed
-
-})
+});
 // This variable will hold the function that AuthContext gives us
 let onUnAuthenticated: (() => void);
 // AuthContext will call this later

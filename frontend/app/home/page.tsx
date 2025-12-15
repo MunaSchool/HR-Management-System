@@ -72,47 +72,54 @@ export default function HomePage() {
             </div>
           )}
 
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-            Dashboard
-          </h2>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              Dashboard
+            </h2>
+            <div className="flex gap-2 flex-wrap">
+              <QuickLink label="Insurance Brackets" onClick={() => router.push("/insurance")} />
+              <QuickLink label="Payroll Configurations" onClick={() => router.push("/payroll-config")} />
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Employee Profile */}
+            <DashboardCard
+              title="Insurance Brackets"
+              description="Configure insurance brackets and approvals"
+              icon="🛡️"
+              onClick={() => router.push("/insurance")}
+            />
+            <DashboardCard
+              title="Payroll Config"
+              description="Edit and approve payroll configurations"
+              icon="💼"
+              onClick={() => router.push("/payroll-config")}
+            />
             <DashboardCard
               title="Employee Profile"
               description="View and manage employee information"
               icon="👤"
             />
-
-            {/* Recruitment */}
             <DashboardCard
               title="Recruitment"
               description="Manage job postings and applications"
               icon="🎯"
             />
-
-            {/* Time Management */}
             <DashboardCard
               title="Time Management"
               description="Track attendance and work hours"
               icon="⏰"
             />
-
-            {/* Leave Management */}
             <DashboardCard
               title="Leave Management"
               description="Handle leave requests and balances"
               icon="🏖️"
             />
-
-            {/* Payroll */}
             <DashboardCard
               title="Payroll"
               description="Process salaries and payroll"
               icon="💰"
             />
-
-            {/* Performance */}
             <DashboardCard
               title="Performance"
               description="Track goals and reviews"
@@ -358,9 +365,12 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string }) {
+function DashboardCard({ title, description, icon, onClick }: { title: string; description: string; icon: string; onClick?: () => void }) {
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
+    <div
+      onClick={onClick}
+      className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer"
+    >
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
         {title}
@@ -369,5 +379,16 @@ function DashboardCard({ title, description, icon }: { title: string; descriptio
         {description}
       </p>
     </div>
+  );
+}
+
+function QuickLink({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition"
+    >
+      {label}
+    </button>
   );
 }
