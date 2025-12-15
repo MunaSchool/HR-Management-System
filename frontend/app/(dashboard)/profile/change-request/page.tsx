@@ -6,13 +6,19 @@ import { useRouter } from "next/navigation";
 
 interface ChangeRequest {
   _id: string;
-  fieldName: string;
-  currentValue: string;
-  requestedValue: string;
+  requestId: string;
+  requestDescription: string;
+  requestedChanges?: Record<string, any>;
   reason: string;
   status: string;
-  createdAt: string;
+  submittedAt: string;
 }
+
+// Enum values from backend
+const MARITAL_STATUS_OPTIONS = ["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"];
+const GENDER_OPTIONS = ["MALE", "FEMALE"];
+const CONTRACT_TYPE_OPTIONS = ["FULL_TIME_CONTRACT", "PART_TIME_CONTRACT"];
+const WORK_TYPE_OPTIONS = ["FULL_TIME", "PART_TIME"];
 
 export default function ChangeRequestPage() {
   const router = useRouter();
@@ -39,13 +45,26 @@ export default function ChangeRequestPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Build the requestedChanges object
+    const requestedChanges: Record<string, any> = {
+      [formData.fieldName]: formData.requestedValue
+    };
+
+    // Build the payload according to CreateChangeRequestDto
+    const payload = {
+      requestedChanges,
+      reason: formData.reason,
+    };
+
     try {
-      await axiosInstance.post("/employee-profile/me/change-requests", formData);
+      await axiosInstance.post("/employee-profile/me/change-requests", payload);
       alert("Change request submitted successfully");
       setShowForm(false);
       setFormData({ fieldName: "", requestedValue: "", reason: "" });
       fetchMyRequests();
     } catch (error: any) {
+      console.error("Error submitting change request:", error);
       alert(error?.response?.data?.message || "Failed to submit change request");
     }
   };
@@ -61,6 +80,124 @@ export default function ChangeRequestPage() {
       default:
         return "text-neutral-400";
     }
+  };
+
+  // Determine input type based on selected field
+  const renderValueInput = () => {
+    const { fieldName, requestedValue } = formData;
+
+    // Dropdown for maritalStatus
+    if (fieldName === "maritalStatus") {
+      return (
+        <select
+          value={requestedValue}
+          onChange={(e) =>
+            setFormData({ ...formData, requestedValue: e.target.value })
+          }
+          required
+          className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+        >
+          <option value="">Select marital status</option>
+          {MARITAL_STATUS_OPTIONS.map((status) => (
+            <option key={status} value={status}>
+              {status.charAt(0) + status.slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Dropdown for gender
+    if (fieldName === "gender") {
+      return (
+        <select
+          value={requestedValue}
+          onChange={(e) =>
+            setFormData({ ...formData, requestedValue: e.target.value })
+          }
+          required
+          className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+        >
+          <option value="">Select gender</option>
+          {GENDER_OPTIONS.map((gender) => (
+            <option key={gender} value={gender}>
+              {gender.charAt(0) + gender.slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Dropdown for contractType
+    if (fieldName === "contractType") {
+      return (
+        <select
+          value={requestedValue}
+          onChange={(e) =>
+            setFormData({ ...formData, requestedValue: e.target.value })
+          }
+          required
+          className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+        >
+          <option value="">Select contract type</option>
+          {CONTRACT_TYPE_OPTIONS.map((type) => (
+            <option key={type} value={type}>
+              {type.replace(/_/g, " ").charAt(0) + type.replace(/_/g, " ").slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Dropdown for workType
+    if (fieldName === "workType") {
+      return (
+        <select
+          value={requestedValue}
+          onChange={(e) =>
+            setFormData({ ...formData, requestedValue: e.target.value })
+          }
+          required
+          className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+        >
+          <option value="">Select work type</option>
+          {WORK_TYPE_OPTIONS.map((type) => (
+            <option key={type} value={type}>
+              {type.replace(/_/g, " ").charAt(0) + type.replace(/_/g, " ").slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    // Date input for dateOfBirth
+    if (fieldName === "dateOfBirth") {
+      return (
+        <input
+          type="date"
+          value={requestedValue}
+          onChange={(e) =>
+            setFormData({ ...formData, requestedValue: e.target.value })
+          }
+          required
+          className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+        />
+      );
+    }
+
+    // Text input for other fields
+    return (
+      <input
+        type="text"
+        value={requestedValue}
+        onChange={(e) =>
+          setFormData({ ...formData, requestedValue: e.target.value })
+        }
+        required
+        className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+        placeholder="Enter new value"
+      />
+    );
   };
 
   return (
@@ -86,9 +223,9 @@ export default function ChangeRequestPage() {
               </label>
               <select
                 value={formData.fieldName}
-                onChange={(e) =>
-                  setFormData({ ...formData, fieldName: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, fieldName: e.target.value, requestedValue: "" });
+                }}
                 required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
@@ -100,6 +237,13 @@ export default function ChangeRequestPage() {
                 <option value="maritalStatus">Marital Status</option>
                 <option value="dateOfBirth">Date of Birth</option>
                 <option value="gender">Gender</option>
+                <option value="personalEmail">Personal Email</option>
+                <option value="mobilePhone">Mobile Phone</option>
+                <option value="homePhone">Home Phone</option>
+                <option value="contractType">Contract Type</option>
+                <option value="workType">Work Type</option>
+                <option value="bankName">Bank Name</option>
+                <option value="bankAccountNumber">Bank Account Number</option>
               </select>
             </div>
 
@@ -107,16 +251,7 @@ export default function ChangeRequestPage() {
               <label className="text-sm text-neutral-400 block mb-1">
                 Requested Value
               </label>
-              <input
-                type="text"
-                value={formData.requestedValue}
-                onChange={(e) =>
-                  setFormData({ ...formData, requestedValue: e.target.value })
-                }
-                required
-                className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
-                placeholder="Enter new value"
-              />
+              {renderValueInput()}
             </div>
 
             <div>
@@ -158,9 +293,12 @@ export default function ChangeRequestPage() {
                 className="border border-neutral-700 rounded-lg p-4 bg-black"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-white font-semibold capitalize">
-                    {request.fieldName ? request.fieldName.replace(/([A-Z])/g, " $1").trim() : "N/A"}
-                  </h3>
+                  <div>
+                    <h3 className="text-white font-semibold">
+                      {request.requestId || "N/A"}
+                    </h3>
+                    <p className="text-sm text-neutral-400">{request.requestDescription}</p>
+                  </div>
                   <span
                     className={`text-sm font-medium ${getStatusColor(
                       request.status || "pending"
@@ -169,16 +307,21 @@ export default function ChangeRequestPage() {
                     {request.status ? request.status.toUpperCase() : "PENDING"}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-2">
-                  <div>
-                    <label className="text-xs text-neutral-500">Current Value</label>
-                    <p className="text-white text-sm">{request.currentValue || "N/A"}</p>
+
+                {request.requestedChanges && (
+                  <div className="mb-2 p-3 bg-neutral-800 rounded">
+                    <label className="text-xs text-neutral-500 block mb-1">Requested Changes</label>
+                    <div className="space-y-1">
+                      {Object.entries(request.requestedChanges).map(([key, value]) => (
+                        <div key={key} className="flex gap-2">
+                          <span className="text-white text-sm font-medium">{key}:</span>
+                          <span className="text-neutral-300 text-sm">{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs text-neutral-500">Requested Value</label>
-                    <p className="text-white text-sm">{request.requestedValue}</p>
-                  </div>
-                </div>
+                )}
+
                 <div>
                   <label className="text-xs text-neutral-500">Reason</label>
                   <p className="text-white text-sm">{request.reason}</p>
@@ -186,7 +329,7 @@ export default function ChangeRequestPage() {
                 <div className="mt-2">
                   <label className="text-xs text-neutral-500">Submitted</label>
                   <p className="text-neutral-400 text-xs">
-                    {new Date(request.createdAt).toLocaleString()}
+                    {new Date(request.submittedAt).toLocaleString()}
                   </p>
                 </div>
               </div>

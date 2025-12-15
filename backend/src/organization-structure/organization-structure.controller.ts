@@ -161,13 +161,13 @@ activatePosition(@Param('id') id: string) {
   }
 
   @Put('change-requests/:id/approve')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //added hr admin by engy
+  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can approve organizational structure changes (REQ-OSM-04)
   approveChangeRequest(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.approveChangeRequest(id, user.employeeId);
   }
 
-  @Put('change-requests/:id/reject') //added hr admin by engy
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN)
+  @Put('change-requests/:id/reject')
+  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can reject organizational structure changes (REQ-OSM-04)
   rejectChangeRequest(@Param('id') id: string, @Body() dto: any, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.rejectChangeRequest(id, dto.reason, user.employeeId);
   }
