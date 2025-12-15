@@ -1,11 +1,11 @@
 // app/performance/layout.tsx
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, MouseEvent } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/(system)/context/authContext';
-import { isHRAdmin, isManager } from '@/app/utils/roleCheck';
+import { debugRoles, isHRAdmin, isManager, isRegularEmployee } from '@/app/utils/roleCheck';
 import { 
   Home, 
   FileText, 
@@ -39,17 +39,45 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
     );
   }
 
-  // Get navigation items based on user role
-  // Update the getNavItems() function:
+  const isActive = (path: string) => pathname?.startsWith(path);
 
+  // Get navigation items based on user role
   const getNavItems = () => {
     if (!user) return [];
 
+    // Debug first
+    debugRoles(user);
+
+    // Check roles
     const isHR = isHRAdmin(user);
     const isMgr = isManager(user);
-    const isRegularEmployee = !isHR && !isMgr;
+    const isRegularEmp = isRegularEmployee(user);
+    const isManagerOnly = isManager(user) && !isHRAdmin(user);
+    
+    console.log('Navigation logic:', { isHR, isMgr, isRegularEmp, isManagerOnly });
 
-    if (isRegularEmployee) {
+    if (isHR) {
+      // HR Admin or HR Manager
+      return [
+        { href: '/performance/adminDashboard', label: 'Dashboard', icon: <Home size={20} /> },
+        { href: '/performance/templates', label: 'Templates', icon: <FileText size={20} /> },
+        { href: '/performance/cycles', label: 'Cycles', icon: <Users size={20} /> },
+        { href: '/performance/adminDisputes', label: 'Disputes', icon: <AlertCircle size={20} /> },
+        { href: '/performance/analytics', label: 'Analytics', icon: <BarChart size={20} /> },
+      ];
+    }
+
+    if (isManagerOnly) {
+      // Department Head or Department Manager (not HR)
+      return [
+        { href: '/performance/managerDashboard', label: 'Dashboard', icon: <Home size={20} /> },
+        { href: '/performance/assignments', label: 'Evaluations', icon: <FileText size={20} /> },
+        { href: '/performance/team', label: 'Team', icon: <Users size={20} /> },
+      ];
+    }
+
+    if (isRegularEmp) {
+      // Regular employees
       return [
         { href: '/performance/employeeDashboard', label: 'Dashboard', icon: <Home size={20} /> },
         { href: '/performance/reviews', label: 'My Reviews', icon: <FileText size={20} /> },
@@ -57,33 +85,23 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
       ];
     }
 
-    if (isMgr && !isHR) {
-      return [
-        { href: '/performance/assignments', label: 'Evaluations', icon: <FileText size={20} /> },
-        { href: '/performance/team', label: 'Team', icon: <Users size={20} /> },
-      ];
-    }
-
-    // HR Admin
+    // Default fallback
     return [
-      { href: '/performance/adminDashboard', label: 'Dashboard', icon: <Home size={20} /> },
-      { href: '/performance/templates', label: 'Templates', icon: <FileText size={20} /> },
-      { href: '/performance/cycles', label: 'Cycles', icon: <Users size={20} /> },
-      { href: '/performance/adminDisputes', label: 'Disputes', icon: <AlertCircle size={20} /> },
-      { href: '/performance/analytics', label: 'Analytics', icon: <BarChart size={20} /> },
+      { href: '/performance/employeeDashboard', label: 'Dashboard', icon: <Home size={20} /> },
+      { href: '/performance/reviews', label: 'My Reviews', icon: <FileText size={20} /> },
+      { href: '/performance/employeeDisputes', label: 'My Disputes', icon: <AlertCircle size={20} /> },
     ];
   };
 
-  const isActive = (path: string) => pathname?.startsWith(path);
-
-  const navItems = getNavItems();
-  const userName = user?.email?.split('@')[0] || 'User';
-  const userRole = user?.roles?.[0] || user?.userType || 'Employee';
-
-  const handleLogout = async () => {
+  const handleLogout = async (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     await logout();
     router.push('/auth/login');
   };
+
+  const navItems = getNavItems();
+  const userName = user?.email?.split('@')[0] || user?.firstName || 'User';
+  const userRole = user?.roles?.[0] || user?.userType || 'Employee';
 
   return (
     <div className="min-h-screen bg-gray-50">
