@@ -1,4 +1,20 @@
-import { IsString, IsEmail, IsOptional, IsArray, IsDateString } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsArray, IsDateString, ValidateNested, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import { Gender, MaritalStatus, EmployeeStatus } from '../enums/employee-profile.enums';
+
+class AddressDto {
+  @IsOptional()
+  @IsString()
+  streetAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+}
 
 export class CreateEmployeeDto {
   @IsString()
@@ -7,17 +23,54 @@ export class CreateEmployeeDto {
   @IsString()
   firstName: string;
 
+  @IsOptional()
+  @IsString()
+  middleName?: string;
+
   @IsString()
   lastName: string;
 
   @IsEmail()
   workEmail: string;
 
+  @IsOptional()
+  @IsEmail()
+  personalEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  mobilePhone?: string;
+
+  @IsOptional()
+  @IsString()
+  homePhone?: string;
+
   @IsString()
   nationalId: string;
 
   @IsDateString()
   dateOfHire: string;
+
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @IsOptional()
+  @IsEnum(Gender)
+  gender?: Gender;
+
+  @IsOptional()
+  @IsEnum(MaritalStatus)
+  maritalStatus?: MaritalStatus;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AddressDto)
+  address?: AddressDto;
+
+  @IsOptional()
+  @IsEnum(EmployeeStatus)
+  status?: EmployeeStatus;
 
   @IsOptional()
   @IsString()
@@ -38,7 +91,7 @@ export class CreateEmployeeDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  roles?: string[];
+  systemRoles?: string[];
 
   @IsOptional()
   @IsArray()

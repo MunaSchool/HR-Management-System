@@ -41,8 +41,14 @@ export class EmployeeSelfServiceService {
       console.error('Failed to fetch appraisal history:', error.message);
     }
 
+    const profileObj = profile.toObject();
+
+    // Extract roles from accessProfileId for easier access
+    const roles = (profileObj.accessProfileId as any)?.roles || [];
+
     return {
-      ...profile.toObject(),
+      ...profileObj,
+      roles, // Add roles at top level for convenience
       appraisalHistory,
     };
   }
