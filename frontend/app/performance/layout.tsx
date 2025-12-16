@@ -5,7 +5,7 @@ import { ReactNode, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/(system)/context/authContext';
-import { isHRAdmin, isManager } from '@/app/utils/roleCheck';
+import { hasRole, isHRAdmin, isManager } from '@/app/utils/roleCheck';
 import { 
   Home, 
   FileText, 
@@ -39,39 +39,64 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
     );
   }
 
-  // Get navigation items based on user role
-  // Update the getNavItems() function:
-
   const getNavItems = () => {
     if (!user) return [];
 
-    const isHR = isHRAdmin(user);
-    const isMgr = isManager(user);
-    const isRegularEmployee = !isHR && !isMgr;
+    // Check if user has ANY manager role (including HR_MANAGER)
+    const hasManagerRole = hasRole(user, [
+      'DEPARTMENT_HEAD', 
+      'DEPARTMENT_MANAGER', 
+      'MANAGER', 
+      'HR_MANAGER'
+    ]);
+    
+    // Check if user has HR admin role (excluding HR_MANAGER)
+    const hasHRAdminRole = hasRole(user, ['HR_ADMIN']);
+    
+    // Check if user has HR employee role
+    const hasHREmployeeRole = hasRole(user, ['HR_EMPLOYEE']);
+    
+    console.log('Simple role check:', {
+      hasManagerRole,
+      hasHRAdminRole,
+      hasHREmployeeRole
+    });
 
-    if (isRegularEmployee) {
+    // Priority 1: HR Admin (highest privilege)
+    if (hasHRAdminRole) {
+      return [
+        { href: '/performance/adminDashboard', label: 'Dashboard', icon: <Home size={20} /> },
+        { href: '/performance/templates', label: 'Templates', icon: <FileText size={20} /> },
+        { href: '/performance/cycles', label: 'Cycles', icon: <Users size={20} /> },
+        { href: '/performance/adminDisputes', label: 'Disputes', icon: <AlertCircle size={20} /> },
+        { href: '/performance/analytics', label: 'Analytics', icon: <BarChart size={20} /> },
+      ];
+    }
+    
+    // Priority 2: Manager (medium privilege)
+    else if (hasManagerRole) {
+      return [
+        { href: '/performance/assignments', label: 'Evaluations', icon: <FileText size={20} /> },
+        { href: '/performance/team', label: 'Team', icon: <Users size={20} /> },
+      ];
+    }
+    
+    // Priority 3: HR Employee
+    else if (hasHREmployeeRole) {
+      return [
+        { href: '/performance/employeeDashboard', label: 'Dashboard', icon: <Home size={20} /> },
+        { href: '/performance/reviews', label: 'My Reviews', icon: <FileText size={20} /> },
+      ];
+    }
+    
+    // Priority 4: Regular employee
+    else {
       return [
         { href: '/performance/employeeDashboard', label: 'Dashboard', icon: <Home size={20} /> },
         { href: '/performance/reviews', label: 'My Reviews', icon: <FileText size={20} /> },
         { href: '/performance/employeeDisputes', label: 'My Disputes', icon: <AlertCircle size={20} /> },
       ];
     }
-
-    if (isMgr && !isHR) {
-      return [
-        { href: '/performance/assignments', label: 'Evaluations', icon: <FileText size={20} /> },
-        { href: '/performance/team', label: 'Team', icon: <Users size={20} /> },
-      ];
-    }
-
-    // HR Admin
-    return [
-      { href: '/performance/adminDashboard', label: 'Dashboard', icon: <Home size={20} /> },
-      { href: '/performance/templates', label: 'Templates', icon: <FileText size={20} /> },
-      { href: '/performance/cycles', label: 'Cycles', icon: <Users size={20} /> },
-      { href: '/performance/adminDisputes', label: 'Disputes', icon: <AlertCircle size={20} /> },
-      { href: '/performance/analytics', label: 'Analytics', icon: <BarChart size={20} /> },
-    ];
   };
 
   const isActive = (path: string) => pathname?.startsWith(path);

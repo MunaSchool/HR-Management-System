@@ -4,28 +4,39 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/(system)/context/authContext';
-import { isHRAdmin, isManager } from '@/app/utils/roleCheck';
+import { debugRoles, hasRole, isHRAdmin, isHROnly, isHRAndManager, isManager, isManagerOnly, isRegularEmployee } from '@/app/utils/roleCheck';
 
 export default function PerformanceLandingPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
   // Update the useEffect:
-  useEffect(() => {
-    if (!loading && user) {
-      const isHR = isHRAdmin(user);
-      const isMgr = isManager(user);
-      const isRegularEmployee = !isHR && !isMgr;
-
-      if (isRegularEmployee) {
-        router.replace('/performance/employeeDashboard'); // ← Fixed
-      } else if (isMgr && !isHR) {
-        router.replace('/performance/assignments'); // ← Fixed
-      } else {
-        router.replace('/performance/adminDashboard'); // ← Fixed
-      }
-    }
-  }, [user, loading, router]);
+  // Add this useEffect at the top of your PerformanceLayout component
+useEffect(() => {
+  if (user) {
+    console.log('=== DEBUG USER ROLES ===');
+    console.log('User object:', JSON.stringify(user, null, 2));
+    console.log('User roles (raw):', user?.roles   || user?.roles);
+    
+    // Test each role check
+    console.log('isHRAdmin(user):', isHRAdmin(user));
+    console.log('isManager(user):', isManager(user));
+    console.log('isRegularEmployee(user):', isRegularEmployee(user));
+    console.log('isManagerOnly(user):', isManagerOnly(user));
+    console.log('isHROnly(user):', isHROnly(user));
+    console.log('isHRAndManager(user):', isHRAndManager(user));
+    
+    // Check specific roles
+    console.log('Has DEPARTMENT_MANAGER:', hasRole(user, ['DEPARTMENT_MANAGER']));
+    console.log('Has DEPARTMENT_HEAD:', hasRole(user, ['DEPARTMENT_HEAD']));
+    console.log('Has MANAGER:', hasRole(user, ['MANAGER']));
+    console.log('Has HR_MANAGER:', hasRole(user, ['HR_MANAGER']));
+    console.log('Has HR_ADMIN:', hasRole(user, ['HR_ADMIN']));
+    
+    // Call debugRoles function if you want detailed info
+    debugRoles(user);
+  }
+}, [user]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

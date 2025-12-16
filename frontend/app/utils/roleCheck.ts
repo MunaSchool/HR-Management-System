@@ -168,13 +168,60 @@ export function canAccessAllEmployees(userProfile: any): boolean {
   return isHRAdmin(userProfile);
 }
 
-// Debug function to log role structure
+// Regular employee roles (based on your enums)
+export function isRegularEmployee(userProfile: any): boolean {
+  const regularEmployeeRoles = [
+    'DEPARTMENT_EMPLOYEE',
+    'HR_EMPLOYEE', 
+    'PAYROLL_SPECIALIST',
+    'PAYROLL_MANAGER',
+    'LEGAL_POLICY_ADMIN',
+    'RECRUITER',
+    'FINANCE_STAFF',
+    'JOB_CANDIDATE'
+  ];
+  
+  // Check if user has ANY regular employee role
+  const hasRegularRole = hasRole(userProfile, regularEmployeeRoles);
+  
+  // Also check if they don't have admin/manager roles
+  const hasAdminOrManagerRole = isHRAdmin(userProfile) || isManager(userProfile) || isSystemAdmin(userProfile);
+  
+  return hasRegularRole && !hasAdminOrManagerRole;
+}
+
+// Check if user is HR but not a manager
+export function isHROnly(userProfile: any): boolean {
+  const isHR = isHRAdmin(userProfile);
+  const isMgr = isManager(userProfile);
+  const isSysAdmin = isSystemAdmin(userProfile);
+  
+  return isHR && !isMgr && !isSysAdmin;
+}
+
+// Check if user is a manager but not HR
+export function isManagerOnly(userProfile: any): boolean {
+  const isMgr = isManager(userProfile);
+  const isHR = isHRAdmin(userProfile);
+  const isSysAdmin = isSystemAdmin(userProfile);
+  
+  return isMgr && !isHR && !isSysAdmin;
+}
+
+// Check if user is HR and Manager (has both)
+export function isHRAndManager(userProfile: any): boolean {
+  return isHRAdmin(userProfile) && isManager(userProfile);
+}
+
+// Enhanced debug function
 export function debugRoles(userProfile: any): void {
   console.log('=== ROLE DEBUG INFO ===');
   console.log('Full profile:', userProfile);
   console.log('systemRoles:', userProfile?.systemRoles);
   console.log('accessProfileId:', userProfile?.accessProfileId);
   console.log('roles:', userProfile?.roles);
+  
+  console.log('\n--- Role Check Results ---');
   console.log('isHRAdmin:', isHRAdmin(userProfile));
   console.log('isDepartmentManager:', isDepartmentManager(userProfile));
   console.log('isDepartmentEmployee:', isDepartmentEmployee(userProfile));
