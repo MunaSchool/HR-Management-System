@@ -87,8 +87,12 @@ export class PayrollConfigurationService
       try {
         return await pg2.save();
       } catch (err: any) {
+        // Log full error to help diagnose which index or key caused the duplicate
+        console.error('AddPayGrade error:', err);
         if (err?.code === 11000) {
-          throw new ConflictException('Pay grade with this name already exists');
+          // Prefer explicit duplicate field if provided by Mongo (err.keyValue)
+          const dup = err.keyValue?.grade ?? JSON.stringify(err.keyValue) ?? 'unknown';
+          throw new ConflictException(`Pay grade with this name already exists: ${dup}`);
         }
         throw err;
       }
