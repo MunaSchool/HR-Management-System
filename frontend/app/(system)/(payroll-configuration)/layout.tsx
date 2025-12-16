@@ -1,4 +1,4 @@
-import React from 'react';
+//import React, { useState } from 'react';
 import Link from 'next/link';
 
 type Props = {
@@ -14,7 +14,45 @@ export default function PayrollConfigLayout({ children }: Props) {
       {/* Sidebar (empty for now) */}
       <aside className="w-64 hidden md:flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800">
         <div className="h-16 flex items-center px-4 font-semibold">Payroll</div>
-        <nav className="flex-1 p-4">{/* Sidebar links go here */}</nav>
+        <nav className="flex-1 p-4">
+          <div className="space-y-2">
+            <details className="group">
+              <summary className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                <span className="font-medium">Payroll Configs</span>
+                <span className="text-sm text-gray-500 group-open:rotate-180 transition-transform">▾</span>
+              </summary>
+              <div className="mt-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                <ul className="space-y-1">
+                  <li>
+                    <Link href="/config-policies" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Policies
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/config-paygrade" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Pay Grades
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/config-paytypes" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Pay Types
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/config-allowances" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Allowances
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/config-benefits" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Termination & Resignation Benefits
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </nav>
       </aside>
 
       {/* Main area */}
