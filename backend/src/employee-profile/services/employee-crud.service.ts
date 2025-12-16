@@ -17,7 +17,7 @@ export class EmployeeCrudService {
 
   // Create a new employee profile with role assignment
   async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
-    const { roles, permissions, password, ...profileData } = employeeData;
+    const { systemRoles, permissions, password, ...profileData } = employeeData;
 
     // Check if employee number already exists
     const existingEmployeeNumber = await this.employeeProfileModel.findOne({
@@ -50,15 +50,30 @@ export class EmployeeCrudService {
     // Hash password if provided
     const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
 
+    console.log('📝 Creating employee with data:', {
+      ...profileData,
+      hasPassword: !!hashedPassword,
+    });
+
     // Create employee profile
+    const fullName = `${profileData.firstName}${profileData.middleName ? ' ' + profileData.middleName : ''} ${profileData.lastName}`;
     const newEmployee = await this.employeeProfileModel.create({
       ...profileData,
       ...(hashedPassword && { password: hashedPassword }),
-      fullName: `${profileData.firstName} ${profileData.lastName}`,
+      fullName,
+    });
+
+    console.log('✅ Employee created:', {
+      _id: newEmployee._id,
+      fullName: newEmployee.fullName,
+      workEmail: newEmployee.workEmail,
+      personalEmail: newEmployee.personalEmail,
+      mobilePhone: newEmployee.mobilePhone,
+      homePhone: newEmployee.homePhone,
     });
 
     // Always create role assignment (default to department employee if no roles provided)
-    const assignedRoles = roles && roles.length > 0 ? roles : ['department employee'];
+    const assignedRoles = systemRoles && systemRoles.length > 0 ? systemRoles : ['department employee'];
 
     try {
       const roleAssignment = await this.employeeRoleModel.create({
