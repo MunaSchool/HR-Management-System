@@ -1,7 +1,7 @@
 // utils/axiosInstance.ts
 "use client";
 import axios from 'axios';
-import { redirect } from 'next/navigation';
+
 const axiosInstance = axios.create({
   baseURL: "http://localhost:4000", // Backend NestJS server
   withCredentials: true, // Include cookies if needed
@@ -20,7 +20,7 @@ axiosInstance.interceptors.response.use(
     console.log('error status', status);
     if (status === 403 && !window.location.href.includes('/login')
       && !window.location.href.includes('/register')) {
-      redirect('/unauthorized')
+      window.location.href = '/unauthorized';
     }
     if ((status === 401) && !window.location.href.includes('/login')
        && !window.location.href.includes('/register')) {

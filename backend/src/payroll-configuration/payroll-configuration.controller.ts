@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 
 import { PayrollConfigurationService } from './payroll-configuration.service';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -339,18 +340,64 @@ export class PayrollConfigurationController {
   // HR MANAGER INSURANCE APPROVAL
   // -------------------
 
+  @Get('hr-manager/insurance-brackets')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_MANAGER)
+  async getAllInsuranceBracketsForHR() {
+    return this.payrollConfigurationService.findAllInsuranceBrackets();
+  }
+
+  @Get('hr-manager/insurance-brackets/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_MANAGER)
+  async getInsuranceBracketForHR(@Param('id') id: string) {
+    return this.payrollConfigurationService.findInsuranceBrackets(id);
+  }
+
+  @Get('hr-manager/policies')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_MANAGER)
+  async getAllPoliciesForHR(): Promise<payrollPoliciesDocument[]> {
+    return this.payrollConfigurationService.findAllPolicies();
+  }
+
+  @Get('hr-manager/policies/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_MANAGER)
+  async getPolicyForHR(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.findById(id);
+  }
+
   @Post('approve/insurance/:id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_MANAGER)
-  async approveInsurance(@Param('id') id: string) {
-    return this.payrollConfigurationService.hrApproveInsurance(id);
+  async approveInsurance(@Param('id') id: string, @Req() req: Request) {
+    const user: any = req['user'];
+    return this.payrollConfigurationService.hrApproveInsurance(id, user.employeeId);
   }
 
   @Post('reject/insurance/:id')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_MANAGER)
-  async rejectInsurance(@Param('id') id: string) {
-    return this.payrollConfigurationService.hrRejectInsurance(id);
+  async rejectInsurance(@Param('id') id: string, @Req() req: Request) {
+    const user: any = req['user'];
+    return this.payrollConfigurationService.hrRejectInsurance(id, user.employeeId);
+  }
+
+  @Post('approve/policy/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_MANAGER)
+  async approvePolicy(@Param('id') id: string, @Req() req: Request) {
+    const user: any = req['user'];
+    return this.payrollConfigurationService.hrApprovePolicy(id, user.employeeId);
+  }
+
+  @Post('reject/policy/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_MANAGER)
+  async rejectPolicy(@Param('id') id: string, @Req() req: Request) {
+    const user: any = req['user'];
+    return this.payrollConfigurationService.hrRejectPolicy(id, user.employeeId);
   }
 
   // -------------------

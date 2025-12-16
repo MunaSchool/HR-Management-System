@@ -29,6 +29,7 @@ import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
 import { ApprovalDto } from './dto/approval.dto';
 import { createTaxRulesDTO } from './dto/create-tax-rules.dto';
 import { editTaxRulesDTO } from './dto/edit-tax-rules.dto';
+import { ConfigStatus } from './enums/payroll-configuration-enums';
 
 
 @Injectable()
@@ -243,6 +244,10 @@ export class PayrollConfigurationService
 
 
     ////////21- config insurance brackets w defined salary ranges
+    async findAllInsuranceBrackets(): Promise<insuranceBracketsDocument[]> {
+        return await this.insuranceBracketsModel.find().exec();
+    }
+
     async findInsuranceBrackets(id: string): Promise<insuranceBracketsDocument|null>{
         return await this.insuranceBracketsModel.findById(id);
     }
@@ -317,12 +322,53 @@ export class PayrollConfigurationService
   // PHASE 5 – HR MANAGER INSURANCE APPROVAL
   // -------------------
 
-  async hrApproveInsurance(id: string) {
-    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+  async hrApproveInsurance(id: string, approvedBy: string) {
+    return this.insuranceBracketsModel.findByIdAndUpdate(
+      id, 
+      { 
+        status: ConfigStatus.APPROVED,
+        approvedBy: new Mongoose.Types.ObjectId(approvedBy),
+        approvedAt: new Date()
+      }, 
+      { new: true }
+    );
   }
 
-  async hrRejectInsurance(id: string) {
-    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+  async hrRejectInsurance(id: string, approvedBy: string) {
+    return this.insuranceBracketsModel.findByIdAndUpdate(
+      id, 
+      { 
+        status: ConfigStatus.REJECTED,
+        approvedBy: new Mongoose.Types.ObjectId(approvedBy),
+        approvedAt: new Date()
+      }, 
+      { new: true }
+    );
+  }
+
+  // HR MANAGER POLICY APPROVAL
+  async hrApprovePolicy(id: string, approvedBy: string) {
+    return this.payrollPoliciesModel.findByIdAndUpdate(
+      id, 
+      { 
+        status: ConfigStatus.APPROVED,
+        approvedBy: new Mongoose.Types.ObjectId(approvedBy),
+        approvedAt: new Date()
+      }, 
+      { new: true }
+    );
+  }
+
+  async hrRejectPolicy(id: string, approvedBy: string) {
+    return this.payrollPoliciesModel.findByIdAndUpdate(
+      id, 
+      { 
+        status: ConfigStatus.REJECTED,
+        approvedBy: new Mongoose.Types.ObjectId(approvedBy),
+        approvedAt: new Date()
+      }, 
+      { new: true }
+    );
   }
 
   // -------------------

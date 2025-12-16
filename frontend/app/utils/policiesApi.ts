@@ -28,3 +28,24 @@ export const getPolicyById = async (id: string) => {
   const res = await axiosInstance.get(`/payroll-configuration/policies/${id}`);
   return res.data;
 };
+
+// HR Manager endpoints
+export const getAllPoliciesForHR = async () => {
+  const res = await axiosInstance.get('/payroll-configuration/hr-manager/policies');
+  return res.data;
+};
+
+export const getPolicyByIdForHR = async (id: string) => {
+  const res = await axiosInstance.get(`/payroll-configuration/hr-manager/policies/${id}`);
+  return res.data;
+};
+
+export const approvePolicy = async (id: string) => {
+  const res = await axiosInstance.post(`/payroll-configuration/approve/policy/${id}`);
+  return res.data;
+};
+
+export const rejectPolicy = async (id: string) => {
+  const res = await axiosInstance.post(`/payroll-configuration/reject/policy/${id}`);
+  return res.data;
+};
