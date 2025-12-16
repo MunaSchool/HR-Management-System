@@ -6,19 +6,27 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { NotificationLogService } from '../time-management/services/notification-log.service';
+import { GetSchedulerDto } from './dto/get-scheduler.dto';
+
 
 // MODELS
 import { LeaveCategory } from './models/leave-category.schema';
 import { LeaveType } from './models/leave-type.schema';
 import { LeavePolicy } from './models/leave-policy.schema';
-import { Calendar } from './models/calendar.schema';
+import { Holiday } from '../time-management/models/holiday.schema'; import { Calendar } from './models/calendar.schema';
 import { ApprovalWorkflow } from './models/approval-workflow.schema';
 import { LeaveEntitlement } from './models/leave-entitlement.schema';
 import { LeaveRequest, LeaveRequestDocument } from './models/leave-request.schema';
 import { EmployeeProfile, EmployeeProfileDocument } from '../employee-profile/models/employee-profile.schema';
-
 import { LeaveStatus } from './enums/leave-status.enum';
 import { AccrualMethod } from './enums/accrual-method.enum';
+import { HolidayType } from '../time-management/models/enums/index';
+import { payType, payTypeDocument } from '../payroll-configuration/models/payType.schema';
+import { Delegation, DelegationDocument } from './models/delegation.schema';
+import { SystemRole } from '../employee-profile/enums/employee-profile.enums';
+
 
 // DTOs
 import { CreateLeaveCategoryDto } from './dto/create-leave-category.dto';
@@ -36,6 +44,10 @@ import { CreatePaycodeMappingDto } from './dto/create-paycode-mapping.dto';
 import { UpdatePaycodeMappingDto } from './dto/update-paycode-mapping.dto';
 import { CreateLeaveRequestDto } from './dto/create-leave-request.dto';
 import { UpdateLeaveRequestDto } from './dto/update-leave-request.dto';
+import { CreateHolidayDto } from './dto/create-holiday.dto';
+import { UpdateHolidayDto } from './dto/update-holiday.dto';
+import { CreateDelegationDto } from './dto/create-delegation.dto';
+import { UpdateDelegationDto } from './dto/update-delegation.dto';
 
 // For REQ-007 logic
 type Employee = {
@@ -66,13 +78,19 @@ export class LeavesService {
   constructor(
     @InjectModel(LeaveCategory.name) private readonly categoryModel: Model<LeaveCategory>,
     @InjectModel(LeaveType.name) private readonly typeModel: Model<LeaveType>,
+    @InjectModel(payType.name) private payTypeModel: Model<payTypeDocument>,
     @InjectModel(LeavePolicy.name) private readonly policyModel: Model<LeavePolicy>,
+    @InjectModel(Holiday.name) private readonly holidayModel: Model<Holiday>,
     @InjectModel(Calendar.name) private readonly calendarModel: Model<Calendar>,
     @InjectModel(ApprovalWorkflow.name) private readonly workflowModel: Model<ApprovalWorkflow>,
     @InjectModel(LeaveEntitlement.name) private readonly entitlementModel: Model<LeaveEntitlement>,
+    @InjectModel(LeaveRequest.name) private readonly requestModel: Model<LeaveRequest>,
     @InjectModel('LeavePaycodeMapping') private readonly paycodeModel: Model<any>,
-    @InjectModel(LeaveRequest.name) private readonly requestModel: Model<LeaveRequestDocument>,
-    @InjectModel(EmployeeProfile.name) private readonly employeeModel: Model<EmployeeProfileDocument>,
+    @InjectModel('Attachment') private readonly attachmentModel: Model<any>,
+    @InjectModel('LeaveAdjustment') private readonly adjustmentModel: Model<any>,
+    @InjectModel(EmployeeProfile.name) private readonly employeeModel: Model<EmployeeProfile>,
+    @InjectModel(Delegation.name) private readonly delegationModel: Model<DelegationDocument>,
+    private readonly notificationLogService: NotificationLogService,
   ) { }
 
   // ======================================================
@@ -107,9 +125,25 @@ export class LeavesService {
     return this.typeModel.create(dto);
   }
 
-  getAllLeaveTypes() {
-    return this.typeModel.find().populate('categoryId').exec();
+  // new version with payroll link
+  async getAllLeaveTypes(): Promise<any[]> {
+    // fetch all leave types
+    const leaveTypes = await this.typeModel.find().lean();
+
+    // fetch approved payroll types
+    const payrolls = await this.payTypeModel.find({ status: 'APPROVED' }).lean();
+
+    // map leave types to payroll info
+    return leaveTypes.map(lt => {
+      const payroll = payrolls.find(p => p.type === lt.code); // link by code -> type
+      return {
+        ...lt,
+        payrollAmount: payroll ? payroll.amount : null,
+        payrollStatus: payroll ? payroll.status : null,
+      };
+    });
   }
+
 
   updateLeaveType(id: string, dto: UpdateLeaveTypeDto) {
     return this.typeModel.findByIdAndUpdate(id, dto, { new: true });
@@ -126,14 +160,38 @@ export class LeavesService {
   // PHASE 1 — POLICIES (Accrual, Carry, Reset)
   // ======================================================
   async createPolicy(dto: CreateLeavePolicyDto) {
+    // Validate leaveTypeId before anything else
+    if (!dto.leaveTypeId || !Types.ObjectId.isValid(dto.leaveTypeId)) {
+      throw new BadRequestException('Invalid or missing leaveTypeId');
+    }
+
     const exists = await this.policyModel.findOne({ leaveTypeId: dto.leaveTypeId });
     if (exists) throw new BadRequestException('Policy already exists for this leave type');
+
     return this.policyModel.create(dto);
   }
 
+
   getAllPolicies() {
-    return this.policyModel.find().populate('leaveTypeId');
+    return this.policyModel
+      .find()
+      .populate({
+        path: 'leaveTypeId',
+        select: 'name code categoryId',
+        populate: { path: 'categoryId', select: 'name' },
+      })
+      .lean()
+      .then(policies =>
+        policies
+          .filter(p => p.leaveTypeId && typeof p.leaveTypeId === 'object') // ✅ skip broken ones
+          .map(p => ({
+            ...p,
+            leaveType: p.leaveTypeId,
+            leaveTypeId: (p.leaveTypeId as any)?._id,
+          })),
+      );
   }
+
 
   updatePolicy(id: string, dto: UpdateLeavePolicyDto) {
     return this.policyModel.findByIdAndUpdate(id, dto, { new: true });
@@ -144,21 +202,175 @@ export class LeavesService {
     if (used) throw new BadRequestException('Cannot delete policy linked to entitlements');
     return this.policyModel.findByIdAndDelete(id);
   }
+  // ========================
+  // HOLIDAYS (Simple CRUD)
+  // ========================
+  // ======================================================
+  // HOLIDAY CRUD (using Time Management schema)
+  // ======================================================
+  async createHoliday(dto: CreateHolidayDto) {
+    // Validate holiday type using the imported enum
+    const validTypes = Object.values(HolidayType);
+    if (!validTypes.includes(dto.type as HolidayType)) {
+      throw new BadRequestException(`Invalid holiday type. Valid types: ${validTypes.join(', ')}`);
+    }
 
-  // ======================================================
-  // PHASE 1 — CALENDAR (BR23, BR55)
-  // ======================================================
-  createCalendar(dto: CreateCalendarDto) {
-    return this.calendarModel.findOneAndUpdate(
-      { year: dto.year },
-      dto,
-      { upsert: true, new: true }
-    );
+    const startDate = new Date(dto.startDate);
+    const endDate = dto.endDate ? new Date(dto.endDate) : startDate;
+
+    if (endDate < startDate) {
+      throw new BadRequestException('End date must be after or equal to start date');
+    }
+
+    // Check for overlapping active holidays
+    const overlappingHoliday = await this.holidayModel.findOne({
+      active: true,
+      $or: [
+        { startDate: { $lte: endDate }, endDate: { $gte: startDate } },
+      ],
+    });
+
+    if (overlappingHoliday) {
+      throw new BadRequestException('Holiday overlaps with an existing active holiday');
+    }
+
+    return this.holidayModel.create({
+      type: dto.type,
+      startDate,
+      endDate,
+      name: dto.name,
+      active: true,
+    });
   }
 
-  getCalendarByYear(year: number) {
-    return this.calendarModel.findOne({ year });
+  async getAllHolidays(year?: number) {
+    const query: any = { active: true };
+
+    if (year) {
+      query.$or = [
+        { startDate: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31`) } },
+        { endDate: { $gte: new Date(`${year}-01-01`), $lte: new Date(`${year}-12-31`) } },
+        {
+          $and: [
+            { startDate: { $lte: new Date(`${year}-01-01`) } },
+            { endDate: { $gte: new Date(`${year}-12-31`) } }
+          ]
+        }
+      ];
+    }
+
+    return this.holidayModel
+      .find(query)
+      .sort({ startDate: 1 })
+      .exec();
   }
+
+  async updateHoliday(id: string, dto: UpdateHolidayDto) {
+    const holiday = await this.holidayModel.findById(id);
+    if (!holiday) {
+      throw new NotFoundException('Holiday not found');
+    }
+
+    const updates: any = {};
+
+    if (dto.type !== undefined) {
+      // Validate against the enum
+      const validTypes = Object.values(HolidayType);
+      if (!validTypes.includes(dto.type as HolidayType)) {
+        throw new BadRequestException(`Invalid holiday type. Valid types: ${validTypes.join(', ')}`);
+      }
+      updates.type = dto.type;
+    }
+
+    if (dto.startDate !== undefined) {
+      updates.startDate = new Date(dto.startDate);
+    }
+
+    if (dto.endDate !== undefined) {
+      updates.endDate = new Date(dto.endDate);
+    }
+
+    if (dto.name !== undefined) {
+      updates.name = dto.name;
+    }
+
+    if (dto.active !== undefined) {
+      updates.active = dto.active;
+    }
+
+    // If updating dates, check for overlaps with other active holidays
+    if (dto.startDate || dto.endDate) {
+      const startDate = updates.startDate || holiday.startDate;
+      const endDate = updates.endDate || holiday.endDate;
+
+      const overlappingHoliday = await this.holidayModel.findOne({
+        _id: { $ne: id },
+        active: true,
+        $or: [
+          { startDate: { $lte: endDate }, endDate: { $gte: startDate } },
+        ],
+      });
+
+      if (overlappingHoliday) {
+        throw new BadRequestException('Updated dates overlap with an existing active holiday');
+      }
+    }
+
+    return this.holidayModel.findByIdAndUpdate(id, updates, { new: true });
+  }
+
+  async deleteHoliday(id: string) {
+    const holiday = await this.holidayModel.findById(id);
+    if (!holiday) {
+      throw new NotFoundException('Holiday not found');
+    }
+
+    // Check if this holiday is referenced in any calendar
+    const calendarsWithHoliday = await this.calendarModel.find({
+      holidays: new Types.ObjectId(id),
+    });
+
+    if (calendarsWithHoliday.length > 0) {
+      throw new BadRequestException(
+        'Cannot delete holiday because it is referenced in one or more calendars. Remove it from calendars first.'
+      );
+    }
+
+    // Soft delete by setting active to false
+    holiday.active = false;
+    return holiday.save();
+  }
+
+  // ======================================================
+  // CALENDAR METHODS (same as before)
+  // ======================================================
+  async createCalendar(dto: CreateCalendarDto) {
+    const existingCalendar = await this.calendarModel.findOne({ year: dto.year });
+    if (existingCalendar) {
+      throw new BadRequestException(`Calendar for year ${dto.year} already exists`);
+    }
+    return this.calendarModel.create(dto);
+  }
+
+  async getCalendarByYear(year: number) {
+    const calendar = await this.calendarModel
+      .findOne({ year })
+      .populate({
+        path: 'holidays',
+        match: { active: true },
+        select: 'type startDate endDate name active',
+      })
+      .lean();
+
+    if (!calendar) {
+      throw new NotFoundException(`Calendar for year ${year} not found`);
+    }
+
+    return calendar;
+  }
+
+  // ... rest of your calendar methods remain the same
+  // (addHoliday, removeHoliday, addBlockedPeriod, removeBlockedPeriod, calculateNetLeaveDays)
 
   async addHoliday(year: number, dto: UpdateCalendarHolidayDto) {
     const calendar = await this.calendarModel.findOne({ year });
@@ -225,7 +437,7 @@ export class LeavesService {
   // ======================================================
   // PHASE 1 — ENTITLEMENTS (REQ-007 / BR-7)
   // ======================================================
-  async createEntitlementForEmployee(employee: Employee) {
+  async createEntitlementForEmployee(employee: any) {
     const leaveTypes = await this.typeModel.find().lean();
     const policies = await this.policyModel
       .find({ leaveTypeId: { $in: leaveTypes.map(t => t._id) } })
@@ -265,6 +477,24 @@ export class LeavesService {
     });
 
     return this.entitlementModel.insertMany(entitlements);
+  }
+
+  // ======================================================
+  // ENTITLEMENT CRUD
+  // ======================================================
+  async getAllEntitlements() {
+    return this.entitlementModel
+      .find()
+      .populate('employeeId')
+      .populate('leaveTypeId')
+      .exec();
+  }
+
+  async getEmployeeEntitlements(employeeId: string) {
+    return this.entitlementModel
+      .find({ employeeId: new Types.ObjectId(employeeId) })
+      .populate('leaveTypeId')
+      .exec();
   }
 
   // ======================================================
@@ -350,16 +580,60 @@ export class LeavesService {
   deletePaycodeMapping(id: string) {
     return this.paycodeModel.findByIdAndDelete(id);
   }
+  async saveAttachment(file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
 
+    const created = await this.attachmentModel.create({
+      originalName: file.originalname,
+      filePath: file.path.replace(/\\/g, '/'), // normalize slashes on Windows
+      fileType: file.mimetype,
+      size: file.size,
+    });
+
+    return created;
+  }
   // ======================================================
   // PHASE 2 — LEAVE REQUEST SUBMISSION
   // ======================================================
+  // Service
   async createLeaveRequest(employeeId: string, dto: CreateLeaveRequestDto) {
+    // employeeId here IS the EmployeeProfile._id
+    const employeeProfile = await this.employeeModel.findById(employeeId);
+
+    if (!employeeProfile) {
+      throw new NotFoundException('Employee profile not found for current user');
+    }
+
+    const employeeObjectId = employeeProfile._id; // same as before
+
     const leaveType = await this.typeModel.findById(dto.leaveTypeId);
     if (!leaveType) throw new NotFoundException('Leave type not found');
 
-    if (leaveType.requiresAttachment && !dto.attachmentId)
-      throw new BadRequestException('Attachment is required');
+    // REQ-028: Enhanced document validation
+    if (leaveType.requiresAttachment && !dto.attachmentId) {
+      throw new BadRequestException('Attachment is required for this leave type');
+    }
+
+    if (dto.attachmentId) {
+      const attachment = await this.attachmentModel.findById(dto.attachmentId);
+      if (!attachment) {
+        throw new NotFoundException('Attachment not found');
+      }
+
+      // Validate file type (allow common document types)
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (attachment.fileType && !allowedTypes.includes(attachment.fileType.toLowerCase())) {
+        throw new BadRequestException('Invalid file type. Allowed: PDF, JPG, PNG, DOC, DOCX');
+      }
+
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (attachment.size && attachment.size > maxSize) {
+        throw new BadRequestException('File size exceeds 10MB limit');
+      }
+    }
 
     const from = new Date(dto.from);
     const to = new Date(dto.to);
@@ -374,15 +648,25 @@ export class LeavesService {
     if (policy?.maxConsecutiveDays && durationDays > policy.maxConsecutiveDays)
       throw new BadRequestException(`Exceeds maximum consecutive days`);
 
+    // REQ-031: Fixed post-leave request grace period logic
     const today = new Date();
-    if (to < today && policy?.minNoticeDays) {
-      const diff = Math.ceil((today.getTime() - to.getTime()) / 86400000);
-      if (diff > policy.minNoticeDays)
-        throw new BadRequestException('Grace period exceeded');
+    today.setHours(0, 0, 0, 0);
+
+    // If this is a post-leave request (to date is in the past)
+    if (to < today) {
+      const gracePeriodDays = policy?.maxGracePeriodDays || policy?.minNoticeDays || 7; // Default 7 days
+      const daysSinceEnd = Math.ceil((today.getTime() - to.getTime()) / 86400000);
+
+      if (daysSinceEnd > gracePeriodDays) {
+        throw new BadRequestException(
+          `Post-leave request grace period exceeded. Maximum ${gracePeriodDays} days allowed after leave end date.`
+        );
+      }
     }
 
+    // Entitlement uses employeeId referencing EmployeeProfile._id
     const entitlement = await this.entitlementModel.findOne({
-      employeeId: new Types.ObjectId(employeeId),
+      employeeId: employeeObjectId,
       leaveTypeId: leaveType._id,
     });
 
@@ -391,29 +675,32 @@ export class LeavesService {
 
     const remaining = entitlement.remaining;
 
-    if (durationDays > remaining) {
-      throw new BadRequestException(
-        `Requested ${durationDays} days but only ${remaining} remaining`
-      );
-    }
+    // BR-29: Convert excess to unpaid leave instead of blocking
+    let paidDays = durationDays;
+    let unpaidDays = 0;
 
-    // Check team scheduling conflicts
-    const employeeProfile = await this.employeeModel.findById(employeeId);
-    if (!employeeProfile) throw new NotFoundException('Employee not found');
+    if (durationDays > remaining) {
+      unpaidDays = durationDays - remaining;
+      paidDays = remaining;
+
+      // If no remaining balance, all days are unpaid
+      if (remaining <= 0) {
+        paidDays = 0;
+        unpaidDays = durationDays;
+      }
+    }
 
     const departmentId = employeeProfile.primaryDepartmentId;
     if (departmentId) {
-      const teamMembers = await this.employeeModel.find({
-        primaryDepartmentId: departmentId,
-      }).select('_id');
-      const teamIds = teamMembers.map(e => e._id.toString());
+      const teamMembers = await this.employeeModel
+        .find({ primaryDepartmentId: departmentId })
+        .select('_id');
+      const teamIds = teamMembers.map((e) => e._id.toString());
 
       const overlaps = await this.requestModel.countDocuments({
         employeeId: { $in: teamIds },
         status: LeaveStatus.APPROVED,
-        $or: [
-          { 'dates.from': { $lte: to }, 'dates.to': { $gte: from } },
-        ],
+        $or: [{ 'dates.from': { $lte: to }, 'dates.to': { $gte: from } }],
       });
 
       const maxAllowed = Math.ceil(teamIds.length * 0.3);
@@ -421,44 +708,96 @@ export class LeavesService {
         throw new BadRequestException('Team scheduling conflict');
     }
 
-    // Personal overlap
     const overlapReq = await this.requestModel.findOne({
-      employeeId: new Types.ObjectId(employeeId),
+      employeeId: employeeObjectId,
       status: LeaveStatus.APPROVED,
-      $or: [
-        { 'dates.from': { $lte: to }, 'dates.to': { $gte: from } },
-      ],
+      $or: [{ 'dates.from': { $lte: to }, 'dates.to': { $gte: from } }],
     });
 
     if (overlapReq)
       throw new BadRequestException('Overlaps with approved leave');
 
-    // Approval flow
     const workflow = await this.workflowModel.findOne({ leaveTypeId: leaveType._id });
     const approvalFlow: ApprovalStepExtended[] = workflow
-      ? workflow.flow.map(s => ({ role: s.role, status: 'pending' }))
+      ? workflow.flow.map((s) => ({ role: s.role, status: 'pending' }))
       : [];
 
-    return this.requestModel.create({
-      employeeId: new Types.ObjectId(employeeId),
+    // Set escalation time for manager step (48 hours from now)
+    const managerStep = approvalFlow.find(s => s.role === 'Manager');
+    if (managerStep) {
+      managerStep.escalationAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    }
+
+    const leaveRequest = await this.requestModel.create({
+      employeeId: employeeObjectId,
       leaveTypeId: leaveType._id,
       dates: { from, to },
       durationDays,
+      paidDays,
+      unpaidDays,
       justification: dto.justification,
-      attachmentId: dto.attachmentId ? new Types.ObjectId(dto.attachmentId) : undefined,
+      attachmentId: dto.attachmentId
+        ? new Types.ObjectId(dto.attachmentId)
+        : undefined,
       approvalFlow,
       status: LeaveStatus.PENDING,
       irregularPatternFlag: false,
     });
-  }
 
+    // REQ-030, REQ-042: Send notifications
+    try {
+      // Notify employee
+      await this.notificationLogService.sendNotification({
+        to: employeeObjectId,
+        type: 'Leave Request Submitted',
+        message: `Your leave request for ${durationDays} day(s) (${paidDays} paid, ${unpaidDays > 0 ? unpaidDays + ' unpaid' : ''}) has been submitted and is pending approval.`,
+      });
+
+      // Find and notify manager
+      const manager = await this.employeeModel.findOne({
+        primaryDepartmentId: employeeProfile.primaryDepartmentId,
+        systemRole: { $in: ['Manager', 'DEPARTMENT_MANAGER', 'DEPARTMENT_HEAD'] },
+      });
+
+      if (manager) {
+        await this.notificationLogService.sendNotification({
+          to: manager._id,
+          type: 'Leave Request Pending Approval',
+          message: `${employeeProfile.fullName || employeeProfile.firstName} has submitted a leave request for ${durationDays} day(s) from ${from.toLocaleDateString()} to ${to.toLocaleDateString()}. Please review.`,
+        });
+      }
+    } catch (error) {
+      // Log but don't fail the request if notification fails
+      console.error('Failed to send notification:', error);
+    }
+
+    return leaveRequest;
+  }
 
   // ======================================================
   // PHASE 2 — GET REQUESTS
   // ======================================================
   getAllLeaveRequests() {
-    return this.requestModel.find().populate('leaveTypeId attachmentId');
+    return this.requestModel
+      .find()
+      .populate({
+        path: 'employeeId',
+        model: EmployeeProfile.name, // ✅ use the imported model class name
+        select: 'firstName lastName fullName workEmail',
+      })
+      .populate({
+        path: 'leaveTypeId',
+        model: LeaveType.name, // ✅ same here
+        select: 'name',
+      })
+      .populate({
+        path: 'attachmentId',
+        select: 'fileName',
+      })
+      .lean()
+      .exec();
   }
+
 
   getLeaveRequest(id: string) {
     return this.requestModel.findById(id)
@@ -506,7 +845,7 @@ export class LeavesService {
   // ======================================================
   // PHASE 2 — ROUTE TO MANAGER (REQ-020)
   // ======================================================
-  async routeToManager(leaveRequestId: string, delegateToId?: string) {
+  async routeToManager(leaveRequestId: string) {
     const leave = await this.requestModel.findById(leaveRequestId);
     if (!leave) throw new NotFoundException('Leave request not found');
 
@@ -515,65 +854,114 @@ export class LeavesService {
 
     const manager = await this.employeeModel.findOne({
       primaryDepartmentId: employee.primaryDepartmentId,
-      systemRole: 'Manager',
+      systemRole: { $in: ['Manager', 'DEPARTMENT_MANAGER', 'DEPARTMENT_HEAD'] },
     });
 
-    if (!manager)
+    if (!manager) {
       throw new NotFoundException('Manager not assigned');
+    }
 
-    const step: any = {
+    // 🔹 CHECK DELEGATION
+    const delegation = await this.getDelegationByManager(manager._id.toString());
+
+    const step: ApprovalStepExtended = {
       role: 'Manager',
       assignedTo: manager._id,
       status: 'pending',
+      escalationAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
     };
 
-    if (delegateToId) {
-      const delegate = await this.employeeModel.findById(delegateToId);
-      if (!delegate)
-        throw new NotFoundException('Delegate not found');
-      step.delegateTo = delegate._id;
+    if (delegation) {
+      step.delegateTo = new Types.ObjectId(delegation.delegateManagerId);
     }
 
     leave.approvalFlow.push(step);
     await leave.save();
+
     return leave;
   }
+
+  private async getEmployeeRoles(employeeId: string): Promise<string[]> {
+    const employee = await this.employeeModel.findById(employeeId);
+
+    if (!employee) {
+      return [];
+    }
+
+    // Example logic to decide role:
+    if (employee.primaryPositionId) {
+      // If this employee has a position ID that corresponds to Department Head
+      return [SystemRole.DEPARTMENT_HEAD];
+    }
+
+    // Default role for normal employees
+    return [SystemRole.DEPARTMENT_EMPLOYEE];
+  }
+
+
+
+
 
   // ======================================================
   // PHASE 2 — MANAGER DECISION (REQ-021 / REQ-022)
   // ======================================================
   async managerDecision(
-    leaveRequestId: string,
+    leaveId: string,
     managerId: string,
     decision: 'approved' | 'rejected',
   ) {
-    const leave = await this.requestModel.findById(leaveRequestId);
+    // 1. Load leave request
+    const leave = await this.requestModel.findById(leaveId);
     if (!leave) throw new NotFoundException('Leave request not found');
 
-    const approvalFlow = leave.approvalFlow as ApprovalStepExtended[];
+    // 2. Load workflow for this leave type
+    const workflow = await this.workflowModel.findOne({ leaveTypeId: leave.leaveTypeId });
 
-    const step = approvalFlow.find(
-      s =>
-        s.role === 'Manager' &&
-        s.status === 'pending' &&
-        (s.assignedTo?.toString() === managerId ||
-          s.delegateTo?.toString() === managerId),
-    );
+    // 3. Determine current step role
+    let currentStepRole: string;
+    const currentStepIndex = leave.approvalFlow.length;
 
-    if (!step)
-      throw new ForbiddenException('No pending managerial action');
+    if (!workflow || workflow.flow.length === 0) {
+      // Fallback if no workflow is defined: assume single manager step
+      currentStepRole = 'Manager';
+      console.warn(`Approval workflow missing for leaveTypeId: ${leave.leaveTypeId}. Defaulting to Manager step.`);
+    } else {
+      currentStepRole = workflow.flow[currentStepIndex]?.role;
+      if (!currentStepRole) throw new BadRequestException('No more approval steps');
+    }
 
-    step.status = decision;
-    step.decidedBy = new Types.ObjectId(managerId);
-    step.decidedAt = new Date();
-    step.escalationAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    // 4. Check if manager has the correct role
+    const managerRoles = await this.getEmployeeRoles(managerId); // your service method
+    if (!managerRoles.includes(currentStepRole)) {
+      throw new ForbiddenException('You are not authorized to approve this leave');
+    }
 
-    await leave.save();
-    return leave;
+    // 5. Record decision in approvalFlow
+    leave.approvalFlow.push({
+      role: currentStepRole,
+      status: decision,
+      decidedBy: new Types.ObjectId(managerId),
+      decidedAt: new Date(),
+    });
+
+    // 6. Update overall status if final step
+    if (workflow && currentStepIndex === workflow.flow.length - 1) {
+      leave.status = decision === 'approved' ? LeaveStatus.APPROVED : LeaveStatus.REJECTED;
+    } else if (!workflow) {
+      // If no workflow, consider this single step as final
+      leave.status = decision === 'approved' ? LeaveStatus.APPROVED : LeaveStatus.REJECTED;
+    }
+
+    return leave.save();
   }
 
+
+
+
+
+
   // ======================================================
-  // PHASE 2 — HR COMPLIANCE (REQ-025 / BR-41)
+  // PHASE 2 — HR COMPLIANCE (REQ-025 / BR-41, REQ-028)
   // ======================================================
   async hrComplianceReview(
     leaveRequestId: string,
@@ -581,7 +969,7 @@ export class LeavesService {
     action: 'approved' | 'rejected',
     overrideManager = false,
   ) {
-    const leave = await this.requestModel.findById(leaveRequestId);
+    const leave = await this.requestModel.findById(leaveRequestId).populate('employeeId leaveTypeId attachmentId');
     if (!leave) throw new NotFoundException('Leave request not found');
 
     const approvalFlow = leave.approvalFlow as ApprovalStepExtended[];
@@ -589,6 +977,19 @@ export class LeavesService {
 
     if (!managerStep || (managerStep.status !== 'approved' && !overrideManager))
       throw new BadRequestException('Manager approval required first');
+
+    // REQ-028: Document validation during HR review
+    const leaveType = await this.typeModel.findById(leave.leaveTypeId);
+    if (leaveType?.requiresAttachment && leave.attachmentId) {
+      const attachment = await this.attachmentModel.findById(leave.attachmentId);
+      if (!attachment) {
+        throw new BadRequestException('Required attachment not found or invalid');
+      }
+      // Additional validation: check if document is recent (for medical certificates, etc.)
+      // This is a placeholder - can be enhanced based on business rules
+    } else if (leaveType?.requiresAttachment && !leave.attachmentId) {
+      throw new BadRequestException('Required attachment is missing for this leave type');
+    }
 
     const entitlement = await this.entitlementModel.findOne({
       employeeId: leave.employeeId,
@@ -598,8 +999,13 @@ export class LeavesService {
     if (!entitlement)
       throw new NotFoundException('Entitlement not found');
 
-    if (entitlement.taken + (leave.durationDays ?? 0) > entitlement.yearlyEntitlement)
-      throw new BadRequestException('Exceeds yearly limit');
+    // BR-41: Cumulative limits check
+    const paidDays = (leave as any).paidDays || leave.durationDays;
+    if (entitlement.taken + paidDays > entitlement.yearlyEntitlement) {
+      throw new BadRequestException(
+        `Exceeds yearly limit. Already taken: ${entitlement.taken}, Requested: ${paidDays}, Yearly limit: ${entitlement.yearlyEntitlement}`
+      );
+    }
 
     approvalFlow.push({
       role: 'HR',
@@ -615,14 +1021,48 @@ export class LeavesService {
       : LeaveStatus.REJECTED;
 
     await leave.save();
+
+    // REQ-030, REQ-042: Send notifications
+    try {
+      const employee = await this.employeeModel.findById(leave.employeeId);
+      const hr = await this.employeeModel.findById(hrId);
+      const leaveType = await this.typeModel.findById(leave.leaveTypeId);
+      const manager = managerStep?.decidedBy
+        ? await this.employeeModel.findById(managerStep.decidedBy)
+        : null;
+
+      // Notify employee
+      await this.notificationLogService.sendNotification({
+        to: leave.employeeId,
+        type: action === 'approved' ? 'Leave Request Approved' : 'Leave Request Rejected',
+        message: `Your leave request for ${leaveType?.name || 'leave'} (${leave.durationDays} days) has been ${action} by HR${overrideManager ? ' (override)' : ''}.${action === 'approved' ? ' Your leave balance will be updated accordingly.' : ''}`,
+      });
+
+      // Notify manager if approved
+      if (action === 'approved' && manager) {
+        await this.notificationLogService.sendNotification({
+          to: manager._id,
+          type: 'Team Member Leave Approved',
+          message: `The leave request from ${employee?.fullName || employee?.firstName || 'your team member'} has been approved by HR and finalized.`,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
+    // If approved, finalize the request
+    if (action === 'approved') {
+      await this.finalizeLeaveRequest(leaveRequestId);
+    }
+
     return leave;
   }
 
   // ======================================================
-  // PHASE 2 — FINALIZATION (PAYROLL + ATTENDANCE)
+  // PHASE 2 — FINALIZATION (REQ-029, BR-19)
   // ======================================================
   async finalizeLeaveRequest(leaveRequestId: string) {
-    const leave = await this.requestModel.findById(leaveRequestId);
+    const leave = await this.requestModel.findById(leaveRequestId).populate('employeeId leaveTypeId');
     if (!leave) throw new NotFoundException('Request not found');
 
     if (leave.status !== LeaveStatus.APPROVED)
@@ -634,17 +1074,48 @@ export class LeavesService {
     });
 
     if (entitlement) {
-      // M1 model: use durationDays for final deduction
-      entitlement.taken += leave.durationDays ?? 0;
-      entitlement.remaining -= leave.durationDays ?? 0;
+      // REQ-029: Use paidDays for deduction (unpaid days don't affect balance)
+      const paidDays = (leave as any).paidDays || leave.durationDays;
+      entitlement.taken += paidDays;
+      entitlement.remaining = Math.max(0, entitlement.remaining - paidDays);
       await entitlement.save();
     }
 
-    console.log(`Notify employee ${leave.employeeId}`);
-    console.log(`Notify manager about approval`);
-    console.log(`Block attendance for ${leave.employeeId}`);
-    console.log(`Adjust payroll for paid/unpaid days`);
+    // REQ-030, REQ-042: Send final approval notifications
+    try {
+      const employee = await this.employeeModel.findById(leave.employeeId);
+      const leaveType = await this.typeModel.findById(leave.leaveTypeId);
+      const paidDays = (leave as any).paidDays || leave.durationDays;
+      const unpaidDays = (leave as any).unpaidDays || 0;
 
+      // Notify employee
+      await this.notificationLogService.sendNotification({
+        to: leave.employeeId,
+        type: 'Leave Request Finalized',
+        message: `Your leave request for ${leaveType?.name || 'leave'} has been finalized. ${paidDays} paid day(s)${unpaidDays > 0 ? ` and ${unpaidDays} unpaid day(s)` : ''} from ${new Date(leave.dates.from).toLocaleDateString()} to ${new Date(leave.dates.to).toLocaleDateString()}. Your leave balance has been updated.`,
+      });
+
+      // Notify manager
+      const employeeProfile = await this.employeeModel.findById(leave.employeeId);
+      if (employeeProfile?.primaryDepartmentId) {
+        const manager = await this.employeeModel.findOne({
+          primaryDepartmentId: employeeProfile.primaryDepartmentId,
+          systemRole: { $in: ['Manager', 'DEPARTMENT_MANAGER', 'DEPARTMENT_HEAD'] },
+        });
+
+        if (manager) {
+          await this.notificationLogService.sendNotification({
+            to: manager._id,
+            type: 'Team Member Leave Finalized',
+            message: `${employee?.fullName || employee?.firstName || 'A team member'}'s leave request has been finalized and their attendance will be blocked for the leave period.`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
+    // BR-19: Retroactive deductions for unapproved absences
     const unapprovedOld = await this.requestModel.find({
       employeeId: leave.employeeId,
       status: LeaveStatus.PENDING,
@@ -656,11 +1127,27 @@ export class LeavesService {
         employeeId: oldReq.employeeId,
         leaveTypeId: oldReq.leaveTypeId,
       });
+
       if (ent) {
         const deduction = oldReq.durationDays ?? 0;
-        ent.remaining -= deduction;
-        await ent.save();
-        console.log(`Retroactive deduction of ${deduction} days`);
+        // Only deduct if there's remaining balance
+        if (ent.remaining > 0) {
+          const actualDeduction = Math.min(deduction, ent.remaining);
+          ent.remaining -= actualDeduction;
+          ent.taken += actualDeduction;
+          await ent.save();
+
+          // Notify employee about retroactive deduction
+          try {
+            await this.notificationLogService.sendNotification({
+              to: oldReq.employeeId,
+              type: 'Retroactive Leave Deduction',
+              message: `Your unapproved absence from ${new Date(oldReq.dates.from).toLocaleDateString()} to ${new Date(oldReq.dates.to).toLocaleDateString()} has resulted in a retroactive deduction of ${actualDeduction} day(s) from your leave balance.`,
+            });
+          } catch (error) {
+            console.error('Failed to send retroactive deduction notification:', error);
+          }
+        }
       }
     }
 
@@ -670,13 +1157,17 @@ export class LeavesService {
   // ======================================================
   // PHASE 2 — AUTO-ESCALATION (BR-28)
   // ======================================================
+  @Cron(CronExpression.EVERY_HOUR) // Run every hour
   async autoEscalateManagerApprovals() {
     const now = new Date();
     const leavesToEscalate = await this.requestModel.find({
+      status: LeaveStatus.PENDING,
       'approvalFlow.role': 'Manager',
       'approvalFlow.status': 'pending',
       'approvalFlow.escalationAt': { $lte: now },
-    });
+    }).populate('employeeId leaveTypeId');
+
+    let escalatedCount = 0;
 
     for (const leave of leavesToEscalate) {
       const approvalFlow = leave.approvalFlow as ApprovalStepExtended[];
@@ -689,16 +1180,335 @@ export class LeavesService {
           step.escalationAt &&
           step.escalationAt <= now
         ) {
-          step.role = 'HR';
-          step.status = 'pending';
-          step.assignedTo = undefined;
+          // Escalate to HR
+          const hrStep = approvalFlow.find(s => s.role === 'HR');
+          if (hrStep && hrStep.status === 'pending') {
+            hrStep.escalationAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+          } else if (!hrStep) {
+            // Add HR step if it doesn't exist
+            approvalFlow.push({
+              role: 'HR',
+              status: 'pending',
+              escalationAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+            });
+          }
+
+          // Mark manager step as escalated
+          step.status = 'escalated';
           updated = true;
+          escalatedCount++;
         }
       });
 
-      if (updated) await leave.save();
+      if (updated) {
+        await leave.save();
+
+        // REQ-030, REQ-042: Notify about escalation
+        try {
+          const employee = await this.employeeModel.findById(leave.employeeId);
+          const leaveType = await this.typeModel.findById(leave.leaveTypeId);
+
+          // Notify employee
+          await this.notificationLogService.sendNotification({
+            to: leave.employeeId,
+            type: 'Leave Request Auto-Escalated',
+            message: `Your leave request for ${leaveType?.name || 'leave'} (${leave.durationDays} days) has been automatically escalated to HR after 48 hours of no manager response.`,
+          });
+
+          // Notify HR
+          const hrAdmins = await this.employeeModel.find({
+            systemRole: { $in: ['HR_ADMIN', 'HR_EMPLOYEE'] },
+          }).limit(5);
+
+          for (const hr of hrAdmins) {
+            await this.notificationLogService.sendNotification({
+              to: hr._id,
+              type: 'Leave Request Escalated',
+              message: `A leave request from ${employee?.fullName || employee?.firstName || 'Employee'} has been auto-escalated to HR after manager did not respond within 48 hours.`,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to send escalation notification:', error);
+        }
+      }
     }
 
-    return leavesToEscalate.length;
+    if (escalatedCount > 0) {
+      console.log(`Auto-escalated ${escalatedCount} leave request(s)`);
+    }
+
+    return escalatedCount;
   }
+  // Add this method for employee balance
+  // ======================================================
+  // PHASE 2 — EMPLOYEE SELF-SERVICE HELPERS
+  // ======================================================
+  async getEmployeeBalance(employeeId: string) {
+    const balance = await this.entitlementModel
+      .find({ employeeId: new Types.ObjectId(employeeId) })
+      .populate('leaveTypeId')
+      .lean();
+
+    return balance;
+  }
+
+  async getEmployeeRequests(employeeId: string) {
+    const requests = await this.requestModel
+      .find({ employeeId: new Types.ObjectId(employeeId) })
+      .populate('leaveTypeId')
+      .populate('attachmentId')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return requests;
+  }
+
+  // ======================================================
+  // PHASE 2 — MANUAL ADJUSTMENTS (REQ-013)
+  // ======================================================
+  async createAdjustment(dto: {
+    employeeId: string;
+    leaveTypeId: string;
+    adjustmentType: 'add' | 'deduct' | 'encashment';
+    amount: number;
+    reason: string;
+    hrUserId: string;
+  }) {
+    const { employeeId, leaveTypeId, adjustmentType, amount, reason, hrUserId } = dto;
+
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
+    }
+
+    if (!['add', 'deduct', 'encashment'].includes(adjustmentType)) {
+      throw new BadRequestException('Invalid adjustment type');
+    }
+
+    // Find entitlement
+    const entitlement = await this.entitlementModel.findOne({
+      employeeId: new Types.ObjectId(employeeId),
+      leaveTypeId: new Types.ObjectId(leaveTypeId),
+    });
+
+    if (!entitlement) {
+      throw new NotFoundException(
+        'Entitlement not found for this employee and leave type',
+      );
+    }
+
+    // Compute new remaining
+    let newRemaining = entitlement.remaining;
+
+    if (adjustmentType === 'add') {
+      newRemaining += amount;
+    } else {
+      // both 'deduct' and 'encashment' reduce balance
+      newRemaining = Math.max(0, entitlement.remaining - amount);
+    }
+
+    entitlement.remaining = newRemaining;
+    await entitlement.save();
+
+    // Save adjustment record
+    const adjustment = await this.adjustmentModel.create({
+      employeeId: new Types.ObjectId(employeeId),
+      leaveTypeId: new Types.ObjectId(leaveTypeId),
+      adjustmentType,
+      amount,
+      reason,
+      hrUserId: new Types.ObjectId(hrUserId),
+      createdAt: new Date(),
+    });
+
+    return {
+      message: 'Adjustment applied successfully',
+      entitlement,
+      adjustment,
+    };
+  }
+
+  // ======================================================
+  // PHASE 2 — ENCASHMENT CALCULATION (BR-52/53)
+  // ======================================================
+  async calculateEncashment(employeeId: string, leaveTypeId: string) {
+    const entitlement = await this.entitlementModel.findOne({
+      employeeId: new Types.ObjectId(employeeId),
+      leaveTypeId: new Types.ObjectId(leaveTypeId),
+    });
+
+    if (!entitlement) {
+      throw new NotFoundException('Entitlement not found');
+    }
+
+    const unusedDays = Math.min(entitlement.remaining, 30); // Cap at 30 days (BR-53)
+
+    // In real system, you'd fetch daily salary rate from Payroll module
+    const dailySalaryRate = 100; // Placeholder - should come from Payroll
+
+    const encashmentAmount = dailySalaryRate * unusedDays;
+
+    return {
+      unusedDays,
+      dailySalaryRate,
+      encashmentAmount,
+      formula: 'DailySalaryRate × NumberOfUnusedLeaveDays (capped at 30)',
+    };
+  }
+
+  // ======================================================
+  // PHASE 2 — ADJUSTMENT REPORTING
+  // ======================================================
+  async getAllAdjustments() {
+    return this.adjustmentModel
+      .find()
+      .populate('employeeId')
+      .populate('leaveTypeId')
+      .populate('hrUserId')
+      .exec();
+  }
+  async getManagerTeamOverview(managerId: string) {
+    const managerObjectId = new Types.ObjectId(managerId);
+
+    // --------------------------------------------------
+    // 1) Direct reports
+    // --------------------------------------------------
+    const directEmployees = await this.employeeModel
+      .find({ managerId: managerObjectId })
+      .select('_id fullName workEmail departmentName positionTitle')
+      .lean();
+
+    // --------------------------------------------------
+    // 2) Delegations TO this manager
+    // --------------------------------------------------
+    const delegations = await this.delegationModel.find({
+      delegateTo: managerObjectId,
+      active: true,
+    });
+
+    const delegatedManagerIds = delegations.map(d => d.managerId);
+
+    // --------------------------------------------------
+    // 3) Employees of delegated managers
+    // --------------------------------------------------
+    const delegatedEmployees = delegatedManagerIds.length
+      ? await this.employeeModel
+        .find({ managerId: { $in: delegatedManagerIds } })
+        .select('_id fullName workEmail departmentName positionTitle')
+        .lean()
+      : [];
+
+    // --------------------------------------------------
+    // 4) Merge & de-duplicate employees
+    // --------------------------------------------------
+    const allEmployeesMap = new Map<string, any>();
+
+    [...directEmployees, ...delegatedEmployees].forEach(emp => {
+      allEmployeesMap.set(emp._id.toString(), emp);
+    });
+
+    const employees = Array.from(allEmployeesMap.values());
+
+    if (employees.length === 0) {
+      return [];
+    }
+
+    const employeeIds = employees.map(e => e._id);
+
+    // --------------------------------------------------
+    // 5) Leave requests
+    // --------------------------------------------------
+    const requests = await this.requestModel
+      .find({ employeeId: { $in: employeeIds } })
+      .populate('leaveTypeId', 'name')
+      .lean();
+
+    // --------------------------------------------------
+    // 6) Entitlements
+    // --------------------------------------------------
+    const entitlements = await this.entitlementModel
+      .find({ employeeId: { $in: employeeIds } })
+      .lean();
+
+    const today = new Date();
+
+    return employees.map(emp => {
+      const empIdStr = emp._id.toString();
+
+      const empRequests = requests.filter(
+        r => r.employeeId?.toString() === empIdStr,
+      );
+
+      const pendingRequests = empRequests.filter(
+        r => (r.status || '').toLowerCase() === 'pending',
+      );
+
+      const onLeaveTodayReq = empRequests.find(r => {
+        if ((r.status || '').toLowerCase() !== 'approved') return false;
+        const from = new Date(r.dates.from);
+        const to = new Date(r.dates.to);
+        return from <= today && to >= today;
+      });
+
+      const entitlement = entitlements.find(
+        en => en.employeeId?.toString() === empIdStr,
+      );
+
+      return {
+        _id: emp._id.toString(),
+        fullName: emp.fullName,
+        workEmail: emp.workEmail,
+        departmentName: (emp as any).departmentName,
+        positionTitle: (emp as any).positionTitle,
+        onLeaveToday: !!onLeaveTodayReq,
+        pendingRequestsCount: pendingRequests.length,
+        currentLeave: onLeaveTodayReq
+          ? {
+            from: onLeaveTodayReq.dates.from,
+            to: onLeaveTodayReq.dates.to,
+            leaveTypeName:
+              (onLeaveTodayReq.leaveTypeId as any)?.name ?? 'Leave',
+          }
+          : null,
+        remainingAnnualDays: entitlement?.remaining ?? null,
+      };
+    });
+  }
+
+
+
+
+  // ===============================
+  // DELEGATION
+  // ===============================
+
+  async createDelegation(managerId: string, dto: CreateDelegationDto) {
+    if (new Date(dto.startDate) > new Date(dto.endDate)) {
+      throw new BadRequestException('Start date must be before end date');
+    }
+
+    return this.delegationModel.create({
+      managerId,
+      delegateManagerId: dto.delegateManagerId,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      active: true,
+    });
+  }
+
+  async getDelegationByManager(managerId: string) {
+    return this.delegationModel.findOne({
+      managerId,
+      active: true,
+    });
+  }
+
+  async updateDelegation(id: string, dto: UpdateDelegationDto) {
+    return this.delegationModel.findByIdAndUpdate(id, dto, { new: true });
+  }
+
+  async deleteDelegation(id: string) {
+    return this.delegationModel.findByIdAndDelete(id);
+  }
+
+
 }
