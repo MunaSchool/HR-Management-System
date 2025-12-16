@@ -36,6 +36,22 @@ export class RegisterDto {
   dateOfHire: string;
 
   @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @IsOptional()
+  @IsEmail()
+  personalEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  mobilePhone?: string;
+
+  @IsOptional()
+  @IsString()
+  homePhone?: string;
+
+  @IsOptional()
   @IsEnum(Gender)
   gender?: Gender;
 

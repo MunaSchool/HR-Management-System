@@ -51,16 +51,121 @@ export function hasRole(userProfile: any, requiredRoles: string[]): boolean {
   return false;
 }
 
+// ============================================
+// ROLE PERMISSION FUNCTIONS (Per Requirements)
+// ============================================
+
+/**
+ * Check if user is HR Admin or HR Manager
+ * Permissions:
+ * - Review and approve/reject change requests
+ * - Direct access to edit ANY employee profile field (PII, Pay Grade, Status, Hire Date)
+ * - Configure system rules
+ * - Access all employee profiles
+ */
 export function isHRAdmin(userProfile: any): boolean {
   return hasRole(userProfile, ['HR_ADMIN', 'HR_MANAGER']);
 }
 
-export function isManager(userProfile: any): boolean {
-  return hasRole(userProfile, ['DEPARTMENT_HEAD', 'HR_MANAGER', 'HR_ADMIN']);
+/**
+ * Check if user is Department Manager (Department Head)
+ * Permissions:
+ * - Secure access to team list
+ * - View non-sensitive, summarized profile data of direct reports
+ * - Filtered by direct reporting line hierarchy
+ */
+export function isDepartmentManager(userProfile: any): boolean {
+  return hasRole(userProfile, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER']);
 }
 
+/**
+ * Check if user is a regular Department Employee
+ * Permissions:
+ * - Direct modification of non-critical data (Profile Picture, Phone, Email, Address)
+ * - Submit change requests for critical data (Name, National ID, Position, Marital Status)
+ * - Access and view own PII and employment details
+ */
+export function isDepartmentEmployee(userProfile: any): boolean {
+  return hasRole(userProfile, ['DEPARTMENT_EMPLOYEE', 'department employee']);
+}
+
+/**
+ * Check if user has Manager-level access (includes HR Admin/Manager + Department Managers)
+ * Use this when you want to show features to ANY type of manager
+ */
+export function isManager(userProfile: any): boolean {
+  return hasRole(userProfile, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER', 'HR_MANAGER', 'HR_ADMIN']);
+}
+
+/**
+ * Check if user is System Admin (highest level)
+ * Permissions: All HR Admin permissions + system configuration
+ */
 export function isSystemAdmin(userProfile: any): boolean {
-  return hasRole(userProfile, ['HR_ADMIN']);
+  return hasRole(userProfile, ['SYSTEM_ADMIN', 'HR_ADMIN']);
+}
+
+/**
+ * Check if user can edit profile fields directly (without change request)
+ * - Department Employees: Can edit non-critical fields only (Phone, Email, Address, Profile Picture)
+ * - HR Admin/Manager: Can edit ALL fields
+ */
+export function canDirectlyEditProfile(userProfile: any, fieldName: string): boolean {
+  const nonCriticalFields = ['mobilePhone', 'homePhone', 'personalEmail', 'address', 'profilePictureUrl'];
+
+  // HR Admin can edit everything
+  if (isHRAdmin(userProfile)) {
+    return true;
+  }
+
+  // Department Employee can only edit non-critical fields
+  if (isDepartmentEmployee(userProfile)) {
+    return nonCriticalFields.includes(fieldName);
+  }
+
+  return false;
+}
+
+/**
+ * Check if user needs to submit a change request for a field
+ * Critical fields require change request: Name, National ID, Position, Marital Status, etc.
+ */
+export function requiresChangeRequest(userProfile: any, fieldName: string): boolean {
+  const criticalFields = ['firstName', 'middleName', 'lastName', 'nationalId', 'maritalStatus',
+                          'dateOfBirth', 'gender', 'primaryPositionId', 'primaryDepartmentId',
+                          'contractType', 'workType', 'bankName', 'bankAccountNumber'];
+
+  // HR Admin never needs change requests (can edit directly)
+  if (isHRAdmin(userProfile)) {
+    return false;
+  }
+
+  // Department Employees need change request for critical fields
+  return criticalFields.includes(fieldName);
+}
+
+/**
+ * Check if user can view team profiles
+ * Department Managers can view their direct reports (non-sensitive data)
+ */
+export function canViewTeamProfiles(userProfile: any): boolean {
+  return isDepartmentManager(userProfile) || isHRAdmin(userProfile);
+}
+
+/**
+ * Check if user can review and approve change requests
+ * Only HR Admin and HR Manager can do this
+ */
+export function canReviewChangeRequests(userProfile: any): boolean {
+  return isHRAdmin(userProfile);
+}
+
+/**
+ * Check if user can access all employee profiles (not just their team)
+ * Only HR Admin/Manager have this access
+ */
+export function canAccessAllEmployees(userProfile: any): boolean {
+  return isHRAdmin(userProfile);
 }
 
 // Debug function to log role structure
@@ -71,7 +176,12 @@ export function debugRoles(userProfile: any): void {
   console.log('accessProfileId:', userProfile?.accessProfileId);
   console.log('roles:', userProfile?.roles);
   console.log('isHRAdmin:', isHRAdmin(userProfile));
+  console.log('isDepartmentManager:', isDepartmentManager(userProfile));
+  console.log('isDepartmentEmployee:', isDepartmentEmployee(userProfile));
   console.log('isManager:', isManager(userProfile));
   console.log('isSystemAdmin:', isSystemAdmin(userProfile));
+  console.log('canViewTeamProfiles:', canViewTeamProfiles(userProfile));
+  console.log('canReviewChangeRequests:', canReviewChangeRequests(userProfile));
+  console.log('canAccessAllEmployees:', canAccessAllEmployees(userProfile));
   console.log('======================');
 }
