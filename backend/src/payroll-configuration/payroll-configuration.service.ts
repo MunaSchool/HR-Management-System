@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as Mongoose from 'mongoose';
 
@@ -79,12 +79,19 @@ export class PayrollConfigurationService
 
     //////2- config pay grades
     async getPayGrade(id: string): Promise<payGradeDocument|null> {
-        return await this.payGradeModel.findById({ id });
+      return await this.payGradeModel.findById(id);
     }
 
-    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument|null> {
-        const newpg = new this.payGradeModel(payGrade);
-        return newpg.save();
+    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument> {
+      const pg2 = new this.payGradeModel(pg);
+      try {
+        return await pg2.save();
+      } catch (err: any) {
+        if (err?.code === 11000) {
+          throw new ConflictException('Pay grade with this name already exists');
+        }
+        throw err;
+      }
     }
     //only if draft
     async editPayGrade(pg: string, updateData: editPayGradeDTO): Promise<payGradeDocument|null> {
