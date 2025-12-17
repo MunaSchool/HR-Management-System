@@ -21,6 +21,7 @@ export default function CompanySettingsPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [backupMsg, setBackupMsg] = useState<string | null>(null);
 
   const fetchList = async () => {
     try {
@@ -46,6 +47,25 @@ export default function CompanySettingsPage() {
       setError(e?.response?.data?.message || "Save failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runBackup = async () => {
+    setBackupMsg(null);
+    try {
+      const res = await axiosInstance.get("/payroll-configuration/backup");
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `payroll-backup-${new Date().toISOString()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setBackupMsg("Backup downloaded.");
+    } catch (e: any) {
+      setError(e?.response?.data?.message || "Backup failed");
     }
   };
 
@@ -100,7 +120,15 @@ export default function CompanySettingsPage() {
         >
           {loading ? "Saving..." : "Create draft"}
         </button>
+        <button
+          onClick={runBackup}
+          className="md:col-span-2 rounded border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
+        >
+          Run Backup (download JSON)
+        </button>
       </div>
+
+      {backupMsg && <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-green-700">{backupMsg}</div>}
 
       <div className="border rounded-lg">
         <div className="border-b px-4 py-2 font-semibold">Existing</div>

@@ -61,7 +61,7 @@ export default function EditPolicyPage() {
       };
       await updatePolicy(id, payload);
       //alert('Policy updated successfully');
-      router.push('../');
+      router.push("/payroll-configuration");
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to save policy");
     } finally {
