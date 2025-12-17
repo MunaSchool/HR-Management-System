@@ -30,15 +30,10 @@ export class ChangeRequestService {
     // Generate unique request ID
     const requestId = `CR-${Date.now()}-${employeeId.slice(-6)}`;
 
-    // Generate description from requested changes
-    const changeFields = Object.keys(createDto.requestedChanges || {}).join(', ');
-    const requestDescription = `Request to update: ${changeFields || 'profile data'}`;
-
     const newRequest = new this.changeRequestModel({
       requestId,
-      requestDescription,
+      requestDescription: createDto.requestDescription,
       employeeProfileId: employeeId,
-      requestedChanges: createDto.requestedChanges,
       reason: createDto.reason,
       status: ProfileChangeStatus.PENDING,
     });
@@ -129,48 +124,10 @@ export class ChangeRequestService {
 
     // If approved, apply changes to employee profile
     if (processDto.approved) {
-      // Check if change request involves Position or Department (Dependency 13)
-      const involvesOrgStructure =
-        request.requestedChanges?.['primaryPositionId'] ||
-        request.requestedChanges?.['primaryDepartmentId'];
-
-      if (involvesOrgStructure) {
-        // INTEGRATION: Validate Position/Department changes with Org Structure Module
-        console.log('[INTEGRATION] Position/Department change detected. Validating with Org Structure...');
-
-        // Validate position exists and is valid
-        if (request.requestedChanges?.['primaryPositionId']) {
-          try {
-            await this.organizationStructureService.getPositionById(
-              request.requestedChanges['primaryPositionId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid position ID: ${request.requestedChanges['primaryPositionId']}. Position does not exist.`
-            );
-          }
-        }
-
-        // Validate department exists and is active
-        if (request.requestedChanges?.['primaryDepartmentId']) {
-          try {
-            await this.organizationStructureService.getDepartmentById(
-              request.requestedChanges['primaryDepartmentId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid department ID: ${request.requestedChanges['primaryDepartmentId']}. Department does not exist.`
-            );
-          }
-        }
-
-        console.log('[INTEGRATION] Position/Department validation successful.');
-      }
-
+      // Update the employee profile's last modified fields
       await this.employeeProfileModel.findByIdAndUpdate(
         request.employeeProfileId,
         {
-          ...request.requestedChanges,
           lastModifiedBy: userId,
           lastModifiedAt: new Date(),
         },
