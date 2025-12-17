@@ -30,44 +30,32 @@ export class ChangeRequestService {
     // Generate unique request ID
     const requestId = `CR-${Date.now()}-${employeeId.slice(-6)}`;
 
-    // Build description with department/position info if provided
-    let description = createDto.requestDescription;
+    console.log('=== Creating Change Request ===');
+    console.log('DTO received:', JSON.stringify(createDto, null, 2));
 
-    if (createDto.requestedPrimaryDepartmentId || createDto.requestedPrimaryPositionId) {
-      const parts = [createDto.requestDescription];
+    // Build full description including field changes
+    let fullDescription = createDto.requestDescription;
 
-      if (createDto.requestedPrimaryDepartmentId) {
-        try {
-          const dept = await this.organizationStructureService.getDepartmentById(
-            createDto.requestedPrimaryDepartmentId
-          );
-          parts.push(`Department: ${dept.name} (${createDto.requestedPrimaryDepartmentId})`);
-        } catch (error) {
-          throw new BadRequestException(
-            `Invalid department ID: ${createDto.requestedPrimaryDepartmentId}. Department does not exist.`
-          );
-        }
-      }
+    if (createDto.requestedChanges && Object.keys(createDto.requestedChanges).length > 0) {
+      const changes = Object.entries(createDto.requestedChanges)
+        .map(([field, value]) => {
+          const fieldName = field
+            .replace(/([A-Z])/g, ' $1')
+            .replace('primary', '')
+            .trim();
+          return `${fieldName}: ${value}`;
+        })
+        .join(', ');
 
-      if (createDto.requestedPrimaryPositionId) {
-        try {
-          const pos = await this.organizationStructureService.getPositionById(
-            createDto.requestedPrimaryPositionId
-          );
-          parts.push(`Position: ${pos.title} (${createDto.requestedPrimaryPositionId})`);
-        } catch (error) {
-          throw new BadRequestException(
-            `Invalid position ID: ${createDto.requestedPrimaryPositionId}. Position does not exist.`
-          );
-        }
-      }
-
-      description = parts.join(' | ');
+      fullDescription = `${createDto.requestDescription}\n\nRequested Changes: ${changes}`;
+      console.log('Full description built:', fullDescription);
+    } else {
+      console.log('No requestedChanges found in DTO');
     }
 
     const newRequest = new this.changeRequestModel({
       requestId,
-      requestDescription: description,
+      requestDescription: fullDescription,
       employeeProfileId: employeeId,
       reason: createDto.reason,
       status: ProfileChangeStatus.PENDING,

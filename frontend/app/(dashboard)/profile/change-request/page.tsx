@@ -14,16 +14,6 @@ interface ChangeRequest {
   submittedAt: string;
 }
 
-interface Department {
-  _id: string;
-  name: string;
-}
-
-interface Position {
-  _id: string;
-  title: string;
-}
-
 // Enum values from backend
 const MARITAL_STATUS_OPTIONS = ["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"];
 const GENDER_OPTIONS = ["MALE", "FEMALE"];
@@ -34,40 +24,16 @@ export default function ChangeRequestPage() {
   const router = useRouter();
   const [myRequests, setMyRequests] = useState<ChangeRequest[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
   const [formData, setFormData] = useState({
     fieldName: "",
     requestedValue: "",
-    requestedPrimaryDepartmentId: "",
-    requestedPrimaryPositionId: "",
     reason: "",
     requestDescription: "",
   });
 
   useEffect(() => {
     fetchMyRequests();
-    fetchDepartmentsAndPositions();
   }, []);
-
-  const fetchDepartmentsAndPositions = async () => {
-    try {
-      const [deptResponse, posResponse] = await Promise.all([
-        axiosInstance.get("/organization-structure/departments"),
-        axiosInstance.get("/organization-structure/positions"),
-      ]);
-
-      const validDepts = (deptResponse.data || []).filter((d: Department) => d._id && d.name);
-      const validPos = (posResponse.data || []).filter((p: Position) => p._id && p.title);
-
-      setDepartments(validDepts);
-      setPositions(validPos);
-    } catch (error) {
-      console.error("Error fetching departments and positions:", error);
-      setDepartments([]);
-      setPositions([]);
-    }
-  };
 
   const fetchMyRequests = async () => {
     try {
@@ -81,35 +47,14 @@ export default function ChangeRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Build description
-    let description = formData.requestDescription || "Profile change request";
-
-    if (formData.fieldName && formData.requestedValue) {
-      description = `Request to change ${formData.fieldName} to ${formData.requestedValue}`;
-    }
-
     // Build the payload according to CreateChangeRequestDto
     const payload: any = {
-      requestDescription: description,
+      requestDescription: formData.requestDescription,
       reason: formData.reason,
-    };
-
-    // Add department if selected
-    if (formData.requestedPrimaryDepartmentId) {
-      payload.requestedPrimaryDepartmentId = formData.requestedPrimaryDepartmentId;
-    }
-
-    // Add position if selected
-    if (formData.requestedPrimaryPositionId) {
-      payload.requestedPrimaryPositionId = formData.requestedPrimaryPositionId;
-    }
-
-    // Add other field changes
-    if (formData.fieldName && formData.requestedValue) {
-      payload.requestedChanges = {
+      requestedChanges: {
         [formData.fieldName]: formData.requestedValue
-      };
-    }
+      }
+    };
 
     try {
       await axiosInstance.post("/employee-profile/me/change-requests", payload);
@@ -118,8 +63,6 @@ export default function ChangeRequestPage() {
       setFormData({
         fieldName: "",
         requestedValue: "",
-        requestedPrimaryDepartmentId: "",
-        requestedPrimaryPositionId: "",
         reason: "",
         requestDescription: ""
       });
@@ -294,57 +237,16 @@ export default function ChangeRequestPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-neutral-400 block mb-1">
-                  Request Department Change (Optional)
-                </label>
-                <select
-                  value={formData.requestedPrimaryDepartmentId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, requestedPrimaryDepartmentId: e.target.value })
-                  }
-                  className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
-                >
-                  <option value="">No department change</option>
-                  {departments.map((dept) => (
-                    <option key={dept._id} value={dept._id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm text-neutral-400 block mb-1">
-                  Request Position Change (Optional)
-                </label>
-                <select
-                  value={formData.requestedPrimaryPositionId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, requestedPrimaryPositionId: e.target.value })
-                  }
-                  className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
-                >
-                  <option value="">No position change</option>
-                  {positions.map((pos) => (
-                    <option key={pos._id} value={pos._id}>
-                      {pos.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Other Field to Change (Optional)
+                Field to Change
               </label>
               <select
                 value={formData.fieldName}
                 onChange={(e) => {
                   setFormData({ ...formData, fieldName: e.target.value, requestedValue: "" });
                 }}
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select a field</option>
@@ -362,6 +264,8 @@ export default function ChangeRequestPage() {
                 <option value="workType">Work Type</option>
                 <option value="bankName">Bank Name</option>
                 <option value="bankAccountNumber">Bank Account Number</option>
+                <option value="primaryDepartmentId">Department</option>
+                <option value="primaryPositionId">Position</option>
               </select>
             </div>
 

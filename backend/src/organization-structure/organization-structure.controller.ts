@@ -149,7 +149,7 @@ activatePosition(@Param('id') id: string) {
   }
 
   @Get('change-requests')
-  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can view all organizational structure change requests (REQ-OSM-04)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER) // HR and System Admin can view all organizational structure change requests
   getAllChangeRequests() {
     return this.organizationStructureService.getAllChangeRequests();
   }

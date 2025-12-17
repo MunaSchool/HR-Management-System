@@ -78,17 +78,6 @@ export default function ChangeRequestsPage() {
     return pos?.title || posId;
   };
 
-  // Parse department/position from description text
-  const parseOrgChanges = (description: string) => {
-    const deptMatch = description.match(/Department:\s*([^(]+)\s*\(/);
-    const posMatch = description.match(/Position:\s*([^(]+)\s*\(/);
-
-    return {
-      department: deptMatch ? deptMatch[1].trim() : null,
-      position: posMatch ? posMatch[1].trim() : null,
-    };
-  };
-
   const checkAccess = async () => {
     try {
       const response = await axiosInstance.get("/employee-profile/me");
@@ -201,63 +190,12 @@ export default function ChangeRequestsPage() {
                   </span>
                 </div>
 
-                {(() => {
-                  const orgChanges = parseOrgChanges(request.requestDescription || "");
-                  const mainDescription = request.requestDescription?.split('|')[0]?.trim() || request.requestDescription;
-
-                  return (
-                    <>
-                      <div className="mb-4">
-                        <label className="text-xs text-neutral-500 block mb-1">Description</label>
-                        <p className="text-white text-sm whitespace-pre-wrap">{mainDescription || "N/A"}</p>
-                      </div>
-
-                      {/* Department/Position Change Requests */}
-                      {(orgChanges.department || orgChanges.position) && (
-                        <div className="mb-4">
-                          <label className="text-xs text-neutral-500 block mb-1">Requested Organizational Changes</label>
-                          <div className="bg-blue-900/20 border border-blue-700 rounded p-3 space-y-2">
-                            {orgChanges.department && (
-                              <div className="flex justify-between text-sm">
-                                <span className="text-blue-300 font-medium">Department Change →</span>
-                                <span className="text-white font-semibold">
-                                  {orgChanges.department}
-                                </span>
-                              </div>
-                            )}
-                            {orgChanges.position && (
-                              <div className="flex justify-between text-sm">
-                                <span className="text-blue-300 font-medium">Position Change →</span>
-                                <span className="text-white font-semibold">
-                                  {orgChanges.position}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-
-                {/* Other Field Changes */}
-                {request.requestedChanges && Object.keys(request.requestedChanges).length > 0 && (
-                  <div className="mb-4">
-                    <label className="text-xs text-neutral-500 block mb-1">Additional Field Changes</label>
-                    <div className="bg-neutral-900 rounded p-3 space-y-2">
-                      {Object.entries(request.requestedChanges).map(([key, value]) => (
-                        <div key={key} className="flex justify-between text-sm">
-                          <span className="text-neutral-400 capitalize">
-                            {key.replace(/([A-Z])/g, " $1").trim()}:
-                          </span>
-                          <span className="text-white font-medium">
-                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                <div className="mb-4">
+                  <label className="text-xs text-neutral-500 block mb-1">Description (Full)</label>
+                  <div className="bg-neutral-800 border border-neutral-700 rounded p-3">
+                    <p className="text-white text-sm whitespace-pre-wrap">{request.requestDescription || "N/A"}</p>
                   </div>
-                )}
+                </div>
 
                 <div className="mb-4">
                   <label className="text-xs text-neutral-500 block mb-1">Reason</label>

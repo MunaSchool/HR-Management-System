@@ -62,8 +62,37 @@ export class OrganizationStructureService {
   // 📌 CREATE DEPARTMENT
   // ======================
  async createDepartment(dto: CreateDepartmentDto) {
-  return this.departmentModel.create(dto);
+  let headPositionId: Types.ObjectId | undefined;
+
+  if (dto.headEmployeeNumber) {
+    const employee = await this.employeeProfileModel
+      .findOne({ employeeNumber: dto.headEmployeeNumber })
+      .exec();
+
+    if (!employee) {
+      throw new NotFoundException(
+        `Employee with number ${dto.headEmployeeNumber} not found`,
+      );
+    }
+
+    if (!employee.primaryPositionId) {
+      throw new BadRequestException(
+        `Employee ${dto.headEmployeeNumber} has no primaryPositionId`,
+      );
+    }
+
+    headPositionId = new Types.ObjectId(employee.primaryPositionId);
+  }
+
+  return this.departmentModel.create({
+    code: dto.code,
+    name: dto.name,
+    description: dto.description,
+    headPositionId,
+    isActive: true,
+  });
 }
+
 
   // ===========================
   // 📌 GET DEPARTMENT BY ID
@@ -88,10 +117,39 @@ export class OrganizationStructureService {
   // 📌 UPDATE DEPARTMENT
   // ============================
   async updateDepartment(id: string, dto: UpdateDepartmentDto) {
-    const updated = await this.departmentModel.findByIdAndUpdate(id, dto, { new: true });
-    if (!updated) throw new NotFoundException("Department not found");
-    return updated;
+  const updateData: any = {};
+
+  if (dto.name !== undefined) updateData.name = dto.name;
+  if (dto.description !== undefined) updateData.description = dto.description;
+
+  if (dto.headEmployeeNumber) {
+    const employee = await this.employeeProfileModel
+      .findOne({ employeeNumber: dto.headEmployeeNumber })
+      .exec();
+
+    if (!employee) {
+      throw new NotFoundException(
+        `Employee with number ${dto.headEmployeeNumber} not found`,
+      );
+    }
+
+    if (!employee.primaryPositionId) {
+      throw new BadRequestException(
+        `Employee ${dto.headEmployeeNumber} has no primaryPositionId`,
+      );
+    }
+
+    updateData.headPositionId = new Types.ObjectId(employee.primaryPositionId);
   }
+
+  const updated = await this.departmentModel.findByIdAndUpdate(id, updateData, {
+    new: true,
+  });
+
+  if (!updated) throw new NotFoundException('Department not found');
+  return updated;
+}
+
 
   // ============================
   // 📌 DEACTIVATE DEPARTMENT

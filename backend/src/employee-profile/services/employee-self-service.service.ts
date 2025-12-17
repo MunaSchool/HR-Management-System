@@ -123,12 +123,36 @@ export class EmployeeSelfServiceService {
 
   // Get team members (US-E4-01, US-E4-02)
   async getTeamMembers(managerPositionId: string): Promise<EmployeeProfileDocument[]> {
-    return await this.employeeProfileModel
+    // First, try to find employees who report to this position
+    const directReports = await this.employeeProfileModel
       .find({ supervisorPositionId: managerPositionId, status: EmployeeStatus.ACTIVE })
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
       .select('-password -nationalId -dateOfBirth -personalEmail -homePhone -address')
       .exec();
+
+    // If there are direct reports, return them
+    if (directReports.length > 0) {
+      return directReports;
+    }
+
+    // Otherwise, check if this manager is a department head
+    // Find which department has this position as headPositionId
+    const Department = this.employeeProfileModel.db.model('Department');
+    const department = await Department.findOne({ headPositionId: managerPositionId }).exec();
+
+    if (department) {
+      // Return all active employees in this department
+      return await this.employeeProfileModel
+        .find({ primaryDepartmentId: department._id, status: EmployeeStatus.ACTIVE })
+        .populate('primaryPositionId')
+        .populate('primaryDepartmentId')
+        .select('-password -nationalId -dateOfBirth -personalEmail -homePhone -address')
+        .exec();
+    }
+
+    // No team found
+    return [];
   }
 
   // Get specific team member profile (US-E4-01)
