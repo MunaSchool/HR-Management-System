@@ -10,10 +10,7 @@ const sampleConfigs = [
 export default function PayrollConfigurationPage() {
 	return (
 		<main className="px-6 py-8 max-w-4xl mx-auto">
-			<div className="flex items-center justify-between mb-6">
-				<h1 className="text-2xl font-semibold">Payroll Configurations</h1>
-				<Link href="./new" className="rounded bg-indigo-600 text-white px-3 py-2 text-sm">Add Configuration</Link>
-			</div>
+			<h1 className="text-2xl font-semibold mb-6">Payroll Configurations</h1>
 
 			<p className="mb-4 text-sm text-gray-600">Manage payroll settings used during payroll execution.</p>
 
@@ -25,8 +22,8 @@ export default function PayrollConfigurationPage() {
 							<div className="text-sm text-gray-600">{c.description}</div>
 						</div>
 						<div className="flex items-center gap-3">
-							<Link href={`./${c.id}`} className="text-indigo-600 text-sm">View</Link>
-							<Link href={`./${c.id}/edit`} className="text-gray-600 text-sm">Edit</Link>
+							<Link href={`/payroll-configuration/${c.id}`} className="text-indigo-600 text-sm">View</Link>
+							<Link href={`/payroll-configuration/${c.id}/edit`} className="text-gray-600 text-sm">Edit</Link>
 						</div>
 					</li>
 				))}

@@ -498,7 +498,7 @@ export class PayrollConfigurationController {
   // -------------------
   @Post('disputes')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
   createDispute(@Body() dto: CreatePayrollDisputeDto) {
     return this.payrollConfigurationService.createPayrollDispute(dto);
   }

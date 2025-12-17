@@ -1,13 +1,15 @@
 //import React, { useState } from 'react';
+ "use client";
 import Link from 'next/link';
+import { useAuth } from "@/app/(system)/context/authContext";
 
 type Props = {
   readonly children: React.ReactNode;
 };
 
 export default function PayrollConfigLayout({ children }: Props) {
-  // Replace this with real user/role retrieval when available
-  const userRole = 'Payroll Specialist';
+  const { user } = useAuth();
+  const roleLabel = user?.roles?.length ? user.roles.join(", ") : "Unknown";
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -58,6 +60,11 @@ export default function PayrollConfigLayout({ children }: Props) {
                       Signing Bonus
                     </Link>
                   </li>
+                  <li>
+                    <Link href="/payroll-configuration/company-settings" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Company Settings
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </details>
@@ -84,7 +91,7 @@ export default function PayrollConfigLayout({ children }: Props) {
           <div className="flex items-center gap-4">
             <button className="px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800">Notifications</button>
             <div className="px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 text-sm">
-              <span className="font-medium">Role:</span>&nbsp;<span>{userRole}</span>
+              <span className="font-medium">Role:</span>&nbsp;<span>{roleLabel}</span>
             </div>
           </div>
         </header>
