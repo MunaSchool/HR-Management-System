@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import axiosInstance from "@/app/utils/ApiClient";
-import { useAuth } from "../(system)/context/authContext";
+import { useAuth } from "../../../(system)/context/authContext";
 
 type Insurance = {
   _id: string;

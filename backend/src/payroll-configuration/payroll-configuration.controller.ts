@@ -35,49 +35,43 @@ export class PayrollConfigurationController {
   // PAYROLL POLICIES (PAYROLL MANAGER)
   // -------------------
 
-  // List all payroll configs
-  @Get()
+  @Get('policies')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER)
-  async getAllPayrollConfigs(): Promise<payrollPoliciesDocument[]> {
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllPolicies(): Promise<payrollPoliciesDocument[]> {
     return this.payrollConfigurationService.findAllPolicies();
   }
 
-  // Update draft payroll config
-  @Put(':id')
+  @Get('policies/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER)
-  async updatePayrollConfig(
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getPolicyById(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.findById(id);
+  }
+
+  @Post('policies')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async createPolicy(@Body() policyData: createPayrollPoliciesDto): Promise<payrollPoliciesDocument> {
+    return this.payrollConfigurationService.createPolicy(policyData);
+  }
+
+  @Put('policies/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async updatePolicy(
     @Param('id') id: string,
     @Body() updateData: updatePayrollPoliciesDto
   ): Promise<payrollPoliciesDocument | null> {
     return this.payrollConfigurationService.updatePolicy(id, updateData);
   }
 
-  // Approve payroll config
-  @Put(':id/approve')
+  @Delete('policies/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER)
-  async approvePayrollConfig(@Param('id') id: string) {
-    return this.payrollConfigurationService.approvePayrollPolicy(id);
-  }
-
-  // Reject payroll config
-  @Put(':id/reject')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER)
-  async rejectPayrollConfig(@Param('id') id: string) {
-    return this.payrollConfigurationService.rejectPayrollPolicy(id);
-  }
-
-  // Delete payroll config
-  @Delete(':id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER)
-  async deletePayrollConfig(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async deletePolicy(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
     return this.payrollConfigurationService.deletePolicy(id);
   }
-
 
   // -------------------
   // DEFINE PAY GRADES
@@ -109,6 +103,13 @@ export class PayrollConfigurationController {
   @Roles(SystemRole.PAYROLL_SPECIALIST)
   async findPayGrade(@Param('id') id: string) {
     return this.payrollConfigurationService.getPayGrade(id);
+  }
+
+  @Get('pay-grades')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllPayGrades() {
+    return this.payrollConfigurationService.getAllPayGrades();
   }
 
 
@@ -228,6 +229,49 @@ export class PayrollConfigurationController {
 
 
   // -------------------
+  // PAYROLL CONFIGURATION (PAYROLL MANAGER FACING)
+  // -------------------
+
+  @Get('policies')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
+  async listPayrollPolicies(): Promise<payrollPoliciesDocument[]> {
+    return this.payrollConfigurationService.listPayrollPolicies();
+  }
+
+  @Put('policies:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async updatePayrollConfiguration(
+    @Param('id') id: string,
+    @Body() updateData: updatePayrollPoliciesDto,
+  ): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.updatePolicy(id, updateData);
+  }
+
+  //?????
+  @Put(':id/approve')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async approvePayrollConfiguration(@Param('id') id: string) {
+    return this.payrollConfigurationService.approvePayrollPolicy(id);
+  }
+
+  @Put(':id/reject')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async rejectPayrollConfiguration(@Param('id') id: string) {
+    return this.payrollConfigurationService.rejectPayrollPolicy(id);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async deletePayrollConfiguration(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.deletePolicy(id);
+  }
+
+  // -------------------
   // INSURANCE BRACKETS
   // -------------------
 
@@ -237,6 +281,7 @@ export class PayrollConfigurationController {
   async listInsuranceBrackets() {
     return this.payrollConfigurationService.findAllInsuranceBrackets();
   }
+
 
   @Get('insurance-brackets/:id')
   @UseGuards(AuthGuard, RolesGuard)

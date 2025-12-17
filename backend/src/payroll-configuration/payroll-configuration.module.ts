@@ -10,7 +10,7 @@ import { payType, payTypeSchema } from './models/payType.schema';
 import { signingBonus, signingBonusSchema } from './models/signingBonus.schema';
 import { taxRules, taxRulesSchema } from './models/taxRules.schema';
 import { terminationAndResignationBenefits, terminationAndResignationBenefitsSchema } from './models/terminationAndResignationBenefits';
-import { payGrade } from './models/payGrades.schema';
+import { payGrade, payGradeSchema } from './models/payGrades.schema';
 
 @Module({
   imports: [
@@ -23,14 +23,26 @@ import { payGrade } from './models/payGrades.schema';
       { name: payrollPolicies.name, schema: payrollPoliciesSchema },
       { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
       { name: CompanyWideSettings.name, schema: CompanyWideSettingsSchema },
-      { name: payGrade.name, schema: payTypeSchema }
+      { name: payGrade.name, schema: payGradeSchema }
     ]),
   ],
   controllers: [PayrollConfigurationController],
   providers: [PayrollConfigurationService],
   exports:[PayrollConfigurationService, 
-           MongooseModule // Export MongooseModule so other modules (recruitment) can access the models
-
+           MongooseModule 
+      .forFeature([
+      { name: allowance.name, schema: allowanceSchema },
+      { name: signingBonus.name, schema: signingBonusSchema },
+      { name: taxRules.name, schema: taxRulesSchema },
+      { name: insuranceBrackets.name, schema: insuranceBracketsSchema },
+      { name: payType.name, schema: payTypeSchema },
+      { name: payrollPolicies.name, schema: payrollPoliciesSchema },
+      { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
+      { name: CompanyWideSettings.name, schema: CompanyWideSettingsSchema },
+      { name: payGrade.name, schema: payGradeSchema }
+    ]) 
   ]
+           // Export MongooseModule so other modules (recruitment) can access the models
+
 })
 export class PayrollConfigurationModule { }

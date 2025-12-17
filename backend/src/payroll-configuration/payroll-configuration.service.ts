@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as Mongoose from 'mongoose';
 
@@ -60,18 +60,33 @@ export class PayrollConfigurationService
         return await this.payrollPoliciesModel.findById(id).exec();
     }
 
+    async listPayrollPolicies(): Promise<payrollPoliciesDocument[]> {
+        return this.payrollPoliciesModel.find().exec();
+    }
+
     async createPolicy(policyData: createPayrollPoliciesDto): Promise<payrollPoliciesDocument> {
-        const newPolicy = new this.payrollPoliciesModel(policyData);
+        const fallbackStatus = (policyData as any).ConfigStatus as ConfigStatus | undefined;
+        const payload = {
+            ...policyData,
+            status: policyData.status ?? fallbackStatus ?? ConfigStatus.DRAFT,
+        };
+        const newPolicy = new this.payrollPoliciesModel(payload);
         return newPolicy.save();
     }
-    //update only if draft
-  async updatePolicy(id: string, updateData: updatePayrollPoliciesDto): Promise<payrollPoliciesDocument|null> {
-    const policy = await this.payrollPoliciesModel.findById(id) as payrollPoliciesDocument;
-    if (policy.status !== 'draft') {
-      throw new Error('Only draft policies can be updated');
-    } else 
-  return await this.payrollPoliciesModel.findByIdAndUpdate(id, updateData, { new: true });  
-  }
+
+    async updatePolicy(id: string, updateData: updatePayrollPoliciesDto): Promise<payrollPoliciesDocument|null> {
+        const existing = await this.payrollPoliciesModel.findById(id).exec();
+        if (!existing) {
+            return null;
+        }
+        if (existing.status !== ConfigStatus.DRAFT) {
+            throw new Error('Only draft payroll configurations can be edited');
+        }
+        const { status, ...safeUpdate } = updateData;
+        return await this.payrollPoliciesModel.findByIdAndUpdate(id, safeUpdate, { new: true });  
+    }
+
+
 
     async deletePolicy(id: string): Promise<payrollPoliciesDocument|null> {
         return await this.payrollPoliciesModel.findByIdAndDelete(id); 
@@ -102,12 +117,23 @@ export class PayrollConfigurationService
 
     //////2- config pay grades
     async getPayGrade(id: string): Promise<payGradeDocument|null> {
-        return await this.payGradeModel.findById({ id });
+      return await this.payGradeModel.findById(id);
     }
 
-    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument|null> {
-        const newpg = new this.payGradeModel(payGrade);
-        return newpg.save();
+    async AddPayGrade(pg: addPayGradeDTO): Promise<payGradeDocument> {
+      const pg2 = new this.payGradeModel(pg);
+      try {
+        return await pg2.save();
+      } catch (err: any) {
+        // Log full error to help diagnose which index or key caused the duplicate
+        console.error('AddPayGrade error:', err);
+        if (err?.code === 11000) {
+          // Prefer explicit duplicate field if provided by Mongo (err.keyValue)
+          const dup = err.keyValue?.grade ?? JSON.stringify(err.keyValue) ?? 'unknown';
+          throw new ConflictException(`Pay grade with this name already exists: ${dup}`);
+        }
+        throw err;
+      }
     }
     //only if draft
     async editPayGrade(pg: string, updateData: editPayGradeDTO): Promise<payGradeDocument|null> {
@@ -120,6 +146,10 @@ export class PayrollConfigurationService
 
     async removePayGrade(pg: string): Promise<payGradeDocument | null> {
         return await this.payGradeModel.findByIdAndDelete(pg); 
+    }
+
+    async getAllPayGrades(): Promise<payGradeDocument[]> {
+        return await this.payGradeModel.find().exec();
     }
 
 /*
@@ -322,7 +352,11 @@ export class PayrollConfigurationService
     const targetModel = modelsMap[model];
     if (!targetModel) throw new Error(`Model ${model} not found`);
 
-    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+    return targetModel.findByIdAndUpdate(
+      id,
+      { status: ConfigStatus.APPROVED, approvedAt: new Date() },
+      { new: true }
+    );
   }
 
   async payrollManagerReject(model: string, id: string) {
@@ -338,7 +372,11 @@ export class PayrollConfigurationService
     const targetModel = modelsMap[model];
     if (!targetModel) throw new Error(`Model ${model} not found`);
 
-    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+    return targetModel.findByIdAndUpdate(
+      id,
+      { status: ConfigStatus.REJECTED, approvedAt: new Date() },
+      { new: true },
+    );
   }
 
   // -------------------
@@ -407,8 +445,12 @@ export class PayrollConfigurationService
     const targetModel = modelsMap[model];
     if (!targetModel) throw new Error(`Model ${model} not found`);
 
-    const status = action === 'approve' ? 'approved' : 'rejected';
-    return targetModel.findByIdAndUpdate(id, { approvalStatus: status }, { new: true });
+    const status = action === 'approve' ? ConfigStatus.APPROVED : ConfigStatus.REJECTED;
+    return targetModel.findByIdAndUpdate(
+      id,
+      { status, approvedAt: new Date() },
+      { new: true },
+    );
   }
 
   // -------------------

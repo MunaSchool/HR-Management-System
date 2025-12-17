@@ -138,7 +138,7 @@ export default function ConfigPoliciesPage() {
           <p className="mt-1 text-gray-600 dark:text-gray-400">Manage misconduct penalties, leave policies, and allowances</p>
         </div>
         <button
-          onClick={() => router.push("./config-policies/create")}
+          onClick={() => router.push("./create")}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           + Create Policy
@@ -225,7 +225,7 @@ export default function ConfigPoliciesPage() {
                         👁️
                       </button>
                       <button
-                        onClick={() => router.push(`./config-policies/${policy._id}/edit`)}
+                        onClick={() => router.push(`./${policy._id}/edit`)}
                         className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition"
                         title="Edit"
                       >

@@ -60,8 +60,8 @@ export default function EditPolicyPage() {
         status: form.status || 'draft',
       };
       await updatePolicy(id, payload);
-      alert('Policy updated successfully');
-      //router.push('../');
+      //alert('Policy updated successfully');
+      router.push('../');
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to save policy");
     } finally {
