@@ -48,8 +48,6 @@ export class AttendanceCorrectionRequestService {
     };
   }
 
-  
-
   // line manager approves a request
   async approveCorrectionRequest(id: string) {
     const request = await this.requestModel.findById(id);
