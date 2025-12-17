@@ -30,9 +30,44 @@ export class ChangeRequestService {
     // Generate unique request ID
     const requestId = `CR-${Date.now()}-${employeeId.slice(-6)}`;
 
+    // Build description with department/position info if provided
+    let description = createDto.requestDescription;
+
+    if (createDto.requestedPrimaryDepartmentId || createDto.requestedPrimaryPositionId) {
+      const parts = [createDto.requestDescription];
+
+      if (createDto.requestedPrimaryDepartmentId) {
+        try {
+          const dept = await this.organizationStructureService.getDepartmentById(
+            createDto.requestedPrimaryDepartmentId
+          );
+          parts.push(`Department: ${dept.name} (${createDto.requestedPrimaryDepartmentId})`);
+        } catch (error) {
+          throw new BadRequestException(
+            `Invalid department ID: ${createDto.requestedPrimaryDepartmentId}. Department does not exist.`
+          );
+        }
+      }
+
+      if (createDto.requestedPrimaryPositionId) {
+        try {
+          const pos = await this.organizationStructureService.getPositionById(
+            createDto.requestedPrimaryPositionId
+          );
+          parts.push(`Position: ${pos.title} (${createDto.requestedPrimaryPositionId})`);
+        } catch (error) {
+          throw new BadRequestException(
+            `Invalid position ID: ${createDto.requestedPrimaryPositionId}. Position does not exist.`
+          );
+        }
+      }
+
+      description = parts.join(' | ');
+    }
+
     const newRequest = new this.changeRequestModel({
       requestId,
-      requestDescription: createDto.requestDescription,
+      requestDescription: description,
       employeeProfileId: employeeId,
       reason: createDto.reason,
       status: ProfileChangeStatus.PENDING,
@@ -124,7 +159,8 @@ export class ChangeRequestService {
 
     // If approved, apply changes to employee profile
     if (processDto.approved) {
-      // Update the employee profile's last modified fields
+      // Note: HR Admin must manually apply the changes described in the request
+      // This just updates the last modified timestamp
       await this.employeeProfileModel.findByIdAndUpdate(
         request.employeeProfileId,
         {

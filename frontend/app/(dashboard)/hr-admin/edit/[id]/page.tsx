@@ -86,22 +86,29 @@ export default function EditEmployeePage() {
 
   const fetchDepartmentsAndPositions = async () => {
     try {
-      const [deptResponse, posResponse, payGradeResponse] = await Promise.all([
+      const [deptResponse, posResponse] = await Promise.all([
         axiosInstance.get("/organization-structure/departments"),
         axiosInstance.get("/organization-structure/positions"),
-        axiosInstance.get("/payroll-configuration/pay-grades"),
       ]);
 
       // Filter out any invalid data
       const validDepts = (deptResponse.data || []).filter((d: Department) => d._id && d.name);
       const validPos = (posResponse.data || []).filter((p: Position) => p._id && p.title);
-      const validPayGrades = (payGradeResponse.data || []).filter((pg: PayGrade) => pg._id && pg.grade);
 
       setDepartments(validDepts);
       setPositions(validPos);
-      setPayGrades(validPayGrades);
+
+      // Try to fetch pay grades, but don't fail if endpoint doesn't exist
+      try {
+        const payGradeResponse = await axiosInstance.get("/payroll-configuration/pay-grades");
+        const validPayGrades = (payGradeResponse.data || []).filter((pg: PayGrade) => pg._id && pg.grade);
+        setPayGrades(validPayGrades);
+      } catch (pgError) {
+        console.warn("Pay grades endpoint not available:", pgError);
+        setPayGrades([]);
+      }
     } catch (error) {
-      console.error("Error fetching departments, positions, and pay grades:", error);
+      console.error("Error fetching departments and positions:", error);
       setDepartments([]);
       setPositions([]);
       setPayGrades([]);
