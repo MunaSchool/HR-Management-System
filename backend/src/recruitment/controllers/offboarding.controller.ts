@@ -55,7 +55,7 @@ export class OffboardingController {
 
   @Post('checklists')
   @HttpCode(HttpStatus.CREATED)
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER)
   async createClearanceChecklist(@Body() createDto: CreateClearanceChecklistDto) {
     return this.offboardingService.createClearanceChecklist(createDto);
   }

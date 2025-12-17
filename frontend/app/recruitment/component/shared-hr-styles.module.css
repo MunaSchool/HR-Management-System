@@ -73,6 +73,7 @@
   background-size: 20px;
   transition: all 0.2s ease;
   font-family: 'Roboto Condensed', sans-serif;
+  color: #1e293b !important; /* Dark text color - force override */
 }
 
 .searchInput:hover,

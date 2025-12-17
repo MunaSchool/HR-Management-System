@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import styles from '@/app/recruitment/component/shared-hr-styles.module.css';
 import axiosInstance from "@/app/utils/ApiClient";
 
 type TerminationRequest = {
@@ -14,7 +15,7 @@ type TerminationRequest = {
 
 type ChecklistItem = {
   department: string;
-  status: "pending" | "approved" | "rejected";  // ← lowercase
+  status: "pending" | "approved" | "rejected";
   comments: string;
 };
 
@@ -64,7 +65,7 @@ export default function CreateChecklistPage() {
   };
 
   const handleAddItem = () => {
-    setItems([...items, { department: "", status: "pending", comments: "" }]);  // ← lowercase
+    setItems([...items, { department: "", status: "pending", comments: "" }]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -139,465 +140,336 @@ export default function CreateChecklistPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
-      padding: '2rem',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div className={styles.container}>
+      {/* Header */}
+      <div style={{ marginBottom: '30px' }}>
+        <button
+          onClick={() => router.back()}
+          className={styles.button}
+          style={{ marginBottom: '20px' }}
+        >
+          ← Back to Checklists
+        </button>
+
+        <h1 className={styles.pageTitle}>Create Clearance Checklist</h1>
+        <div className={styles.fullLine}></div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
         
-        {/* Header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              background: 'rgba(148, 163, 184, 0.1)',
-              border: '1px solid rgba(148, 163, 184, 0.3)',
-              color: '#e2e8f0',
-              padding: '0.75rem 1.5rem',
-              cursor: 'pointer',
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all 0.2s',
-              backdropFilter: 'blur(10px)'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(148, 163, 184, 0.2)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(148, 163, 184, 0.1)'}
-          >
-            ← Back to Checklists
-          </button>
-        </div>
-
-        <h1 style={{
-          fontSize: '2.5rem',
-          fontWeight: '700',
-          background: 'linear-gradient(90deg, #60a5fa, #a78bfa, #ec4899)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          marginBottom: '2.5rem'
-        }}>
-          Create Clearance Checklist
-        </h1>
-
-        <form onSubmit={handleSubmit}>
-          
-          {/* Basic Information Card */}
-          <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '1rem',
-            padding: '1.5rem',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            marginBottom: '1.5rem',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+        {/* Basic Information Card */}
+        <div className={styles.card} style={{ marginBottom: '24px' }}>
+          <h2 style={{ 
+            fontSize: '20px', 
+            fontWeight: '700', 
+            marginBottom: '20px',
+            paddingBottom: '12px',
+            borderBottom: '2px solid rgba(255, 255, 255, 0.2)'
           }}>
-            <h2 style={{
-              fontSize: '1.25rem',
-              fontWeight: '600',
-              color: '#f1f5f9',
-              marginBottom: '1.5rem',
-              paddingBottom: '0.75rem',
-              borderBottom: '1px solid rgba(148, 163, 184, 0.2)'
-            }}>
-              📋 Basic Information
-            </h2>
+            📋 Basic Information
+          </h2>
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: '#cbd5e1',
-                marginBottom: '0.5rem'
-              }}>
-                Termination Request <span style={{ color: '#f87171' }}>*</span>
-              </label>
-              <select
-                value={formData.terminationId}
-                onChange={(e) => setFormData({ ...formData, terminationId: e.target.value })}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: 'rgba(15, 23, 42, 0.5)',
-                  border: '1px solid rgba(148, 163, 184, 0.3)',
-                  borderRadius: '0.5rem',
-                  color: '#e2e8f0',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  outline: 'none'
-                }}
-              >
-                <option value="">Select approved termination request</option>
-                {terminationRequests.map((req) => (
-                  <option key={req._id} value={req._id}>
-                    Employee: {req.employeeId} | Status: {req.status}
-                  </option>
-                ))}
-              </select>
-              {terminationRequests.length === 0 && (
-                <small style={{ color: '#94a3b8', display: 'block', marginTop: '0.5rem' }}>
-                  ⚠️ No approved termination requests found
-                </small>
-              )}
-            </div>
-
+          <div style={{ marginBottom: '20px' }}>
             <label style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              cursor: 'pointer',
-              padding: '1rem',
-              background: 'rgba(15, 23, 42, 0.3)',
-              borderRadius: '0.5rem',
-              border: '1px solid rgba(148, 163, 184, 0.2)'
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '700',
+              marginBottom: '8px'
             }}>
-              <input
-                type="checkbox"
-                checked={formData.cardReturned}
-                onChange={(e) => setFormData({ ...formData, cardReturned: e.target.checked })}
-                style={{
-                  width: '1.25rem',
-                  height: '1.25rem',
-                  cursor: 'pointer',
-                  accentColor: '#3b82f6'
-                }}
-              />
-              <span style={{ fontSize: '0.875rem', color: '#e2e8f0', fontWeight: '500' }}>
-                🎫 Access Card Returned
-              </span>
+              Termination Request <span style={{ color: '#f87171' }}>*</span>
             </label>
+            <select
+              value={formData.terminationId}
+              onChange={(e) => setFormData({ ...formData, terminationId: e.target.value })}
+              required
+              className={styles.select}
+              style={{ width: '100%' }}
+            >
+              <option value="">Select approved termination request</option>
+              {terminationRequests.map((req) => (
+                <option key={req._id} value={req._id}>
+                  Employee: {req.employeeId} | Status: {req.status}
+                </option>
+              ))}
+            </select>
+            {terminationRequests.length === 0 && (
+              <small style={{ color: '#e9d5ff', display: 'block', marginTop: '8px' }}>
+                ⚠️ No approved termination requests found
+              </small>
+            )}
           </div>
 
-          {/* Department Clearance Items */}
-          <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '1rem',
-            padding: '1.5rem',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            marginBottom: '1.5rem',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            cursor: 'pointer',
+            padding: '16px',
+            backgroundColor: '#693699',
+            borderRadius: '8px',
+            border: '2px solid #9570DD'
           }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem',
-              paddingBottom: '0.75rem',
-              borderBottom: '1px solid rgba(148, 163, 184, 0.2)'
-            }}>
-              <h2 style={{
-                fontSize: '1.25rem',
-                fontWeight: '600',
-                color: '#f1f5f9',
-                margin: 0
-              }}>
-                🏢 Department Clearances
-              </h2>
-              <button
-                type="button"
-                onClick={handleAddItem}
-                style={{
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.625rem 1.25rem',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  transition: 'transform 0.2s',
-                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                + Add Department
-              </button>
-            </div>
+            <input
+              type="checkbox"
+              checked={formData.cardReturned}
+              onChange={(e) => setFormData({ ...formData, cardReturned: e.target.checked })}
+              style={{
+                width: '20px',
+                height: '20px',
+                cursor: 'pointer',
+                accentColor: '#7C40A9'
+              }}
+            />
+            <span style={{ fontSize: '14px', fontWeight: '600' }}>
+              🎫 Access Card Returned
+            </span>
+          </label>
+        </div>
 
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {items.map((item, index) => (
-                <div key={index} style={{
-                  padding: '1.25rem',
-                  background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05))',
-                  borderRadius: '0.75rem',
-                  border: '1px solid rgba(96, 165, 250, 0.2)'
+        {/* Department Clearance Items */}
+        <div className={styles.card} style={{ marginBottom: '24px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            paddingBottom: '12px',
+            borderBottom: '2px solid rgba(255, 255, 255, 0.2)',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: '700',
+              margin: 0
+            }}>
+              🏢 Department Clearances
+            </h2>
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className={styles.createButton}
+            >
+              + Add Department
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {items.map((item, index) => (
+              <div key={index} style={{
+                padding: '20px',
+                backgroundColor: '#9570DD',
+                borderRadius: '8px',
+                border: '2px solid #693699'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px'
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '1rem'
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#ffffff'
                   }}>
-                    <h3 style={{
-                      margin: 0,
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      color: '#93c5fd'
+                    Department {index + 1}
+                  </h3>
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(index)}
+                      className={styles.deleteBtn}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gap: '16px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      marginBottom: '8px'
                     }}>
-                      Department {index + 1}
-                    </h3>
-                    {items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(index)}
-                        style={{
-                          background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                          color: 'white',
-                          border: 'none',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          fontSize: '0.8125rem',
-                          fontWeight: '500'
-                        }}
-                      >
-                        Remove
-                      </button>
-                    )}
+                      Department Name <span style={{ color: '#f87171' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={item.department}
+                      onChange={(e) => handleItemChange(index, "department", e.target.value)}
+                      placeholder="e.g., IT, HR, Finance, Facilities"
+                      required
+                      className={styles.input}
+                      style={{ width: '100%', paddingLeft: '16px', backgroundImage: 'none' }}
+                    />
                   </div>
 
-                  <div style={{ display: 'grid', gap: '1rem' }}>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '200px 1fr', 
+                    gap: '16px',
+                    alignItems: 'start'
+                  }}>
                     <div>
                       <label style={{
                         display: 'block',
-                        fontSize: '0.875rem',
-                        fontWeight: '600',
-                        color: '#cbd5e1',
-                        marginBottom: '0.5rem'
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        marginBottom: '8px'
                       }}>
-                        Department Name <span style={{ color: '#f87171' }}>*</span>
+                        Status
+                      </label>
+                      <select
+                        value={item.status}
+                        onChange={(e) => handleItemChange(index, "status", e.target.value as any)}
+                        className={styles.select}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="pending">⏳ Pending</option>
+                        <option value="approved">✅ Approved</option>
+                        <option value="rejected">❌ Rejected</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        marginBottom: '8px'
+                      }}>
+                        Comments
                       </label>
                       <input
                         type="text"
-                        value={item.department}
-                        onChange={(e) => handleItemChange(index, "department", e.target.value)}
-                        placeholder="e.g., IT, HR, Finance, Facilities"
-                        required
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          background: 'rgba(15, 23, 42, 0.5)',
-                          border: '1px solid rgba(148, 163, 184, 0.3)',
-                          borderRadius: '0.5rem',
-                          color: '#e2e8f0',
-                          fontSize: '0.875rem',
-                          outline: 'none'
-                        }}
+                        value={item.comments}
+                        onChange={(e) => handleItemChange(index, "comments", e.target.value)}
+                        placeholder="Requirements and instructions"
+                        className={styles.input}
+                        style={{ width: '100%', paddingLeft: '16px', backgroundImage: 'none' }}
                       />
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1rem' }}>
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '600',
-                          color: '#cbd5e1',
-                          marginBottom: '0.5rem'
-                        }}>
-                          Status
-                        </label>
-                        <select
-                          value={item.status}
-                          onChange={(e) => handleItemChange(index, "status", e.target.value as any)}
-                          style={{
-                            width: '100%',
-                            padding: '0.75rem',
-                            background: 'rgba(15, 23, 42, 0.5)',
-                            border: '1px solid rgba(148, 163, 184, 0.3)',
-                            borderRadius: '0.5rem',
-                            color: '#e2e8f0',
-                            fontSize: '0.875rem',
-                            cursor: 'pointer',
-                            outline: 'none'
-                          }}
-                        >
-                          <option value="pending">⏳ Pending</option>
-                          <option value="approved">✅ Approved</option>
-                          <option value="rejected">❌ Rejected</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '600',
-                          color: '#cbd5e1',
-                          marginBottom: '0.5rem'
-                        }}>
-                          Comments
-                        </label>
-                        <input
-                          type="text"
-                          value={item.comments}
-                          onChange={(e) => handleItemChange(index, "comments", e.target.value)}
-                          placeholder="Requirements and instructions"
-                          style={{
-                            width: '100%',
-                            padding: '0.75rem',
-                            background: 'rgba(15, 23, 42, 0.5)',
-                            border: '1px solid rgba(148, 163, 184, 0.3)',
-                            borderRadius: '0.5rem',
-                            color: '#e2e8f0',
-                            fontSize: '0.875rem',
-                            outline: 'none'
-                          }}
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Equipment List */}
+        <div className={styles.card} style={{ marginBottom: '24px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            paddingBottom: '12px',
+            borderBottom: '2px solid rgba(255, 255, 255, 0.2)',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <h2 style={{
+              fontSize: '20px',
+              fontWeight: '700',
+              margin: 0
+            }}>
+              💼 Equipment to Return
+            </h2>
+            <button
+              type="button"
+              onClick={handleAddEquipment}
+              className={styles.createButton}
+            >
+              + Add Equipment
+            </button>
           </div>
 
-          {/* Equipment List */}
-          <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '1rem',
-            padding: '1.5rem',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            marginBottom: '1.5rem',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem',
-              paddingBottom: '0.75rem',
-              borderBottom: '1px solid rgba(148, 163, 184, 0.2)'
-            }}>
-              <h2 style={{
-                fontSize: '1.25rem',
-                fontWeight: '600',
-                color: '#f1f5f9',
-                margin: 0
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {equipmentList.map((equipment, index) => (
+              <div key={index} style={{
+                padding: '20px',
+                backgroundColor: '#9570DD',
+                borderRadius: '8px',
+                border: '2px solid #693699'
               }}>
-                💼 Equipment to Return
-              </h2>
-              <button
-                type="button"
-                onClick={handleAddEquipment}
-                style={{
-                  background: 'linear-gradient(135deg, #10b981, #059669)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.625rem 1.25rem',
-                  borderRadius: '0.5rem',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  transition: 'transform 0.2s',
-                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                + Add Equipment
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {equipmentList.map((equipment, index) => (
-                <div key={index} style={{
-                  padding: '1.25rem',
-                  background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(168, 85, 247, 0.05))',
-                  borderRadius: '0.75rem',
-                  border: '1px solid rgba(236, 72, 153, 0.2)'
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '16px'
                 }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '1rem'
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#ffffff'
                   }}>
-                    <h3 style={{
-                      margin: 0,
-                      fontSize: '1rem',
-                      fontWeight: '600',
-                      color: '#f9a8d4'
+                    Equipment {index + 1}
+                  </h3>
+                  {equipmentList.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEquipment(index)}
+                      className={styles.deleteBtn}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gap: '16px' }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      marginBottom: '8px'
                     }}>
-                      Equipment {index + 1}
-                    </h3>
-                    {equipmentList.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveEquipment(index)}
-                        style={{
-                          background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                          color: 'white',
-                          border: 'none',
-                          padding: '0.5rem 1rem',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          fontSize: '0.8125rem',
-                          fontWeight: '500'
-                        }}
-                      >
-                        Remove
-                      </button>
-                    )}
+                      Equipment Name <span style={{ color: '#f87171' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={equipment.name}
+                      onChange={(e) => handleEquipmentChange(index, "name", e.target.value)}
+                      placeholder="e.g., Laptop, Access Card, Phone"
+                      required
+                      className={styles.input}
+                      style={{ width: '100%', paddingLeft: '16px', backgroundImage: 'none' }}
+                    />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 200px', gap: '1rem', alignItems: 'end' }}>
-                    <div>
-                      <label style={{
-                        display: 'block',
-                        fontSize: '0.875rem',
-                        fontWeight: '600',
-                        color: '#cbd5e1',
-                        marginBottom: '0.5rem'
-                      }}>
-                        Equipment Name <span style={{ color: '#f87171' }}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={equipment.name}
-                        onChange={(e) => handleEquipmentChange(index, "name", e.target.value)}
-                        placeholder="e.g., Laptop, Access Card, Phone"
-                        required
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          background: 'rgba(15, 23, 42, 0.5)',
-                          border: '1px solid rgba(148, 163, 184, 0.3)',
-                          borderRadius: '0.5rem',
-                          color: '#e2e8f0',
-                          fontSize: '0.875rem',
-                          outline: 'none'
-                        }}
-                      />
-                    </div>
-
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'auto 1fr', 
+                    gap: '16px',
+                    alignItems: 'start'
+                  }}>
                     <label style={{
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.5rem',
+                      gap: '8px',
                       cursor: 'pointer',
-                      padding: '0.75rem',
-                      background: 'rgba(15, 23, 42, 0.3)',
-                      borderRadius: '0.5rem',
-                      border: '1px solid rgba(148, 163, 184, 0.2)'
+                      padding: '12px',
+                      backgroundColor: '#693699',
+                      borderRadius: '8px',
+                      border: '2px solid #7C40A9',
+                      minWidth: '100px'
                     }}>
-                      <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>Returned</span>
+                      <span style={{ fontSize: '12px', fontWeight: '700' }}>Returned</span>
                       <input
                         type="checkbox"
                         checked={equipment.returned}
                         onChange={(e) => handleEquipmentChange(index, "returned", e.target.checked)}
                         style={{
-                          width: '1.5rem',
-                          height: '1.5rem',
+                          width: '24px',
+                          height: '24px',
                           cursor: 'pointer',
-                          accentColor: '#10b981'
+                          accentColor: '#7C40A9'
                         }}
                       />
                     </label>
@@ -605,10 +477,9 @@ export default function CreateChecklistPage() {
                     <div>
                       <label style={{
                         display: 'block',
-                        fontSize: '0.875rem',
-                        fontWeight: '600',
-                        color: '#cbd5e1',
-                        marginBottom: '0.5rem'
+                        fontSize: '14px',
+                        fontWeight: '700',
+                        marginBottom: '8px'
                       }}>
                         Condition
                       </label>
@@ -617,86 +488,53 @@ export default function CreateChecklistPage() {
                         value={equipment.condition}
                         onChange={(e) => handleEquipmentChange(index, "condition", e.target.value)}
                         placeholder="Good, Fair, Damaged"
-                        style={{
-                          width: '100%',
-                          padding: '0.75rem',
-                          background: 'rgba(15, 23, 42, 0.5)',
-                          border: '1px solid rgba(148, 163, 184, 0.3)',
-                          borderRadius: '0.5rem',
-                          color: '#e2e8f0',
-                          fontSize: '0.875rem',
-                          outline: 'none'
-                        }}
+                        className={styles.input}
+                        style={{ width: '100%', paddingLeft: '16px', backgroundImage: 'none' }}
                       />
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* Error Message */}
-          {error && (
-            <div style={{
-              padding: '1rem',
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: '0.5rem',
-              color: '#fca5a5',
-              marginBottom: '1.5rem',
-              fontSize: '0.875rem'
-            }}>
-              ⚠️ {error}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: '1rem',
-                background: loading ? 'rgba(148, 163, 184, 0.3)' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.75rem',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
-                fontWeight: '600',
-                transition: 'all 0.2s',
-                boxShadow: loading ? 'none' : '0 4px 20px rgba(59, 130, 246, 0.4)'
-              }}
-              onMouseEnter={(e) => !loading && (e.currentTarget.style.transform = 'translateY(-2px)')}
-              onMouseLeave={(e) => !loading && (e.currentTarget.style.transform = 'translateY(0)')}
-            >
-              {loading ? '⏳ Creating...' : '✅ Create Checklist'}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              disabled={loading}
-              style={{
-                flex: 1,
-                padding: '1rem',
-                background: 'rgba(148, 163, 184, 0.1)',
-                color: '#e2e8f0',
-                border: '1px solid rgba(148, 163, 184, 0.3)',
-                borderRadius: '0.75rem',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontSize: '1rem',
-                fontWeight: '600',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => !loading && (e.currentTarget.style.background = 'rgba(148, 163, 184, 0.2)')}
-              onMouseLeave={(e) => !loading && (e.currentTarget.style.background = 'rgba(148, 163, 184, 0.1)')}
-            >
-              Cancel
-            </button>
+        {/* Error Message */}
+        {error && (
+          <div className={styles.errorBanner} style={{ marginBottom: '24px' }}>
+            <p>⚠️ {error}</p>
           </div>
-        </form>
-      </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className={styles.actions}>
+          <button
+            type="submit"
+            disabled={loading}
+            className={styles.createButton}
+            style={{ 
+              flex: 1,
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {loading ? '⏳ Creating...' : '✅ Create Checklist'}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            disabled={loading}
+            className={styles.button}
+            style={{ 
+              flex: 1,
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
