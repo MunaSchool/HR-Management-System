@@ -11,7 +11,7 @@ import axiosInstance, { registerUnauthenticatedHandler } from "@/app/utils/ApiCl
 import { usePathname, useRouter } from "next/navigation";
 
 type User = {
-  id?: string;
+  userid?: string;
   role?: string;
   roles?: string[];
   name?: string;
