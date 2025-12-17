@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { performanceApi } from '@/app/utils/performanceApi';
 import { useAuth } from '@/app/(system)/context/authContext';
-import { 
-  AppraisalAssignment, 
+import {
+  AppraisalAssignment,
   AppraisalAssignmentStatus,
   AppraisalCycle,
   PerformanceAnalytics
 } from '@/app/types/performance';
-import { 
+import {
   Users,
   Calendar,
   CheckCircle,
@@ -51,29 +51,29 @@ export default function ManagerDashboardPage() {
   const fetchManagerData = async () => {
     try {
       setLoading(true);
-      
+     
       // Fetch manager assignments
       let managerId = user?.userid || user?.employeeNumber || user?.email;
       if (managerId) {
         const assignmentsData = await performanceApi.getManagerAppraisalAssignments(managerId);
         setAssignments(assignmentsData);
-        
+       
         // Get active cycles from assignments
-        const cycleIds = [...new Set(assignmentsData.map(a => 
+        const cycleIds = [...new Set(assignmentsData.map(a =>
           typeof a.cycleId === 'string' ? a.cycleId : a.cycleId?._id
         ).filter(Boolean))];
-        
+       
         if (cycleIds.length > 0) {
           // Get cycle details
           const cyclesData = await performanceApi.getAllAppraisalCycles();
           setCycles(cyclesData);
-          
+         
           // Find active cycle (first active cycle in assignments)
-          const active = cyclesData.find(c => 
+          const active = cyclesData.find(c =>
             c.status === 'ACTIVE' && cycleIds.includes(c._id)
           ) || cyclesData[0];
           setActiveCycle(active || null);
-          
+         
           // Get analytics for active cycle
           if (active) {
             const analyticsData = await performanceApi.getPerformanceAnalytics(active._id);
@@ -94,13 +94,13 @@ export default function ManagerDashboardPage() {
     const inProgress = assignments.filter(a => a.status === AppraisalAssignmentStatus.IN_PROGRESS).length;
     const submitted = assignments.filter(a => a.status === AppraisalAssignmentStatus.SUBMITTED).length;
     const published = assignments.filter(a => a.status === AppraisalAssignmentStatus.PUBLISHED).length;
-    
+   
     const completionRate = total > 0 ? Math.round(((published + submitted) / total) * 100) : 0;
-    
+   
     const overdue = assignments.filter(a => {
       if (!a.dueDate) return false;
-      return new Date(a.dueDate) < new Date() && 
-             a.status !== AppraisalAssignmentStatus.PUBLISHED && 
+      return new Date(a.dueDate) < new Date() &&
+             a.status !== AppraisalAssignmentStatus.PUBLISHED &&
              a.status !== AppraisalAssignmentStatus.SUBMITTED;
     }).length;
 
@@ -135,7 +135,7 @@ export default function ManagerDashboardPage() {
   const getUpcomingDueDates = () => {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
+   
     return assignments
       .filter(a => a.dueDate && new Date(a.dueDate) <= nextWeek && new Date(a.dueDate) >= now)
       .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
@@ -146,8 +146,8 @@ export default function ManagerDashboardPage() {
     return assignments
       .filter(a => {
         if (!a.dueDate) return false;
-        return new Date(a.dueDate) < new Date() && 
-               a.status !== AppraisalAssignmentStatus.PUBLISHED && 
+        return new Date(a.dueDate) < new Date() &&
+               a.status !== AppraisalAssignmentStatus.PUBLISHED &&
                a.status !== AppraisalAssignmentStatus.SUBMITTED;
       })
       .slice(0, 3);
@@ -165,10 +165,8 @@ export default function ManagerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -178,10 +176,7 @@ export default function ManagerDashboardPage() {
   const overdueAssignments = getOverdueAssignments();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation Bar */}
-      
-
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-6">
@@ -196,7 +191,7 @@ export default function ManagerDashboardPage() {
             <div className="flex space-x-3">
               <button
                 onClick={fetchManagerData}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
               >
                 Refresh
               </button>
@@ -205,16 +200,18 @@ export default function ManagerDashboardPage() {
 
           {/* Active Cycle Info */}
           {activeCycle && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-6 w-6 text-blue-600" />
+                  <div className="bg-white/70 rounded-full p-3 shadow-sm">
+                    <Calendar className="h-6 w-6 text-blue-600" />
+                  </div>
                   <div>
-                    <h3 className="font-medium text-blue-900">Active Appraisal Cycle</h3>
-                    <p className="text-sm text-blue-700">{activeCycle.name}</p>
+                    <h3 className="font-semibold text-blue-900">Active Appraisal Cycle</h3>
+                    <p className="text-sm text-blue-800">{activeCycle.name}</p>
                   </div>
                 </div>
-                <div className="text-sm text-blue-700">
+                <div className="text-sm text-blue-800 font-medium">
                   Ends: {new Date(activeCycle.endDate).toLocaleDateString()}
                 </div>
               </div>
@@ -223,56 +220,55 @@ export default function ManagerDashboardPage() {
 
           {/* Stats Overview */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="text-center">
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-sm text-gray-500">Team Members</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Team Members</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{stats.published}</p>
-                <p className="text-sm text-gray-500">Published</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Published</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">{stats.published}</p>
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="text-center">
-                <p className="text-2xl font-bold text-blue-600">{stats.submitted}</p>
-                <p className="text-sm text-gray-500">Submitted</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Submitted</p>
+                <p className="text-2xl font-bold text-blue-600 mt-1">{stats.submitted}</p>
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="text-center">
-                <p className="text-2xl font-bold text-yellow-600">{stats.inProgress}</p>
-                <p className="text-sm text-gray-500">In Progress</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">In Progress</p>
+                <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.inProgress}</p>
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="text-center">
-                <p className="text-2xl font-bold text-gray-600">{stats.notStarted}</p>
-                <p className="text-sm text-gray-500">Not Started</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Not Started</p>
+                <p className="text-2xl font-bold text-gray-600 mt-1">{stats.notStarted}</p>
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-                <p className="text-sm text-gray-500">Overdue</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Overdue</p>
+                <p className="text-2xl font-bold text-red-600 mt-1">{stats.overdue}</p>
               </div>
             </div>
-            <div className="bg-white border rounded-lg p-6 shadow-sm">
+            <div className="bg-white border rounded-xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
               <div className="text-center">
-                <p className="text-2xl font-bold text-purple-600">{stats.completionRate}%</p>
-                <p className="text-sm text-gray-500">Completion</p>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Completion</p>
+                <p className="text-2xl font-bold text-purple-600 mt-1">{stats.completionRate}%</p>
               </div>
             </div>
           </div>
 
-          
-
           {/* Recent Activity */}
-          <div className="bg-white border rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b">
-              <h3 className="font-medium text-gray-900">Recent Activity</h3>
+          <div className="bg-white border rounded-xl shadow-sm">
+            <div className="px-6 py-4 border-b flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">Recent Activity</h3>
+              <span className="text-xs text-gray-400">Last submitted or published reviews</span>
             </div>
             <div className="p-6">
               <div className="space-y-4">
@@ -281,12 +277,15 @@ export default function ManagerDashboardPage() {
                   .sort((a, b) => new Date(b.submittedAt || b.assignedAt).getTime() - new Date(a.submittedAt || a.assignedAt).getTime())
                   .slice(0, 3)
                   .map((assignment) => (
-                    <div key={assignment._id} className="flex items-center justify-between">
+                    <div
+                      key={assignment._id}
+                      className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3 hover:bg-gray-50 transition-colors"
+                    >
                       <div className="flex items-center space-x-3">
                         <div className={`p-2 rounded-full ${
-                          assignment.status === AppraisalAssignmentStatus.PUBLISHED 
-                            ? 'bg-green-100' 
-                            : 'bg-blue-100'
+                          assignment.status === AppraisalAssignmentStatus.PUBLISHED
+                            ? 'bg-green-50'
+                            : 'bg-blue-50'
                         }`}>
                           {getStatusIcon(assignment.status)}
                         </div>
@@ -302,13 +301,14 @@ export default function ManagerDashboardPage() {
                         </div>
                       </div>
                       <Link href={`/performance/assignments/view/${assignment._id}`}>
-                        <button className="text-sm text-blue-600 hover:text-blue-800">
+                        <button className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">
                           View Details
+                          <ArrowRight className="h-4 w-4" />
                         </button>
                       </Link>
                     </div>
                   ))}
-                
+               
                 {assignments.filter(a => a.status === AppraisalAssignmentStatus.SUBMITTED || a.status === AppraisalAssignmentStatus.PUBLISHED).length === 0 && (
                   <div className="text-center py-8">
                     <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />

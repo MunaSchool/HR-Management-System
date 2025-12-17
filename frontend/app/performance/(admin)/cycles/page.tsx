@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { performanceApi } from '@/app/utils/performanceApi';
 import { AppraisalCycle, AppraisalCycleStatus } from '@/app/types/performance';
-import { 
+import {
   Plus,
   Search,
   Filter,
@@ -57,7 +57,7 @@ export default function CyclesPage() {
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(cycle => 
+      filtered = filtered.filter(cycle =>
         cycle.name.toLowerCase().includes(term) ||
         cycle.description?.toLowerCase().includes(term) ||
         cycle.cycleType.toLowerCase().includes(term)
@@ -153,7 +153,7 @@ export default function CyclesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto px-4 lg:px-8 py-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -238,7 +238,7 @@ export default function CyclesPage() {
           <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No cycles found</h3>
           <p className="text-gray-500 mb-4">
-            {cycles.length === 0 
+            {cycles.length === 0
               ? "You haven't created any appraisal cycles yet."
               : "No cycles match your search criteria."}
           </p>
@@ -295,7 +295,7 @@ export default function CyclesPage() {
                       Assignments
                     </button>
                   </Link>
-                  
+
                   <div className="flex space-x-2">
                     <Link href={`/performance/cycles/view/${cycle._id}`}>
                       <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md" title="View">
@@ -307,8 +307,8 @@ export default function CyclesPage() {
                         <Edit size={16} />
                       </button>
                     </Link>
-                    <button 
-                      className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-md" 
+                    <button
+                      className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-md"
                       title="Duplicate"
                       onClick={() => console.log('Duplicate cycle:', cycle._id)}
                     >
@@ -364,7 +364,6 @@ export default function CyclesPage() {
         </div>
       )}
 
-      
     </div>
   );
 }

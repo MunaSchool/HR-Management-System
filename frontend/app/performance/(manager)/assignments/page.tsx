@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { performanceApi } from '@/app/utils/performanceApi';
 import { useAuth } from '@/app/(system)/context/authContext';
 import { AppraisalAssignment, AppraisalAssignmentStatus } from '@/app/types/performance';
-import { 
+import {
   Search,
   Filter,
   Users,
@@ -41,14 +41,14 @@ export default function ManagerAssignmentsPage() {
   const fetchAssignments = async () => {
     try {
       setLoading(true);
-      
+     
       let managerId = user?.userid || user?.employeeNumber || user?.email;
-      
+     
       if (!managerId) {
         console.error('No manager ID found in user data');
         return;
       }
-      
+     
       const data = await performanceApi.getManagerAppraisalAssignments(managerId);
       setAssignments(data);
       setFilteredAssignments(data);
@@ -72,7 +72,7 @@ export default function ManagerAssignmentsPage() {
         const cycleName = typeof assignment.cycleId === 'object' && 'name' in assignment.cycleId
           ? assignment.cycleId.name.toLowerCase()
           : '';
-        
+       
         return (
           employeeName.includes(term) ||
           cycleName.includes(term) ||
@@ -95,12 +95,12 @@ export default function ManagerAssignmentsPage() {
     const inProgress = assignments.filter(a => a.status === AppraisalAssignmentStatus.IN_PROGRESS).length;
     const submitted = assignments.filter(a => a.status === AppraisalAssignmentStatus.SUBMITTED).length;
     const published = assignments.filter(a => a.status === AppraisalAssignmentStatus.PUBLISHED).length;
-    
+   
     const completionRate = total > 0 ? Math.round(((published + submitted) / total) * 100) : 0;
     const overdue = assignments.filter(a => {
       if (!a.dueDate) return false;
-      return new Date(a.dueDate) < new Date() && 
-             a.status !== AppraisalAssignmentStatus.PUBLISHED && 
+      return new Date(a.dueDate) < new Date() &&
+             a.status !== AppraisalAssignmentStatus.PUBLISHED &&
              a.status !== AppraisalAssignmentStatus.SUBMITTED;
     }).length;
 
@@ -144,7 +144,7 @@ export default function ManagerAssignmentsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px] bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -159,11 +159,11 @@ export default function ManagerAssignmentsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Team Evaluations</h1>
           <p className="text-gray-600 mt-1">
-            Evaluate your team members' performance
+            Evaluate your team members&apos; performance
           </p>
         </div>
         <Link href="/performance/team">
-          <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+          <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2 shadow-sm">
             <BarChart size={16} />
             Team Analytics
           </button>
@@ -172,43 +172,43 @@ export default function ManagerAssignmentsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             <p className="text-sm text-gray-500">Total</p>
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
           <div className="text-center">
             <p className="text-2xl font-bold text-green-600">{stats.published}</p>
             <p className="text-sm text-gray-500">Published</p>
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
           <div className="text-center">
             <p className="text-2xl font-bold text-blue-600">{stats.submitted}</p>
             <p className="text-sm text-gray-500">Submitted</p>
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
           <div className="text-center">
             <p className="text-2xl font-bold text-yellow-600">{stats.inProgress}</p>
             <p className="text-sm text-gray-500">In Progress</p>
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
           <div className="text-center">
             <p className="text-2xl font-bold text-gray-600">{stats.notStarted}</p>
             <p className="text-sm text-gray-500">Not Started</p>
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
           <div className="text-center">
             <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
             <p className="text-sm text-gray-500">Overdue</p>
           </div>
         </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
           <div className="text-center">
             <p className="text-2xl font-bold text-purple-600">{stats.completionRate}%</p>
             <p className="text-sm text-gray-500">Completion</p>
@@ -217,10 +217,10 @@ export default function ManagerAssignmentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white border rounded-lg p-6 shadow-sm">
+      <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
               placeholder="Search team members..."
@@ -250,11 +250,11 @@ export default function ManagerAssignmentsPage() {
 
       {/* Assignments List */}
       {filteredAssignments.length === 0 ? (
-        <div className="bg-white border rounded-lg p-12 text-center shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-xl p-12 text-center shadow-sm">
           <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No evaluations found</h3>
           <p className="text-gray-500">
-            {assignments.length === 0 
+            {assignments.length === 0
               ? "You don't have any team members to evaluate yet."
               : "No evaluations match your search criteria."}
           </p>
@@ -262,13 +262,16 @@ export default function ManagerAssignmentsPage() {
       ) : (
         <div className="space-y-4">
           {filteredAssignments.map((assignment) => {
-            const isOverdue = assignment.dueDate && 
-              new Date(assignment.dueDate) < new Date() && 
-              assignment.status !== AppraisalAssignmentStatus.PUBLISHED && 
+            const isOverdue = assignment.dueDate &&
+              new Date(assignment.dueDate) < new Date() &&
+              assignment.status !== AppraisalAssignmentStatus.PUBLISHED &&
               assignment.status !== AppraisalAssignmentStatus.SUBMITTED;
-            
+           
             return (
-              <div key={assignment._id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div
+                key={assignment._id}
+                className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+              >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Employee Info */}
                   <div className="flex items-start space-x-4 flex-1">
@@ -302,15 +305,19 @@ export default function ManagerAssignmentsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 text-sm">
                         <div className="flex items-center text-gray-600">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>Cycle: {typeof assignment.cycleId === 'object' && 'name' in assignment.cycleId
-                            ? assignment.cycleId.name
-                            : 'N/A'}</span>
+                          <span>
+                            Cycle: {typeof assignment.cycleId === 'object' && 'name' in assignment.cycleId
+                              ? assignment.cycleId.name
+                              : 'N/A'}
+                          </span>
                         </div>
                         <div className="flex items-center text-gray-600">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          <span>Due: {assignment.dueDate 
-                            ? new Date(assignment.dueDate).toLocaleDateString()
-                            : 'No due date'}</span>
+                          <span>
+                            Due: {assignment.dueDate
+                              ? new Date(assignment.dueDate).toLocaleDateString()
+                              : 'No due date'}
+                          </span>
                         </div>
                         <div className="flex items-center text-gray-600">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />

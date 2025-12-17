@@ -1,24 +1,53 @@
 "use client";
 
-import { useAuth } from "@/app/(system)/context/authContext";
-import { useRouter } from "next/navigation";
+import { useAuth, User } from "@/app/(system)/context/authContext";
 import Link from "next/link";
+import {
+  isSystemAdmin,
+  isHRManager,
+  isHREmployee,
+  isLineManager,
+  isEmployee,
+} from "@/app/utils/roleCheck";
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { user, logout, loading } = useAuth();
 
   const handleLogout = async () => {
     await logout();
   };
 
-  if (!user) {
+  const getPerformanceRoute = (u: User) => {
+    // HR side goes to admin dashboard
+    if (isSystemAdmin(u) || isHRManager(u) || isHREmployee(u)) {
+      return "/performance/adminDashboard";
+    }
+    // Line manager goes to manager dashboard
+    if (isLineManager(u)) {
+      return "/performance/managerDashboard";
+    }
+    // Regular employee goes to employee dashboard
+    if (isEmployee(u)) {
+      return "/performance/employeeDashboard";
+    }
+    return "/performance/unauthorized";
+  };
+
+  if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
   }
+
+  const userDisplayName = user.firstName || user.email;
+
+  const userRoleLabel =
+    (isHREmployee(user) && "HR") ||
+    (isLineManager(user) && "Manager") ||
+    (isEmployee(user) && "Employee") ||
+    "User";
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -33,7 +62,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-gray-700 dark:text-gray-300">
-                Welcome, {user.firstName || user.email}
+                Welcome, {userDisplayName}
               </span>
               <button
                 onClick={handleLogout}
@@ -54,7 +83,6 @@ export default function HomePage() {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Employee Profile Management - Role-based access */}
             <Link href="/employee-profile-management">
               <DashboardCard
                 title="Employee Profile Management"
@@ -63,36 +91,31 @@ export default function HomePage() {
               />
             </Link>
 
-            {/* Recruitment */}
             <DashboardCard
               title="Recruitment"
               description="Manage job postings and applications"
               icon="🎯"
             />
 
-            {/* Time Management */}
             <DashboardCard
               title="Time Management"
               description="Track attendance and work hours"
               icon="⏰"
             />
 
-            {/* Leave Management */}
             <DashboardCard
               title="Leave Management"
               description="Handle leave requests and balances"
               icon="🏖️"
             />
 
-            {/* Payroll */}
             <DashboardCard
               title="Payroll"
               description="Process salaries and payroll"
               icon="💰"
             />
 
-            {/* Performance */}
-            <Link href="/performance">
+            <Link href={getPerformanceRoute(user)}>
               <DashboardCard
                 title="Performance"
                 description="Track goals and reviews"
@@ -100,7 +123,6 @@ export default function HomePage() {
               />
             </Link>
 
-            {/* Organization Structure */}
             <Link href="/organization-structure">
               <DashboardCard
                 title="Organization Structure"
@@ -108,7 +130,6 @@ export default function HomePage() {
                 icon="🏛️"
               />
             </Link>
-
           </div>
 
           {/* User Info */}
@@ -117,9 +138,17 @@ export default function HomePage() {
               Your Information
             </h3>
             <div className="space-y-2 text-gray-700 dark:text-gray-300">
-              <p><strong>Roles:</strong> {user.roles && user.roles.length > 0 ? user.roles.join(", ") : "N/A"}</p>
-              <p><strong>Email:</strong> {user.email}</p>
-              {user.age && <p><strong>Age:</strong> {user.age}</p>}
+              <p>
+                <strong>Role:</strong> {userRoleLabel}
+              </p>
+              <p>
+                <strong>Email:</strong> {user.email}
+              </p>
+              {"age" in user && user.age && (
+                <p>
+                  <strong>Age:</strong> {user.age}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -128,16 +157,22 @@ export default function HomePage() {
   );
 }
 
-function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string }) {
+function DashboardCard({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+}) {
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
       <div className="text-4xl mb-4">{icon}</div>
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
         {title}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400">
-        {description}
-      </p>
+      <p className="text-gray-600 dark:text-gray-400">{description}</p>
     </div>
   );
 }
