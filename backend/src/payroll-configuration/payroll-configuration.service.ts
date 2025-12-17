@@ -29,6 +29,7 @@ import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
 import { ApprovalDto } from './dto/approval.dto';
 import { createTaxRulesDTO } from './dto/create-tax-rules.dto';
 import { editTaxRulesDTO } from './dto/edit-tax-rules.dto';
+import { ConfigStatus } from './enums/payroll-configuration-enums';
 
 
 @Injectable()
@@ -59,13 +60,46 @@ export class PayrollConfigurationService
         return await this.payrollPoliciesModel.findById(id).exec();
     }
 
+    async listPayrollPolicies(): Promise<payrollPoliciesDocument[]> {
+        return this.payrollPoliciesModel.find().exec();
+    }
+
     async createPolicy(policyData: createPayrollPoliciesDto): Promise<payrollPoliciesDocument> {
-        const newPolicy = new this.payrollPoliciesModel(policyData);
+        const fallbackStatus = (policyData as any).ConfigStatus as ConfigStatus | undefined;
+        const payload = {
+            ...policyData,
+            status: policyData.status ?? fallbackStatus ?? ConfigStatus.DRAFT,
+        };
+        const newPolicy = new this.payrollPoliciesModel(payload);
         return newPolicy.save();
     }
 
     async updatePolicy(id: string, updateData: updatePayrollPoliciesDto): Promise<payrollPoliciesDocument|null> {
-        return await this.payrollPoliciesModel.findByIdAndUpdate(id, updateData, { new: true });  
+        const existing = await this.payrollPoliciesModel.findById(id).exec();
+        if (!existing) {
+            return null;
+        }
+        if (existing.status !== ConfigStatus.DRAFT) {
+            throw new Error('Only draft payroll configurations can be edited');
+        }
+        const { status, ...safeUpdate } = updateData;
+        return await this.payrollPoliciesModel.findByIdAndUpdate(id, safeUpdate, { new: true });  
+    }
+
+    async approvePayrollPolicy(id: string): Promise<payrollPoliciesDocument | null> {
+        return this.payrollPoliciesModel.findByIdAndUpdate(
+            id,
+            { status: ConfigStatus.APPROVED, approvedAt: new Date() },
+            { new: true },
+        );
+    }
+
+    async rejectPayrollPolicy(id: string): Promise<payrollPoliciesDocument | null> {
+        return this.payrollPoliciesModel.findByIdAndUpdate(
+            id,
+            { status: ConfigStatus.REJECTED, approvedAt: new Date() },
+            { new: true },
+        );
     }
 
     async deletePolicy(id: string): Promise<payrollPoliciesDocument|null> {
@@ -200,13 +234,38 @@ export class PayrollConfigurationService
         return await this.insuranceBracketsModel.findById(id);
     }
 
-    async createInsuranceBrackets(id: createInsuranceBracketsDTO):Promise <insuranceBracketsDocument|null>{
-        const ib = new this.insuranceBracketsModel(id);
+    async findAllInsuranceBrackets(): Promise<insuranceBracketsDocument[]> {
+        return this.insuranceBracketsModel.find().exec();
+    }
+
+    async createInsuranceBrackets(data: createInsuranceBracketsDTO):Promise <insuranceBracketsDocument|null>{
+        const employeeRate = data.employeeRate ?? (data as any).EmployeeRate;
+        const employerRate = data.employerRate ?? (data as any).EmployerRate;
+        const payload = {
+            ...data,
+            employeeRate,
+            employerRate,
+            status: data.status ?? ConfigStatus.DRAFT,
+        };
+        const ib = new this.insuranceBracketsModel(payload);
         return ib.save();
     }
 
     async editInsuranceBrackets (id: string, updateData: editInsuranceBracketsDTO): Promise<insuranceBracketsDocument|null>{
-        return await this.insuranceBracketsModel.findByIdAndUpdate(id, updateData, { new: true });
+        const existing = await this.insuranceBracketsModel.findById(id).exec();
+        if (!existing) {
+            return null;
+        }
+        if (existing.status !== ConfigStatus.DRAFT) {
+            throw new Error('Only draft insurance brackets can be edited');
+        }
+        const { status, ...safeUpdate } = updateData;
+        const normalized = {
+            ...safeUpdate,
+            employeeRate: safeUpdate.employeeRate ?? (updateData as any).EmployeeRate,
+            employerRate: safeUpdate.employerRate ?? (updateData as any).EmployerRate,
+        };
+        return await this.insuranceBracketsModel.findByIdAndUpdate(id, normalized, { new: true });
     }
 
     async removeInsuranceBrackets(id: string): Promise<insuranceBracketsDocument|null>{
@@ -242,7 +301,11 @@ export class PayrollConfigurationService
     const targetModel = modelsMap[model];
     if (!targetModel) throw new Error(`Model ${model} not found`);
 
-    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+    return targetModel.findByIdAndUpdate(
+      id,
+      { status: ConfigStatus.APPROVED, approvedAt: new Date() },
+      { new: true },
+    );
   }
 
   async payrollManagerReject(model: string, id: string) {
@@ -258,7 +321,11 @@ export class PayrollConfigurationService
     const targetModel = modelsMap[model];
     if (!targetModel) throw new Error(`Model ${model} not found`);
 
-    return targetModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+    return targetModel.findByIdAndUpdate(
+      id,
+      { status: ConfigStatus.REJECTED, approvedAt: new Date() },
+      { new: true },
+    );
   }
 
   // -------------------
@@ -266,11 +333,19 @@ export class PayrollConfigurationService
   // -------------------
 
   async hrApproveInsurance(id: string) {
-    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'approved' }, { new: true });
+    return this.insuranceBracketsModel.findByIdAndUpdate(
+      id,
+      { status: ConfigStatus.APPROVED, approvedAt: new Date() },
+      { new: true },
+    );
   }
 
   async hrRejectInsurance(id: string) {
-    return this.insuranceBracketsModel.findByIdAndUpdate(id, { approvalStatus: 'rejected' }, { new: true });
+    return this.insuranceBracketsModel.findByIdAndUpdate(
+      id,
+      { status: ConfigStatus.REJECTED, approvedAt: new Date() },
+      { new: true },
+    );
   }
 
   // -------------------
@@ -318,8 +393,12 @@ export class PayrollConfigurationService
     const targetModel = modelsMap[model];
     if (!targetModel) throw new Error(`Model ${model} not found`);
 
-    const status = action === 'approve' ? 'approved' : 'rejected';
-    return targetModel.findByIdAndUpdate(id, { approvalStatus: status }, { new: true });
+    const status = action === 'approve' ? ConfigStatus.APPROVED : ConfigStatus.REJECTED;
+    return targetModel.findByIdAndUpdate(
+      id,
+      { status, approvedAt: new Date() },
+      { new: true },
+    );
   }
 
   // -------------------
