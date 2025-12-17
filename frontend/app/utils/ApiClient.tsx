@@ -9,7 +9,7 @@ const axiosInstance = axios.create({
 })
 // This variable will hold the function that AuthContext gives us
 let onUnAuthenticated: (() => void);
-// AuthContext will call this later
+// AuthContext will call athis later
 export function registerUnauthenticatedHandler(handler: () => void) {
   onUnAuthenticated = handler;
 }

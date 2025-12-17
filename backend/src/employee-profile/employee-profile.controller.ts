@@ -201,6 +201,13 @@ export class EmployeeProfileController {
   }
 
   // ==================== CHANGE REQUEST MANAGEMENT ====================
+  @Get('change-requests/all')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getAllChangeRequests() {
+    return this.employeeProfileService.getAllChangeRequests();
+  }
+
   @Get('change-requests/pending')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
