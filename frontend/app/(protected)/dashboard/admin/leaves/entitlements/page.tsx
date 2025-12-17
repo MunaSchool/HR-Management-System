@@ -88,7 +88,7 @@ interface LeaveType {
 
 interface LeaveEntitlement {
   _id: string;
-  employeeId: Employee;
+  employeeId: Employee ;
   leaveTypeId: LeaveType;
   yearlyEntitlement: number;
   accruedActual: number;

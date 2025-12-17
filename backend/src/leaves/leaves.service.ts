@@ -92,7 +92,6 @@ export class LeavesService {
     @InjectModel(Delegation.name) private readonly delegationModel: Model<DelegationDocument>,
     private readonly notificationLogService: NotificationLogService,
   ) { }
-
   // ======================================================
   // PHASE 1 — CATEGORY
   // ======================================================
@@ -485,9 +484,32 @@ export class LeavesService {
   async getAllEntitlements() {
     return this.entitlementModel
       .find()
-      .populate('employeeId')
+      .populate({
+        path: 'employeeId',
+        select: 'firstName lastName fullName workEmail', // Explicitly select fields
+        // Add this to handle null references gracefully:
+        options: {
+          // This ensures empty results instead of throwing errors
+          // Or you can use a different approach:
+          // strictPopulate: false
+        }
+      })
       .populate('leaveTypeId')
-      .exec();
+      .lean()
+      .then(entitlements =>
+        entitlements.map(ent => ({
+          ...ent,
+          // Ensure employeeId has a fallback structure if null
+          employeeId: ent.employeeId || {
+            _id: null,
+            firstName: 'Unknown',
+            lastName: 'Employee',
+            fullName: 'Unknown Employee',
+            workEmail: 'N/A'
+          }
+        }))
+      )
+      
   }
 
   async getEmployeeEntitlements(employeeId: string) {
