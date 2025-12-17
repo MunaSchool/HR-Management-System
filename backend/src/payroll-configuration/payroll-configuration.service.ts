@@ -11,6 +11,10 @@ import { payType, payTypeDocument } from './models/payType.schema';
 import { signingBonus, signingBonusDocument } from './models/signingBonus.schema';
 import { taxRules, taxRulesDocument } from './models/taxRules.schema';
 import { terminationAndResignationBenefits, terminationAndResignationBenefitsDocument } from './models/terminationAndResignationBenefits';
+import { TaxDocument, TaxDocumentDocument } from './models/taxDocument.schema';
+import { PayrollDispute, PayrollDisputeDocument } from './models/payrollDispute.schema';
+import { CreateTaxDocumentDto } from './dto/create-tax-document.dto';
+import { CreatePayrollDisputeDto } from './dto/create-payroll-dispute.dto';
 
 import { updatePayrollPoliciesDto } from './dto/update-policies.dto';
 import { createPayrollPoliciesDto } from './dto/create-policies.dto';
@@ -45,6 +49,8 @@ export class PayrollConfigurationService
         @InjectModel(signingBonus.name) private signingBonusModel: Mongoose.Model<signingBonusDocument>,
         @InjectModel(taxRules.name) private taxRulesModel: Mongoose.Model<taxRulesDocument>,
         @InjectModel(terminationAndResignationBenefits.name) private terminationAndResignationBenefitsModel: Mongoose.Model<terminationAndResignationBenefitsDocument>,
+        @InjectModel(TaxDocument.name) private taxDocumentModel: Mongoose.Model<TaxDocumentDocument>,
+        @InjectModel(PayrollDispute.name) private payrollDisputeModel: Mongoose.Model<PayrollDisputeDocument>,
     ) {}
 
 
@@ -389,24 +395,24 @@ export class PayrollConfigurationService
   // PHASE 5 – HR MANAGER INSURANCE APPROVAL
   // -------------------
 
-  async hrApproveInsurance(id: string, approvedBy: string) {
+  async hrApproveInsurance(id: string, approvedBy?: string) {
     return this.insuranceBracketsModel.findByIdAndUpdate(
       id, 
       { 
         status: ConfigStatus.APPROVED,
-        approvedBy: new Mongoose.Types.ObjectId(approvedBy),
+        approvedBy: approvedBy ? new Mongoose.Types.ObjectId(approvedBy) : undefined,
         approvedAt: new Date()
       }, 
       { new: true }
     );
   }
 
-  async hrRejectInsurance(id: string, approvedBy: string) {
+  async hrRejectInsurance(id: string, approvedBy?: string) {
     return this.insuranceBracketsModel.findByIdAndUpdate(
       id, 
       { 
         status: ConfigStatus.REJECTED,
-        approvedBy: new Mongoose.Types.ObjectId(approvedBy),
+        approvedBy: approvedBy ? new Mongoose.Types.ObjectId(approvedBy) : undefined,
         approvedAt: new Date()
       }, 
       { new: true }
@@ -443,7 +449,11 @@ export class PayrollConfigurationService
   // -------------------
 
   async create(dto: CreateCompanySettingsDto) {
-    const newSettings = new this.companyWideSettingsModel(dto);
+    const newSettings = new this.companyWideSettingsModel({
+      ...dto,
+      status: dto.status || ConfigStatus.DRAFT,
+      payCycle: dto.payCycle || 'monthly',
+    });
     return newSettings.save();
   }
 
@@ -457,6 +467,11 @@ export class PayrollConfigurationService
 
 
   async update(id: string, dto: UpdateCompanySettingsDto) {
+    const existing = await this.companyWideSettingsModel.findById(id).exec();
+    if (!existing) return null;
+    if (existing.status !== ConfigStatus.DRAFT) {
+      throw new Error('Only draft company settings can be edited');
+    }
     return this.companyWideSettingsModel.findByIdAndUpdate(id, dto, { new: true });
   }
 
@@ -600,6 +615,38 @@ export class PayrollConfigurationService
       companySettings,
       timestamp: new Date(),
     };
+  }
+
+  // -------------------
+  // TAX DOCUMENTS (EMPLOYEE DOWNLOAD)
+  // -------------------
+  async createTaxDocument(dto: CreateTaxDocumentDto): Promise<TaxDocumentDocument> {
+    const doc = new this.taxDocumentModel(dto);
+    return doc.save();
+  }
+
+  async listTaxDocumentsForEmployee(employeeId: string): Promise<TaxDocumentDocument[]> {
+    return this.taxDocumentModel.find({ employeeId }).exec();
+  }
+
+  // -------------------
+  // PAYROLL DISPUTES
+  // -------------------
+  async createPayrollDispute(dto: CreatePayrollDisputeDto): Promise<PayrollDisputeDocument> {
+    const dispute = new this.payrollDisputeModel({ ...dto, status: 'open' });
+    return dispute.save();
+  }
+
+  async resolvePayrollDispute(id: string): Promise<PayrollDisputeDocument | null> {
+    return this.payrollDisputeModel.findByIdAndUpdate(id, { status: 'resolved' }, { new: true });
+  }
+
+  async listDisputesByEmployee(employeeId: string): Promise<PayrollDisputeDocument[]> {
+    return this.payrollDisputeModel.find({ employeeId }).exec();
+  }
+
+  async listAllDisputes(): Promise<PayrollDisputeDocument[]> {
+    return this.payrollDisputeModel.find().exec();
   }
 }
 

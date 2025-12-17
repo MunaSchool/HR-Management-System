@@ -11,6 +11,8 @@ import { signingBonus, signingBonusSchema } from './models/signingBonus.schema';
 import { taxRules, taxRulesSchema } from './models/taxRules.schema';
 import { terminationAndResignationBenefits, terminationAndResignationBenefitsSchema } from './models/terminationAndResignationBenefits';
 import { payGrade, payGradeSchema } from './models/payGrades.schema';
+import { TaxDocument, TaxDocumentSchema } from './models/taxDocument.schema';
+import { PayrollDispute, PayrollDisputeSchema } from './models/payrollDispute.schema';
 
 @Module({
   imports: [
@@ -23,7 +25,9 @@ import { payGrade, payGradeSchema } from './models/payGrades.schema';
       { name: payrollPolicies.name, schema: payrollPoliciesSchema },
       { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
       { name: CompanyWideSettings.name, schema: CompanyWideSettingsSchema },
-      { name: payGrade.name, schema: payGradeSchema }
+      { name: payGrade.name, schema: payGradeSchema },
+      { name: TaxDocument.name, schema: TaxDocumentSchema },
+      { name: PayrollDispute.name, schema: PayrollDisputeSchema },
     ]),
   ],
   controllers: [PayrollConfigurationController],
@@ -39,7 +43,9 @@ import { payGrade, payGradeSchema } from './models/payGrades.schema';
       { name: payrollPolicies.name, schema: payrollPoliciesSchema },
       { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
       { name: CompanyWideSettings.name, schema: CompanyWideSettingsSchema },
-      { name: payGrade.name, schema: payGradeSchema }
+      { name: payGrade.name, schema: payGradeSchema },
+      { name: TaxDocument.name, schema: TaxDocumentSchema },
+      { name: PayrollDispute.name, schema: PayrollDisputeSchema },
     ]) 
   ]
            // Export MongooseModule so other modules (recruitment) can access the models

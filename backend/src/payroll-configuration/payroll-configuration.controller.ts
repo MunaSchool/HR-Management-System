@@ -25,6 +25,8 @@ import { UpdateCompanySettingsDto } from './dto/UpdateCompanySettings.dto';
 import { ApprovalDto } from './dto/approval.dto';
 import { createTaxRulesDTO } from './dto/create-tax-rules.dto';
 import { editTaxRulesDTO } from './dto/edit-tax-rules.dto';
+import { CreateTaxDocumentDto } from './dto/create-tax-document.dto';
+import { CreatePayrollDisputeDto } from './dto/create-payroll-dispute.dto';
 
 @Controller('payroll-configuration')
 export class PayrollConfigurationController {
@@ -466,6 +468,70 @@ export class PayrollConfigurationController {
   @Roles(SystemRole.SYSTEM_ADMIN)
   deleteSettings(@Param('id') id: string) {
     return this.payrollConfigurationService.delete(id);
+  }
+
+  // -------------------
+  // TAX DOCUMENTS (EMPLOYEE DOWNLOAD)
+  // -------------------
+  @Post('tax-documents')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
+  createTaxDocument(@Body() dto: CreateTaxDocumentDto) {
+    return this.payrollConfigurationService.createTaxDocument(dto);
+  }
+
+  @Get('tax-documents/:employeeId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(
+    SystemRole.DEPARTMENT_EMPLOYEE,
+    SystemRole.PAYROLL_MANAGER,
+    SystemRole.PAYROLL_SPECIALIST,
+    SystemRole.HR_MANAGER,
+    SystemRole.SYSTEM_ADMIN,
+  )
+  listTaxDocuments(@Param('employeeId') employeeId: string) {
+    return this.payrollConfigurationService.listTaxDocumentsForEmployee(employeeId);
+  }
+
+  // -------------------
+  // PAYROLL DISPUTES
+  // -------------------
+  @Post('disputes')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.DEPARTMENT_EMPLOYEE)
+  createDispute(@Body() dto: CreatePayrollDisputeDto) {
+    return this.payrollConfigurationService.createPayrollDispute(dto);
+  }
+
+  @Get('disputes/my/:employeeId')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
+  listMyDisputes(@Param('employeeId') employeeId: string) {
+    return this.payrollConfigurationService.listDisputesByEmployee(employeeId);
+  }
+
+  @Get('disputes')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
+  listAllDisputes() {
+    return this.payrollConfigurationService.listAllDisputes();
+  }
+
+  @Put('disputes/:id/resolve')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
+  resolveDispute(@Param('id') id: string) {
+    return this.payrollConfigurationService.resolvePayrollDispute(id);
+  }
+
+  // -------------------
+  // BACKUP
+  // -------------------
+  @Get('backup')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.SYSTEM_ADMIN)
+  backup() {
+    return this.payrollConfigurationService.backupPayrollData();
   }
 
   // -------------------

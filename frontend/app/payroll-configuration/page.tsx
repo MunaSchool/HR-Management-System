@@ -2,8 +2,9 @@ import React from 'react'
 import Link from 'next/link'
 
 const sampleConfigs = [
-	{ id: 'tax', name: 'Tax Settings', description: 'Federal and state tax configuration' },
-	{ id: 'pay-periods', name: 'Pay Periods', description: 'Define pay period frequency' },
+	{ id: 'company-settings', name: 'Company Settings', description: 'Pay date, time zone, currency, pay cycle' },
+	{ id: 'tax-documents', name: 'Tax Documents', description: 'Create and download employee tax forms' },
+	{ id: 'disputes', name: 'Payroll Disputes', description: 'Submit or review payroll error disputes' },
 ]
 
 export default function PayrollConfigurationPage() {
