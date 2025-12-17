@@ -74,6 +74,9 @@ export class HrAdminService {
       throw new ForbiddenException('Insufficient permissions');
     }
 
+    console.log('🔍 Updating employee:', employeeId);
+    console.log('📦 Update data received:', JSON.stringify(updateDto, null, 2));
+
     const updated = await this.employeeProfileModel.findByIdAndUpdate(
       employeeId,
       {
@@ -87,6 +90,14 @@ export class HrAdminService {
     if (!updated) {
       throw new NotFoundException('Employee profile not found');
     }
+
+    console.log('✅ Employee updated:', {
+      id: updated._id,
+      name: updated.fullName,
+      primaryDepartmentId: updated.primaryDepartmentId,
+      primaryPositionId: updated.primaryPositionId,
+      supervisorPositionId: updated.supervisorPositionId,
+    });
 
     return updated;
   }

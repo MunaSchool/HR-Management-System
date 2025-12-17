@@ -97,4 +97,40 @@ export class CreateEmployeeDto {
   @IsArray()
   @IsString({ each: true })
   permissions?: string[];
+
+  @IsOptional()
+  @IsString()
+  primaryPositionId?: string;
+
+  @IsOptional()
+  @IsString()
+  primaryDepartmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  supervisorPositionId?: string;
+
+  @IsOptional()
+  @IsString()
+  contractType?: string;
+
+  @IsOptional()
+  @IsString()
+  workType?: string;
+
+  @IsOptional()
+  @IsDateString()
+  contractStartDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  contractEndDate?: string;
+
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @IsOptional()
+  @IsString()
+  bankAccountNumber?: string;
 }

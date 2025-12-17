@@ -177,7 +177,7 @@ activatePosition(@Param('id') id: string) {
   // ======================
 
   @Get('hierarchy/organization')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_EMPLOYEE) // needed to add employee
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
   getOrganizationHierarchy() {
     return this.organizationStructureService.getOrganizationHierarchy();
   }

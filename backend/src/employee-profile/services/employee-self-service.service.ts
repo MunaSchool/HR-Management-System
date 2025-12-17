@@ -123,13 +123,19 @@ export class EmployeeSelfServiceService {
 
   // Get team members (US-E4-01, US-E4-02)
   async getTeamMembers(managerPositionId: string): Promise<EmployeeProfileDocument[]> {
+    console.log('🔍 Getting team members for position:', managerPositionId);
+
     // First, try to find employees who report to this position
     const directReports = await this.employeeProfileModel
       .find({ supervisorPositionId: managerPositionId, status: EmployeeStatus.ACTIVE })
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
-      .select('-password -nationalId -dateOfBirth -personalEmail -homePhone -address')
       .exec();
+
+    console.log('👥 Found', directReports.length, 'direct reports');
+    directReports.forEach(emp => {
+      console.log('  -', emp.fullName, '| supervisorPositionId:', emp.supervisorPositionId);
+    });
 
     // If there are direct reports, return them
     if (directReports.length > 0) {
@@ -141,17 +147,22 @@ export class EmployeeSelfServiceService {
     const Department = this.employeeProfileModel.db.model('Department');
     const department = await Department.findOne({ headPositionId: managerPositionId }).exec();
 
+    console.log('🏢 Department head check:', department ? department.name : 'Not a department head');
+
     if (department) {
       // Return all active employees in this department
-      return await this.employeeProfileModel
+      const deptEmployees = await this.employeeProfileModel
         .find({ primaryDepartmentId: department._id, status: EmployeeStatus.ACTIVE })
         .populate('primaryPositionId')
         .populate('primaryDepartmentId')
-        .select('-password -nationalId -dateOfBirth -personalEmail -homePhone -address')
         .exec();
+
+      console.log('👥 Found', deptEmployees.length, 'employees in department');
+      return deptEmployees;
     }
 
     // No team found
+    console.log('❌ No team members found');
     return [];
   }
 
