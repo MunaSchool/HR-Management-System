@@ -509,7 +509,7 @@ export class LeavesService {
           }
         }))
       )
-      
+
   }
 
   async getEmployeeEntitlements(employeeId: string) {
@@ -904,22 +904,36 @@ export class LeavesService {
   }
 
   private async getEmployeeRoles(employeeId: string): Promise<string[]> {
-    const employee = await this.employeeModel.findById(employeeId);
+    // First check employee_system_roles collection
+    const systemRoleDoc = await this.employeeModel.aggregate([
+      { $match: { _id: new Types.ObjectId(employeeId) } },
+      {
+        $lookup: {
+          from: 'employee_system_roles',
+          localField: '_id',
+          foreignField: 'employeeProfileId',
+          as: 'systemRoles'
+        }
+      },
+      { $unwind: { path: '$systemRoles', preserveNullAndEmptyArrays: true } }
+    ]);
 
+    if (systemRoleDoc.length > 0 && systemRoleDoc[0].systemRoles) {
+      const roles = systemRoleDoc[0].systemRoles.roles || [];
+      console.log('Roles from employee_system_roles:', roles);
+      return roles;
+    }
+
+    // Fallback: check based on position/department
+    const employee = await this.employeeModel.findById(employeeId);
     if (!employee) {
       return [];
     }
 
-    // Example logic to decide role:
-    if (employee.primaryPositionId) {
-      // If this employee has a position ID that corresponds to Department Head
-      return [SystemRole.DEPARTMENT_HEAD];
-    }
-
-    // Default role for normal employees
-    return [SystemRole.DEPARTMENT_EMPLOYEE];
+    // You can add logic here based on employee's position/title
+    // For now, return empty
+    return [];
   }
-
 
 
 
@@ -932,51 +946,158 @@ export class LeavesService {
     managerId: string,
     decision: 'approved' | 'rejected',
   ) {
+    console.log('=== DEBUG MANAGER DECISION START ===');
+
     // 1. Load leave request
     const leave = await this.requestModel.findById(leaveId);
     if (!leave) throw new NotFoundException('Leave request not found');
 
-    // 2. Load workflow for this leave type
+    // 2. Get manager trying to approve
+    const manager = await this.employeeModel.findById(managerId);
+    if (!manager) throw new NotFoundException('Manager not found');
+
+    // 3. Get manager's actual roles from database
+    const systemRoleDoc = await this.employeeModel.aggregate([
+      { $match: { _id: new Types.ObjectId(managerId) } },
+      {
+        $lookup: {
+          from: 'employee_system_roles',
+          localField: '_id',
+          foreignField: 'employeeProfileId',
+          as: 'systemRoles'
+        }
+      },
+      { $unwind: { path: '$systemRoles', preserveNullAndEmptyArrays: true } }
+    ]);
+
+    let managerRoles: string[] = [];
+    if (systemRoleDoc.length > 0 && systemRoleDoc[0].systemRoles) {
+      managerRoles = systemRoleDoc[0].systemRoles.roles || [];
+    }
+
+    console.log('Manager roles from DB:', managerRoles);
+
+    // 4. Check if manager has any manager-like role
+    const normalizedRoles = managerRoles.map(role => role.toLowerCase());
+    const hasManagerRole = normalizedRoles.some(role =>
+      role.includes('manager') ||
+      role.includes('head') ||
+      role.includes('admin')
+    );
+
+    if (!hasManagerRole) {
+      console.log('FAIL: No manager role found');
+      throw new ForbiddenException('You do not have manager permissions');
+    }
+
+    console.log('Authorization PASSED - Manager role found');
+
+    // 5. Determine current step
     const workflow = await this.workflowModel.findOne({ leaveTypeId: leave.leaveTypeId });
 
-    // 3. Determine current step role
     let currentStepRole: string;
-    const currentStepIndex = leave.approvalFlow.length;
 
     if (!workflow || workflow.flow.length === 0) {
-      // Fallback if no workflow is defined: assume single manager step
-      currentStepRole = 'Manager';
       console.warn(`Approval workflow missing for leaveTypeId: ${leave.leaveTypeId}. Defaulting to Manager step.`);
+      currentStepRole = 'Manager';
     } else {
-      currentStepRole = workflow.flow[currentStepIndex]?.role;
-      if (!currentStepRole) throw new BadRequestException('No more approval steps');
+      // Find the first pending step
+      const pendingStepIndex = leave.approvalFlow.findIndex((step: any) => step.status === 'pending');
+
+      if (pendingStepIndex === -1) {
+        // Check if there are any steps at all
+        if (leave.approvalFlow.length === 0) {
+          // No steps yet, use first workflow step
+          currentStepRole = workflow.flow[0]?.role || 'Manager';
+        } else {
+          throw new BadRequestException('No pending approval steps found');
+        }
+      } else {
+        currentStepRole = workflow.flow[pendingStepIndex]?.role;
+      }
     }
 
-    // 4. Check if manager has the correct role
-    const managerRoles = await this.getEmployeeRoles(managerId); // your service method
-    if (!managerRoles.includes(currentStepRole)) {
-      throw new ForbiddenException('You are not authorized to approve this leave');
+    console.log('Current step role:', currentStepRole);
+
+    // 6. Map workflow role to actual roles (flexible mapping)
+    // Since roles are lowercase with spaces, we need flexible matching
+    const roleMapping: Record<string, string[]> = {
+      'Manager': ['manager', 'department manager', 'hr manager'],
+      'Department Head': ['department head', 'head'],
+      'HR': ['hr admin', 'hr employee', 'hr'],
+      'Department Manager': ['department manager', 'manager'],
+    };
+
+    const allowedRolePatterns = roleMapping[currentStepRole] || [currentStepRole.toLowerCase()];
+    const hasRequiredRole = normalizedRoles.some(role =>
+      allowedRolePatterns.some(pattern => role.includes(pattern))
+    );
+
+    if (!hasRequiredRole) {
+      console.log('Role mismatch. Manager has:', normalizedRoles, 'Workflow expects:', currentStepRole);
+
+      // Allow department head to approve manager steps as fallback
+      const isDepartmentHead = normalizedRoles.some(role => role.includes('head'));
+      if (!isDepartmentHead) {
+        throw new ForbiddenException(`You need ${currentStepRole} role to approve this step`);
+      }
     }
 
-    // 5. Record decision in approvalFlow
-    leave.approvalFlow.push({
+    // 7. Record decision
+    const approvalStep: ApprovalStepExtended = {
       role: currentStepRole,
       status: decision,
       decidedBy: new Types.ObjectId(managerId),
       decidedAt: new Date(),
-    });
+    };
 
-    // 6. Update overall status if final step
-    if (workflow && currentStepIndex === workflow.flow.length - 1) {
-      leave.status = decision === 'approved' ? LeaveStatus.APPROVED : LeaveStatus.REJECTED;
-    } else if (!workflow) {
-      // If no workflow, consider this single step as final
-      leave.status = decision === 'approved' ? LeaveStatus.APPROVED : LeaveStatus.REJECTED;
+    // If department head overriding manager step
+    if (currentStepRole === 'Manager' && normalizedRoles.some(role => role.includes('head'))) {
+      approvalStep.overrideManager = true;
     }
 
-    return leave.save();
-  }
+    if (!leave.approvalFlow || leave.approvalFlow.length === 0) {
+      leave.approvalFlow = [approvalStep];
+    } else {
+      leave.approvalFlow.push(approvalStep);
+    }
 
+    // 8. Update status and deduct entitlement
+    leave.status = decision === 'approved' ? LeaveStatus.APPROVED : LeaveStatus.REJECTED;
+
+    if (decision === 'approved') {
+      const entitlement = await this.entitlementModel.findOne({
+        employeeId: leave.employeeId,
+        leaveTypeId: leave.leaveTypeId,
+      });
+
+      if (entitlement) {
+        const paidDays = (leave as any).paidDays || leave.durationDays || 0;
+        console.log('Deducting', paidDays, 'days from entitlement');
+        entitlement.taken += paidDays;
+        entitlement.remaining = Math.max(0, entitlement.remaining - paidDays);
+        await entitlement.save();
+      }
+    }
+
+    await leave.save();
+
+    console.log('=== DEBUG MANAGER DECISION END ===');
+    console.log('Leave saved with status:', leave.status);
+
+    // 9. Send notification
+    try {
+      await this.notificationLogService.sendNotification({
+        to: leave.employeeId,
+        type: decision === 'approved' ? 'Manager Approved Leave' : 'Manager Rejected Leave',
+        message: `Your leave request has been ${decision} by ${manager.fullName || 'your manager'}`,
+      });
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
+    return leave;
+  }
 
 
 
