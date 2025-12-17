@@ -40,28 +40,28 @@ export class PayrollConfigurationController {
 
   @Get('policies')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
   async getAllPolicies(): Promise<payrollPoliciesDocument[]> {
     return this.payrollConfigurationService.findAllPolicies();
   }
 
   @Get('policies/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
   async getPolicyById(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
     return this.payrollConfigurationService.findById(id);
   }
 
   @Post('policies')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
   async createPolicy(@Body() policyData: createPayrollPoliciesDto): Promise<payrollPoliciesDocument> {
     return this.payrollConfigurationService.createPolicy(policyData);
   }
 
   @Put('policies/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
   async updatePolicy(
     @Param('id') id: string,
     @Body() updateData: updatePayrollPoliciesDto
@@ -71,7 +71,7 @@ export class PayrollConfigurationController {
 
   @Delete('policies/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
   async deletePolicy(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
     return this.payrollConfigurationService.deletePolicy(id);
   }
