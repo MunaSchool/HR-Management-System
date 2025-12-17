@@ -59,7 +59,7 @@ export default function EditPolicyPage() {
         status: form.status || "draft",
       };
       await updatePolicy(id, payload);
-      router.push("/payroll-config");
+      router.back();
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Failed to save policy");
     } finally {

@@ -86,6 +86,28 @@ export default function ConfigPoliciesPage() {
     ? policies 
     : policies.filter(p => p.status === statusFilter);
 
+  const handleApprove = async (id: string) => {
+    try {
+      await axiosInstance.put(`/payroll-configuration/${id}/approve`);
+      setPolicies((prev) =>
+        prev.map((p) => (p._id === id ? { ...p, status: "approved" } : p))
+      );
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Approve failed");
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await axiosInstance.put(`/payroll-configuration/${id}/reject`);
+      setPolicies((prev) =>
+        prev.map((p) => (p._id === id ? { ...p, status: "rejected" } : p))
+      );
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Reject failed");
+    }
+  };
+
 
   //colours
   const getStatusBadgeColor = (status: string) => {
@@ -238,6 +260,24 @@ export default function ConfigPoliciesPage() {
                       >
                         🗑️
                       </button>
+                      {policy.status === "draft" && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(policy._id)}
+                            className="text-green-700 hover:text-green-900 transition"
+                            title="Approve"
+                          >
+                            ✅
+                          </button>
+                          <button
+                            onClick={() => handleReject(policy._id)}
+                            className="text-orange-700 hover:text-orange-900 transition"
+                            title="Reject"
+                          >
+                            ❌
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
