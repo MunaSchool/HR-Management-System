@@ -1,4 +1,3 @@
-// leaves/models/calendar.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
@@ -10,7 +9,7 @@ export class Calendar {
   year: number;
 
   @Prop({
-    type: [{ type: Types.ObjectId, ref: 'Holiday' }], // References Time Management's Holiday
+    type: [{ type: Types.ObjectId, ref: 'Holiday' }],
     default: [],
   })
   holidays: Types.ObjectId[];

@@ -29,13 +29,6 @@ export class LeaveRequest {
   @Prop({ required: true })
   durationDays: number;
 
-  // PAID VS UNPAID BREAKDOWN (BR-29)
-  @Prop({ default: 0 })
-  paidDays: number;
-
-  @Prop({ default: 0 })
-  unpaidDays: number;
-
   // OPTIONAL JUSTIFICATION
   @Prop()
   justification?: string;

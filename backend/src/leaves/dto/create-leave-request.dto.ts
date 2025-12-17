@@ -2,9 +2,8 @@
 import { IsMongoId, IsDateString, IsString, IsOptional } from 'class-validator';
 
 export class CreateLeaveRequestDto {
-  // Employee is taken from JWT – no need in body
-  // @IsMongoId()
-  // employeeId: string;
+  @IsMongoId()
+  employeeId: string;
 
   @IsMongoId()
   leaveTypeId: string;
@@ -23,4 +22,3 @@ export class CreateLeaveRequestDto {
   @IsMongoId()
   attachmentId?: string;
 }
-
