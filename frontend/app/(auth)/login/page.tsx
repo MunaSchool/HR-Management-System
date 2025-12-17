@@ -9,7 +9,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [loginType, setLoginType] = useState<"employee" | "candidate">("employee");
-  const [identifier, setIdentifier] = useState(""); // Employee number or email
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,14 @@ export default function LoginPage() {
           password,
         });
       }
-      router.push("/home");
+
+      // 🔁 Redirect based on login type
+      if (loginType === "candidate") {
+        router.push("/recruitment/candidate/dashboard");
+      } else {
+        router.push("/home");
+      }
+
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed");
     } finally {
@@ -67,6 +74,7 @@ export default function LoginPage() {
           >
             Employee
           </button>
+
           <button
             type="button"
             onClick={() => {
@@ -85,40 +93,33 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Identifier (Employee Number or Email) */}
+
+          {/* Identifier */}
           <div className="space-y-1">
-            <label
-              htmlFor="identifier"
-              className="text-sm text-neutral-300 block"
-            >
+            <label className="text-sm text-neutral-300 block">
               {loginType === "employee" ? "Employee Number" : "Email"}
             </label>
             <input
-              id="identifier"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               type={loginType === "employee" ? "text" : "email"}
               required
-              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
+              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-white"
               placeholder={loginType === "employee" ? "EMP12345" : "you@example.com"}
             />
           </div>
 
           {/* Password */}
           <div className="space-y-1">
-            <label
-              htmlFor="password"
-              className="text-sm text-neutral-300 block"
-            >
+            <label className="text-sm text-neutral-300 block">
               Password
             </label>
             <input
-              id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               required
-              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
+              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-white"
               placeholder="••••••••"
             />
           </div>
@@ -134,16 +135,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-white text-black font-semibold py-2 transition hover:bg-neutral-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full rounded-lg bg-white text-black font-semibold py-2 transition hover:bg-neutral-200 disabled:opacity-60"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        {/* Footer */}
+        {/* Candidate Register */}
         {loginType === "candidate" && (
           <p className="mt-5 text-center text-neutral-400 text-sm">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="text-white underline hover:text-neutral-300"
