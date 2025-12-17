@@ -3,6 +3,7 @@
 import { useAuth } from "@/app/(system)/context/authContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+//delete this comment later :>
 
 export default function HomePage() {
   const { user, logout } = useAuth();
