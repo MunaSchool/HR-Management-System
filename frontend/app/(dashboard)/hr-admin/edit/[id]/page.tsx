@@ -613,7 +613,6 @@ export default function EditEmployeePage() {
           {[
             { value: "department employee", label: "Department Employee" },
             { value: "department head", label: "Department Head" },
-            { value: "DEPARTMENT_MANAGER", label: "Department Manager" },
             { value: "HR Admin", label: "HR Admin" },
             { value: "HR Manager", label: "HR Manager" },
             { value: "HR Employee", label: "HR Employee" },
