@@ -33,7 +33,7 @@ export class PayrollConfigurationController {
   ) {}
 
   // -------------------
-  // PAYROLL SPECIALIST ROUTES
+  // PAYROLL POLICIES (PAYROLL MANAGER)
   // -------------------
 
   @Get('policies')
@@ -73,7 +73,6 @@ export class PayrollConfigurationController {
   async deletePolicy(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
     return this.payrollConfigurationService.deletePolicy(id);
   }
-
 
   // -------------------
   // DEFINE PAY GRADES
@@ -227,30 +226,88 @@ export class PayrollConfigurationController {
     return this.payrollConfigurationService.findSigningBonuses(id);
   }
 
+  @Get('signing-bonuses')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async getAllSigningBonuses() {
+    return this.payrollConfigurationService.findAllSigningBonuses();
+  }
 
 
+
+
+  // -------------------
+  // PAYROLL CONFIGURATION (PAYROLL MANAGER FACING)
+  // -------------------
+
+  @Get('policies')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
+  async listPayrollPolicies(): Promise<payrollPoliciesDocument[]> {
+    return this.payrollConfigurationService.listPayrollPolicies();
+  }
+
+  @Put('policies:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async updatePayrollConfiguration(
+    @Param('id') id: string,
+    @Body() updateData: updatePayrollPoliciesDto,
+  ): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.updatePolicy(id, updateData);
+  }
+
+  //?????
+  @Put(':id/approve')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async approvePayrollConfiguration(@Param('id') id: string) {
+    return this.payrollConfigurationService.approvePayrollPolicy(id);
+  }
+
+  @Put(':id/reject')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async rejectPayrollConfiguration(@Param('id') id: string) {
+    return this.payrollConfigurationService.rejectPayrollPolicy(id);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_MANAGER)
+  async deletePayrollConfiguration(@Param('id') id: string): Promise<payrollPoliciesDocument | null> {
+    return this.payrollConfigurationService.deletePolicy(id);
+  }
 
   // -------------------
   // INSURANCE BRACKETS
   // -------------------
 
+  @Get('insurance-brackets')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.HR_MANAGER, SystemRole.PAYROLL_MANAGER)
+  async listInsuranceBrackets() {
+    return this.payrollConfigurationService.findAllInsuranceBrackets();
+  }
+
+
   @Get('insurance-brackets/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.HR_MANAGER, SystemRole.PAYROLL_MANAGER)
   async findInsuranceBracket(@Param('id') id: string) {
     return this.payrollConfigurationService.findInsuranceBrackets(id);
   }
 
   @Post('insurance-brackets')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.HR_MANAGER)
   async createInsuranceBracket(@Body() bracketData: createInsuranceBracketsDTO) {
     return this.payrollConfigurationService.createInsuranceBrackets(bracketData);
   }
 
   @Put('insurance-brackets/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.HR_MANAGER)
   async editInsuranceBracket(
     @Param('id') id: string,
     @Body() updateData: editInsuranceBracketsDTO
@@ -260,14 +317,10 @@ export class PayrollConfigurationController {
 
   @Delete('insurance-brackets/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  @Roles(SystemRole.HR_MANAGER)
   async removeInsuranceBracket(@Param('id') id: string) {
     return this.payrollConfigurationService.removeInsuranceBrackets(id);
   }
-
-  
-
-
 
   // -------------------
   // TERMINATION & RESIGNATION BENEFITS
@@ -311,30 +364,6 @@ export class PayrollConfigurationController {
     return this.payrollConfigurationService.deleteTerminationAndResignationBenefit(id);
   }
 
-
-  // -------------------
-  // PAYROLL MANAGER APPROVAL
-  // -------------------
-
-  @Post('approve/payroll/:model/:id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER)
-  async approvePayrollConfig(
-    @Param('model') model: string,
-    @Param('id') id: string,
-  ) {
-    return this.payrollConfigurationService.payrollManagerApprove(model, id);
-  }
-
-  @Post('reject/payroll/:model/:id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER)
-  async rejectPayrollConfig(
-    @Param('model') model: string,
-    @Param('id') id: string,
-  ) {
-    return this.payrollConfigurationService.payrollManagerReject(model, id);
-  }
 
   // -------------------
   // HR MANAGER INSURANCE APPROVAL

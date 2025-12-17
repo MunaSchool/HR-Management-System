@@ -192,6 +192,7 @@ export default function CreatePayGrade() {
             type="submit"
             disabled={loading}
             className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition"
+            onSubmit={handleSubmit}
           >
             {loading ? "Creating..." : "Create Pay Grade"}
           </button>

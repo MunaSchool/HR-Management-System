@@ -51,11 +51,12 @@ export default function CreateSigningBonus() {
       });
       router.push("./");
     } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Failed to create signing bonus"
-      );
+      const status = err?.response?.status;
+      const serverMessage = err?.response?.data?.message || err?.response?.data || null;
+      const message = serverMessage
+        ? `Request failed (${status}): ${JSON.stringify(serverMessage)}`
+        : (err?.message || "Failed to create signing bonus");
+      setError(message);
     } finally {
       setLoading(false);
     }

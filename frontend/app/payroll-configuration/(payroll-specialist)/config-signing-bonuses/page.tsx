@@ -141,7 +141,7 @@ export default function ConfigSigningBonusesPage() {
           <p className="mt-1 text-gray-600 dark:text-gray-400">Manage signing bonus policies based on position</p>
         </div>
         <button
-          onClick={() => router.push("./config-signing-bonuses/create")}
+          onClick={() => router.push("/payroll-configuration/config-signing-bonuses/create")}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
         >
           + Create Signing Bonus
@@ -192,7 +192,7 @@ export default function ConfigSigningBonusesPage() {
               filteredBonuses.map((bonus) => (
                 <tr key={bonus._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
                   <td className="px-6 py-4 font-medium">{bonus.positionName}</td>
-                  <td className="px-6 py-4">${bonus.amount.toLocaleString()}</td>
+                  <td className="px-6 py-4">{bonus.amount !== undefined && bonus.amount !== null ? `$${bonus.amount.toLocaleString()}` : "-"}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(bonus.status)}`}>
                       {bonus.status.charAt(0).toUpperCase() + bonus.status.slice(1)}
@@ -231,7 +231,7 @@ export default function ConfigSigningBonusesPage() {
             ) : (
               <tr>
                 <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No signing bonuses found. <button onClick={() => router.push("./config-signing-bonuses/create")} className="text-blue-600 hover:underline">Create one now</button>
+                  No signing bonuses found. <button onClick={() => router.push("./create")} className="text-blue-600 hover:underline">Create one now</button>
                 </td>
               </tr>
             )}
@@ -256,7 +256,7 @@ export default function ConfigSigningBonusesPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Amount</label>
-                <p className="mt-1 text-lg font-medium text-gray-900 dark:text-gray-100">${selectedBonus.amount.toLocaleString()}</p>
+                <p className="mt-1 text-lg font-medium text-gray-900 dark:text-gray-100">{selectedBonus.amount !== undefined && selectedBonus.amount !== null ? `$${selectedBonus.amount.toLocaleString()}` : "-"}</p>
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Status</label>

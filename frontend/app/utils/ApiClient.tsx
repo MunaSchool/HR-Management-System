@@ -3,10 +3,9 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:4000", // Backend NestJS server
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
   withCredentials: true, // Include cookies if needed
-
-})
+});
 // This variable will hold the function that AuthContext gives us
 let onUnAuthenticated: (() => void);
 // AuthContext will call this later
@@ -24,7 +23,12 @@ axiosInstance.interceptors.response.use(
     }
     if ((status === 401) && !window.location.href.includes('/login')
        && !window.location.href.includes('/register')) {
-      onUnAuthenticated();
+      if (typeof onUnAuthenticated === 'function') {
+        try { onUnAuthenticated(); } catch (e) { console.error('onUnAuthenticated handler error', e); }
+      } else {
+        // Fallback: navigate to login if no handler registered
+        window.location.href = '/login';
+      }
 
     }
     return Promise.reject(error);
