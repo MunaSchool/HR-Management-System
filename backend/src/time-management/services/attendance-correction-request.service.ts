@@ -52,7 +52,7 @@ export class AttendanceCorrectionRequestService {
   async approveCorrectionRequest(id: string) {
     const request = await this.requestModel.findById(id);
     if (!request) throw new NotFoundException('Correction request not found!');
-    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW) {
+    if (request.status !== CorrectionRequestStatus.SUBMITTED && request.status !== CorrectionRequestStatus.IN_REVIEW && request.status !== CorrectionRequestStatus.ESCALATED) {
       throw new BadRequestException('Only pending requests can be approved.');
     }
 
