@@ -179,6 +179,81 @@ export default function ChangeRequestsPage() {
                   <p className="text-white text-sm">{request.reason || "N/A"}</p>
                 </div>
 
+                {/* Audit Trail Timeline (BR 22) */}
+                <div className="mb-4 border-t border-neutral-700 pt-4">
+                  <label className="text-xs text-neutral-500 block mb-3 font-semibold">
+                    📋 Audit Trail (BR 22 - Timestamped & Traced)
+                  </label>
+                  <div className="space-y-3">
+                    {/* Request Submitted */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-white text-sm font-medium">Request Submitted</p>
+                            <p className="text-neutral-400 text-xs">
+                              By: {request.employeeProfileId?.firstName} {request.employeeProfileId?.lastName}
+                            </p>
+                            <p className="text-neutral-400 text-xs">
+                              Employee #: {request.employeeProfileId?.employeeNumber}
+                            </p>
+                          </div>
+                          <span className="text-xs text-neutral-500">
+                            {new Date(request.submittedAt).toLocaleString('en-US', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short'
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Request Status */}
+                    <div className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${
+                        request.status === 'PENDING' ? 'bg-yellow-500' :
+                        request.status === 'APPROVED' ? 'bg-green-500' :
+                        'bg-red-500'
+                      }`}></div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-white text-sm font-medium">
+                              Current Status: <span className={`${
+                                request.status === 'PENDING' ? 'text-yellow-400' :
+                                request.status === 'APPROVED' ? 'text-green-400' :
+                                'text-red-400'
+                              }`}>{request.status}</span>
+                            </p>
+                            {request.processedAt && (
+                              <p className="text-neutral-400 text-xs">
+                                Processed at: {new Date(request.processedAt).toLocaleString('en-US', {
+                                  dateStyle: 'medium',
+                                  timeStyle: 'short'
+                                })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Request ID for tracking */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                      <div className="flex-1">
+                        <p className="text-neutral-400 text-xs">
+                          Request ID: <span className="text-white font-mono">{request.requestId}</span>
+                        </p>
+                        <p className="text-neutral-400 text-xs">
+                          Database ID: <span className="text-white font-mono text-xs">{request._id}</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {selectedRequest?._id === request._id && processingAction ? (
                   <div className="space-y-4 mt-4 p-4 bg-neutral-900 rounded">
                     <div>

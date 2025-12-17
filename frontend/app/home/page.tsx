@@ -2,18 +2,11 @@
 
 import { useAuth } from "@/app/(system)/context/authContext";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Link from "next/link";
 
 export default function HomePage() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [showCreateUser, setShowCreateUser] = useState(false);
-
-  // Check if user is HR Admin
-  const isHRAdmin = user?.roles?.some(role =>
-    role === 'HR Admin' || role === 'System Admin'
-  );
 
   const handleLogout = async () => {
     await logout();
@@ -42,14 +35,6 @@ export default function HomePage() {
               <span className="text-gray-700 dark:text-gray-300">
                 Welcome, {user.firstName || user.email}
               </span>
-              {isHRAdmin && (
-                <button
-                  onClick={() => setShowCreateUser(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                  Create User
-                </button>
-              )}
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
@@ -64,26 +49,17 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {/* Testing Note - Only for HR Admin */}
-          {isHRAdmin && (
-            <div className="mb-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4">
-              <p className="text-red-700 dark:text-red-400 text-sm">
-                <strong>Note:</strong> The "Create User" button is for testing purposes only and will be removed later.
-              </p>
-            </div>
-          )}
-
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
             Dashboard
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Employee Profile */}
-            <Link href="/profile">
+            {/* Employee Profile Management - Role-based access */}
+            <Link href="/employee-profile-management">
               <DashboardCard
-                title="Employee Profile"
-                description="View and manage employee information"
-                icon="👤"
+                title="Employee Profile Management"
+                description="Manage profiles, change requests, and team information"
+                icon="👥"
               />
             </Link>
 
@@ -133,16 +109,6 @@ export default function HomePage() {
               />
             </Link>
 
-            {/* Change Requests - Only for HR Admin */}
-            {isHRAdmin && (
-              <Link href="/change-requests">
-                <DashboardCard
-                  title="Change Requests"
-                  description="Review and approve employee changes"
-                  icon="📝"
-                />
-              </Link>
-            )}
           </div>
 
           {/* User Info */}
@@ -158,374 +124,6 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-
-      {/* Create User Modal */}
-      {showCreateUser && <CreateUserModal onClose={() => setShowCreateUser(false)} />}
-    </div>
-  );
-}
-
-function CreateUserModal({ onClose }: { onClose: () => void }) {
-  const [formData, setFormData] = useState({
-    employeeNumber: '',
-    workEmail: '',
-    password: '',
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    nationalId: '',
-    dateOfHire: '',
-    role: 'department employee',
-    address: {
-      streetAddress: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: ''
-    },
-    gender: 'MALE',
-    maritalStatus: 'SINGLE',
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      // Convert role (string) to roles (array) for backend
-      const payload = {
-        ...formData,
-        roles: [formData.role], // Backend expects roles as array
-      };
-      delete (payload as any).role; // Remove singular role field
-
-      const response = await fetch('http://localhost:4000/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to create user');
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to create user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRoleChange = (role: string) => {
-    setFormData({ ...formData, role });
-  };
-
-  // Must match EXACTLY with backend SystemRole enum values
-  const availableRoles = [
-    'department employee',     // DEPARTMENT_EMPLOYEE
-    'department head',         // DEPARTMENT_HEAD
-    'DEPARTMENT_MANAGER',      // DEPARTMENT_MANAGER
-    'HR Manager',              // HR_MANAGER ⚠️ Capital H, M
-    'HR Admin',                // HR_ADMIN ⚠️ Capital H, A
-    'HR Employee',             // HR_EMPLOYEE
-    'Payroll Specialist',      // PAYROLL_SPECIALIST
-    'Payroll Manager',         // PAYROLL_MANAGER
-    'System Admin',            // SYSTEM_ADMIN
-    'Legal & Policy Admin',    // LEGAL_POLICY_ADMIN
-    'Recruiter',               // RECRUITER
-    'Finance Staff',           // FINANCE_STAFF
-    'Job Candidate',           // JOB_CANDIDATE
-  ];
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create New User</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            ✕
-          </button>
-        </div>
-
-        {success ? (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-500 text-green-700 dark:text-green-400 p-4 rounded-lg">
-            User created successfully! Closing...
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Employee Number *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.employeeNumber}
-                  onChange={(e) => setFormData({ ...formData, employeeNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="EMP001"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Work Email *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={formData.workEmail}
-                  onChange={(e) => setFormData({ ...formData, workEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="employee@company.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  First Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Last Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Middle Name
-                </label>
-                <input
-                  type="text"
-                  value={formData.middleName}
-                  onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  National ID *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.nationalId}
-                  onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Date of Hire *
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={formData.dateOfHire}
-                  onChange={(e) => setFormData({ ...formData, dateOfHire: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Date of Birth
-                </label>
-                <input
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Gender
-                </label>
-                <select
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">Select</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Marital Status
-                </label>
-                <select
-                  value={formData.maritalStatus}
-                  onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">Select</option>
-                  <option value="SINGLE">Single</option>
-                  <option value="MARRIED">Married</option>
-                  <option value="DIVORCED">Divorced</option>
-                  <option value="WIDOWED">Widowed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Mobile Phone
-                </label>
-                <input
-                  type="tel"
-                  value={formData.mobilePhone}
-                  onChange={(e) => setFormData({ ...formData, mobilePhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Personal Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.personalEmail}
-                  onChange={(e) => setFormData({ ...formData, personalEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Street Address
-                </label>
-                <input
-                  type="text"
-                  value={formData.address?.streetAddress || ''}
-                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, streetAddress: e.target.value }})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="123 Main St"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  City
-                </label>
-                <input
-                  type="text"
-                  value={formData.address?.city || ''}
-                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value }})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Cairo"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Country
-                </label>
-                <input
-                  type="text"
-                  value={formData.address?.country || ''}
-                  onChange={(e) => setFormData({ ...formData, address: { ...formData.address, country: e.target.value }})}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Egypt"
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Minimum 6 characters"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Role (select one)
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {availableRoles.map((roleOption) => (
-                  <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="role"
-                      checked={formData.role === roleOption}
-                      onChange={() => handleRoleChange(roleOption)}
-                      className="border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{roleOption}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-500 text-red-700 dark:text-red-400 p-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-              >
-                {loading ? 'Creating...' : 'Create User'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
     </div>
   );
 }

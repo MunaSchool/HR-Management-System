@@ -22,14 +22,24 @@ export class EmployeeSelfServiceService {
     const profile = await this.employeeProfileModel
       .findById(employeeId)
       .populate('accessProfileId')
-      .populate('primaryPositionId')
-      .populate('primaryDepartmentId')
-      .populate('supervisorPositionId')
-      .populate('payGradeId')
       .exec();
 
     if (!profile) {
       throw new NotFoundException('Employee profile not found');
+    }
+
+    // Manually populate only valid fields (handles null and empty string)
+    if (profile.primaryPositionId && profile.primaryPositionId.toString() !== '') {
+      await profile.populate('primaryPositionId');
+    }
+    if (profile.primaryDepartmentId && profile.primaryDepartmentId.toString() !== '') {
+      await profile.populate('primaryDepartmentId');
+    }
+    if (profile.supervisorPositionId && profile.supervisorPositionId.toString() !== '') {
+      await profile.populate('supervisorPositionId');
+    }
+    if (profile.payGradeId) {
+      await profile.populate('payGradeId');
     }
 
     // Retrieve appraisal history from Performance module with error handling

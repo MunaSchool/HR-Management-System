@@ -17,7 +17,7 @@ export class EmployeeCrudService {
 
   // Create a new employee profile with role assignment
   async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
-    const { roles, permissions, password, ...profileData } = employeeData;
+    const { systemRoles, permissions, password, ...profileData } = employeeData;
 
     // Check if employee number already exists
     const existingEmployeeNumber = await this.employeeProfileModel.findOne({
@@ -50,15 +50,30 @@ export class EmployeeCrudService {
     // Hash password if provided
     const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
 
+    console.log('📝 Creating employee with data:', {
+      ...profileData,
+      hasPassword: !!hashedPassword,
+    });
+
     // Create employee profile
+    const fullName = `${profileData.firstName}${profileData.middleName ? ' ' + profileData.middleName : ''} ${profileData.lastName}`;
     const newEmployee = await this.employeeProfileModel.create({
       ...profileData,
       ...(hashedPassword && { password: hashedPassword }),
-      fullName: `${profileData.firstName} ${profileData.lastName}`,
+      fullName,
+    });
+
+    console.log('✅ Employee created:', {
+      _id: newEmployee._id,
+      fullName: newEmployee.fullName,
+      workEmail: newEmployee.workEmail,
+      personalEmail: newEmployee.personalEmail,
+      mobilePhone: newEmployee.mobilePhone,
+      homePhone: newEmployee.homePhone,
     });
 
     // Always create role assignment (default to department employee if no roles provided)
-    const assignedRoles = roles && roles.length > 0 ? roles : ['department employee'];
+    const assignedRoles = systemRoles && systemRoles.length > 0 ? systemRoles : ['department employee'];
 
     try {
       const roleAssignment = await this.employeeRoleModel.create({
@@ -92,29 +107,23 @@ export class EmployeeCrudService {
     const employees = await this.employeeProfileModel
       .find()
       .populate('accessProfileId')
-      .populate('primaryDepartmentId')
-      .populate('primaryPositionId')
       .exec();
 
-    // Manually populate payGradeId only for valid ObjectIds
-    const populatedEmployees = await Promise.all(
-      employees.map(async (emp) => {
-        const empObj = emp.toObject();
-
-        // Only populate payGradeId if it's a valid ObjectId
-        if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
-          const populated = await this.employeeProfileModel
-            .findById(emp._id)
-            .populate('payGradeId')
-            .exec();
-          return populated || emp;
-        }
-        return emp;
-      })
-    );
+    // Manually populate all fields only when valid
+    for (const emp of employees) {
+      if (emp.primaryPositionId && emp.primaryPositionId.toString() !== '') {
+        await emp.populate('primaryPositionId');
+      }
+      if (emp.primaryDepartmentId && emp.primaryDepartmentId.toString() !== '') {
+        await emp.populate('primaryDepartmentId');
+      }
+      if (emp.payGradeId && Types.ObjectId.isValid(emp.payGradeId)) {
+        await emp.populate('payGradeId');
+      }
+    }
 
     // Map employees to include roles and properly formatted data
-    return populatedEmployees.map(emp => {
+    return employees.map(emp => {
       const empObj = emp.toObject();
       const roles = (empObj.accessProfileId as any)?.roles || [];
       const payGrade = (empObj.payGradeId as any)?.grade || null;
@@ -133,28 +142,21 @@ export class EmployeeCrudService {
     let employee = await this.employeeProfileModel
       .findById(id)
       .populate('accessProfileId')
-      .populate('primaryDepartmentId')
-      .populate('primaryPositionId')
       .exec();
 
     if (!employee) {
       throw new NotFoundException('Employee profile not found');
     }
 
-    // Only populate payGradeId if it's a valid ObjectId
-    const empObj = employee.toObject();
-    if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
-      const populatedEmployee = await this.employeeProfileModel
-        .findById(id)
-        .populate('accessProfileId')
-        .populate('primaryDepartmentId')
-        .populate('primaryPositionId')
-        .populate('payGradeId')
-        .exec();
-
-      if (populatedEmployee) {
-        employee = populatedEmployee;
-      }
+    // Manually populate only valid fields (handles null and empty string)
+    if (employee.primaryPositionId && employee.primaryPositionId.toString() !== '') {
+      await employee.populate('primaryPositionId');
+    }
+    if (employee.primaryDepartmentId && employee.primaryDepartmentId.toString() !== '') {
+      await employee.populate('primaryDepartmentId');
+    }
+    if (employee.payGradeId && Types.ObjectId.isValid(employee.payGradeId)) {
+      await employee.populate('payGradeId');
     }
 
     const finalEmpObj = employee.toObject();
