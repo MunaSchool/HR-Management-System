@@ -28,6 +28,7 @@ export default function ChangeRequestPage() {
     fieldName: "",
     requestedValue: "",
     reason: "",
+    requestDescription: "",
   });
 
   useEffect(() => {
@@ -46,22 +47,25 @@ export default function ChangeRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Build the requestedChanges object
-    const requestedChanges: Record<string, any> = {
-      [formData.fieldName]: formData.requestedValue
-    };
-
     // Build the payload according to CreateChangeRequestDto
-    const payload = {
-      requestedChanges,
+    const payload: any = {
+      requestDescription: formData.requestDescription,
       reason: formData.reason,
+      requestedChanges: {
+        [formData.fieldName]: formData.requestedValue
+      }
     };
 
     try {
       await axiosInstance.post("/employee-profile/me/change-requests", payload);
       alert("Change request submitted successfully");
       setShowForm(false);
-      setFormData({ fieldName: "", requestedValue: "", reason: "" });
+      setFormData({
+        fieldName: "",
+        requestedValue: "",
+        reason: "",
+        requestDescription: ""
+      });
       fetchMyRequests();
     } catch (error: any) {
       console.error("Error submitting change request:", error);
@@ -219,6 +223,22 @@ export default function ChangeRequestPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
+                Request Description
+              </label>
+              <input
+                type="text"
+                value={formData.requestDescription}
+                onChange={(e) =>
+                  setFormData({ ...formData, requestDescription: e.target.value })
+                }
+                required
+                className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
+                placeholder="Brief description of requested changes"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-neutral-400 block mb-1">
                 Field to Change
               </label>
               <select
@@ -244,15 +264,19 @@ export default function ChangeRequestPage() {
                 <option value="workType">Work Type</option>
                 <option value="bankName">Bank Name</option>
                 <option value="bankAccountNumber">Bank Account Number</option>
+                <option value="primaryDepartmentId">Department</option>
+                <option value="primaryPositionId">Position</option>
               </select>
             </div>
 
-            <div>
-              <label className="text-sm text-neutral-400 block mb-1">
-                Requested Value
-              </label>
-              {renderValueInput()}
-            </div>
+            {formData.fieldName && (
+              <div>
+                <label className="text-sm text-neutral-400 block mb-1">
+                  Requested Value
+                </label>
+                {renderValueInput()}
+              </div>
+            )}
 
             <div>
               <label className="text-sm text-neutral-400 block mb-1">

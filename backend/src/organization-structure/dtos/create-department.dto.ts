@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsMongoId } from 'class-validator';
+import { IsString, IsOptional, IsMongoId, IsBoolean } from 'class-validator';
 
 export class CreateDepartmentDto {
   @IsString()
@@ -11,7 +11,18 @@ export class CreateDepartmentDto {
   @IsString()
   description?: string;
 
+  // 👇 from dropdown (employeeNumber)
+  @IsOptional()
+  @IsString()
+  employeeNumber?: string;
+
+  // 👇 backend-only (resolved from employeeNumber)
   @IsOptional()
   @IsMongoId()
   headPositionId?: string;
+
+  // 👇 THIS fixes the error
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

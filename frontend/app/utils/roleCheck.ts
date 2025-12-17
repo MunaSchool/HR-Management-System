@@ -75,7 +75,7 @@ export function isHRAdmin(userProfile: any): boolean {
  * - Filtered by direct reporting line hierarchy
  */
 export function isDepartmentManager(userProfile: any): boolean {
-  return hasRole(userProfile, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER']);
+  return hasRole(userProfile, ['DEPARTMENT_HEAD']);
 }
 
 /**
@@ -94,7 +94,7 @@ export function isDepartmentEmployee(userProfile: any): boolean {
  * Use this when you want to show features to ANY type of manager
  */
 export function isManager(userProfile: any): boolean {
-  return hasRole(userProfile, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER', 'HR_MANAGER', 'HR_ADMIN']);
+  return hasRole(userProfile, ['DEPARTMENT_HEAD', 'HR_MANAGER', 'HR_ADMIN']);
 }
 
 /**

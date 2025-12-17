@@ -22,14 +22,24 @@ export class EmployeeSelfServiceService {
     const profile = await this.employeeProfileModel
       .findById(employeeId)
       .populate('accessProfileId')
-      .populate('primaryPositionId')
-      .populate('primaryDepartmentId')
-      .populate('supervisorPositionId')
-      .populate('payGradeId')
       .exec();
 
     if (!profile) {
       throw new NotFoundException('Employee profile not found');
+    }
+
+    // Manually populate only valid fields (handles null and empty string)
+    if (profile.primaryPositionId && profile.primaryPositionId.toString() !== '') {
+      await profile.populate('primaryPositionId');
+    }
+    if (profile.primaryDepartmentId && profile.primaryDepartmentId.toString() !== '') {
+      await profile.populate('primaryDepartmentId');
+    }
+    if (profile.supervisorPositionId && profile.supervisorPositionId.toString() !== '') {
+      await profile.populate('supervisorPositionId');
+    }
+    if (profile.payGradeId) {
+      await profile.populate('payGradeId');
     }
 
     // Retrieve appraisal history from Performance module with error handling
@@ -113,12 +123,47 @@ export class EmployeeSelfServiceService {
 
   // Get team members (US-E4-01, US-E4-02)
   async getTeamMembers(managerPositionId: string): Promise<EmployeeProfileDocument[]> {
-    return await this.employeeProfileModel
+    console.log('🔍 Getting team members for position:', managerPositionId);
+
+    // First, try to find employees who report to this position
+    const directReports = await this.employeeProfileModel
       .find({ supervisorPositionId: managerPositionId, status: EmployeeStatus.ACTIVE })
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
-      .select('-password -nationalId -dateOfBirth -personalEmail -homePhone -address')
       .exec();
+
+    console.log('👥 Found', directReports.length, 'direct reports');
+    directReports.forEach(emp => {
+      console.log('  -', emp.fullName, '| supervisorPositionId:', emp.supervisorPositionId);
+    });
+
+    // If there are direct reports, return them
+    if (directReports.length > 0) {
+      return directReports;
+    }
+
+    // Otherwise, check if this manager is a department head
+    // Find which department has this position as headPositionId
+    const Department = this.employeeProfileModel.db.model('Department');
+    const department = await Department.findOne({ headPositionId: managerPositionId }).exec();
+
+    console.log('🏢 Department head check:', department ? department.name : 'Not a department head');
+
+    if (department) {
+      // Return all active employees in this department
+      const deptEmployees = await this.employeeProfileModel
+        .find({ primaryDepartmentId: department._id, status: EmployeeStatus.ACTIVE })
+        .populate('primaryPositionId')
+        .populate('primaryDepartmentId')
+        .exec();
+
+      console.log('👥 Found', deptEmployees.length, 'employees in department');
+      return deptEmployees;
+    }
+
+    // No team found
+    console.log('❌ No team members found');
+    return [];
   }
 
   // Get specific team member profile (US-E4-01)

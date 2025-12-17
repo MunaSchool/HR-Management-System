@@ -20,6 +20,7 @@ interface Employee {
   positionId?: string;
   payGrade?: string;
   profilePictureUrl?: string;
+  roles?: string[];
 }
 
 export default function HRAdminPage() {
@@ -101,12 +102,26 @@ export default function HRAdminPage() {
             Manage employee profiles and master data
           </p>
         </div>
-        <Link
-          href="/hr-admin/create"
-          className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200 transition"
-        >
-          Create Employee
-        </Link>
+        <div className="flex space-x-3">
+          <Link
+            href="/logs"
+            className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition"
+          >
+            View Logs
+          </Link>
+          <Link
+            href="/change-requests"
+            className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition"
+          >
+            Change Requests
+          </Link>
+          <Link
+            href="/hr-admin/create"
+            className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200 transition"
+          >
+            Create Employee
+          </Link>
+        </div>
       </div>
 
       {/* Stats */}

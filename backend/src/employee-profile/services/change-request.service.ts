@@ -30,15 +30,33 @@ export class ChangeRequestService {
     // Generate unique request ID
     const requestId = `CR-${Date.now()}-${employeeId.slice(-6)}`;
 
-    // Generate description from requested changes
-    const changeFields = Object.keys(createDto.requestedChanges || {}).join(', ');
-    const requestDescription = `Request to update: ${changeFields || 'profile data'}`;
+    console.log('=== Creating Change Request ===');
+    console.log('DTO received:', JSON.stringify(createDto, null, 2));
+
+    // Build full description including field changes
+    let fullDescription = createDto.requestDescription;
+
+    if (createDto.requestedChanges && Object.keys(createDto.requestedChanges).length > 0) {
+      const changes = Object.entries(createDto.requestedChanges)
+        .map(([field, value]) => {
+          const fieldName = field
+            .replace(/([A-Z])/g, ' $1')
+            .replace('primary', '')
+            .trim();
+          return `${fieldName}: ${value}`;
+        })
+        .join(', ');
+
+      fullDescription = `${createDto.requestDescription}\n\nRequested Changes: ${changes}`;
+      console.log('Full description built:', fullDescription);
+    } else {
+      console.log('No requestedChanges found in DTO');
+    }
 
     const newRequest = new this.changeRequestModel({
       requestId,
-      requestDescription,
+      requestDescription: fullDescription,
       employeeProfileId: employeeId,
-      requestedChanges: createDto.requestedChanges,
       reason: createDto.reason,
       status: ProfileChangeStatus.PENDING,
     });
@@ -59,6 +77,15 @@ export class ChangeRequestService {
   async getMyChangeRequests(employeeId: string): Promise<EmployeeProfileChangeRequest[]> {
     return await this.changeRequestModel
       .find({ employeeProfileId: employeeId })
+      .sort({ submittedAt: -1 })
+      .exec();
+  }
+
+  // Get all change requests (BR-22: Audit trail)
+  async getAllChangeRequests(): Promise<EmployeeProfileChangeRequest[]> {
+    return await this.changeRequestModel
+      .find()
+      .populate('employeeProfileId')
       .sort({ submittedAt: -1 })
       .exec();
   }
@@ -120,48 +147,11 @@ export class ChangeRequestService {
 
     // If approved, apply changes to employee profile
     if (processDto.approved) {
-      // Check if change request involves Position or Department (Dependency 13)
-      const involvesOrgStructure =
-        request.requestedChanges?.['primaryPositionId'] ||
-        request.requestedChanges?.['primaryDepartmentId'];
-
-      if (involvesOrgStructure) {
-        // INTEGRATION: Validate Position/Department changes with Org Structure Module
-        console.log('[INTEGRATION] Position/Department change detected. Validating with Org Structure...');
-
-        // Validate position exists and is valid
-        if (request.requestedChanges?.['primaryPositionId']) {
-          try {
-            await this.organizationStructureService.getPositionById(
-              request.requestedChanges['primaryPositionId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid position ID: ${request.requestedChanges['primaryPositionId']}. Position does not exist.`
-            );
-          }
-        }
-
-        // Validate department exists and is active
-        if (request.requestedChanges?.['primaryDepartmentId']) {
-          try {
-            await this.organizationStructureService.getDepartmentById(
-              request.requestedChanges['primaryDepartmentId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid department ID: ${request.requestedChanges['primaryDepartmentId']}. Department does not exist.`
-            );
-          }
-        }
-
-        console.log('[INTEGRATION] Position/Department validation successful.');
-      }
-
+      // Note: HR Admin must manually apply the changes described in the request
+      // This just updates the last modified timestamp
       await this.employeeProfileModel.findByIdAndUpdate(
         request.employeeProfileId,
         {
-          ...request.requestedChanges,
           lastModifiedBy: userId,
           lastModifiedAt: new Date(),
         },

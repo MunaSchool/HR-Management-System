@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -183,24 +184,49 @@ export class EmployeeProfileController {
   // ==================== MANAGER ROUTES ====================
   @Get('team')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER)
   async getTeamMembers(@CurrentUser() user: CurrentUserData) {
-    const managerPositionId = user['managerPositionId'] || user.employeeId;
-    return this.employeeProfileService.getTeamMembers(managerPositionId);
+    // Get the manager's employee profile to find their primaryPositionId
+    const manager = await this.employeeProfileService.getMyProfile(user.employeeId);
+    if (!manager.primaryPositionId) {
+      return []; // No position assigned, return empty team
+    }
+    // Convert ObjectId to string - handle both string and object types
+    const positionId = typeof manager.primaryPositionId === 'string'
+      ? manager.primaryPositionId
+      : manager.primaryPositionId._id?.toString() || manager.primaryPositionId.toString();
+
+    return this.employeeProfileService.getTeamMembers(positionId);
   }
 
   @Get('team/:id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER)
   async getTeamMemberProfile(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
   ) {
-    const managerPositionId = user['managerPositionId'] || user.employeeId;
-    return this.employeeProfileService.getTeamMemberProfile(id, managerPositionId);
+    // Get the manager's employee profile to find their primaryPositionId
+    const manager = await this.employeeProfileService.getMyProfile(user.employeeId);
+    if (!manager.primaryPositionId) {
+      throw new NotFoundException('Manager position not found');
+    }
+    // Convert ObjectId to string - handle both string and object types
+    const positionId = typeof manager.primaryPositionId === 'string'
+      ? manager.primaryPositionId
+      : manager.primaryPositionId._id?.toString() || manager.primaryPositionId.toString();
+
+    return this.employeeProfileService.getTeamMemberProfile(id, positionId);
   }
 
   // ==================== CHANGE REQUEST MANAGEMENT ====================
+  @Get('change-requests/all')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getAllChangeRequests() {
+    return this.employeeProfileService.getAllChangeRequests();
+  }
+
   @Get('change-requests/pending')
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)

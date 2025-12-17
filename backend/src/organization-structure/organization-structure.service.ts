@@ -37,33 +37,68 @@ export class OrganizationStructureService {
   // 🔥 DISABLE BROKEN SCHEMA HOOKS
   // ============================
 
-  // Disable pre-save hook
-  this.positionModel.schema.pre('save', function (next) {
-    const doc: any = this;   // <-- FIX: cast to any
-    doc.reportsToPositionId = undefined;  // <-- FIX: use undefined, not null
-    next();
-  });
+ // ============================
+// ✅ SAFE pre-save hook
+// ============================
+this.positionModel.schema.pre('save', function (next) {
+  const doc: any = this;
 
-  // Disable pre-findOneAndUpdate hook
-  this.positionModel.schema.pre('findOneAndUpdate', function (next) {
-    const query: any = this;   // <-- FIX: cast to any
+  // 🔑 Only normalize NULL → undefined
+  // ❌ Do NOT override a real value
+  if (doc.reportsToPositionId === null) {
+    doc.reportsToPositionId = undefined;
+  }
 
-    const update = query.getUpdate() || {};
-    if (!update.$set) update.$set = {};
+  next();
+});
 
+
+// ============================
+// ✅ SAFE pre-findOneAndUpdate hook
+// ============================
+this.positionModel.schema.pre('findOneAndUpdate', function (next) {
+  const query: any = this;
+
+  const update = query.getUpdate() || {};
+
+  if (update.$set && update.$set.reportsToPositionId === null) {
     update.$set.reportsToPositionId = undefined;
+  }
 
-    query.setUpdate(update);
-    next();
-  });
+  query.setUpdate(update);
+  next();
+});
+
 }
 
   // ======================
   // 📌 CREATE DEPARTMENT
   // ======================
- async createDepartment(dto: CreateDepartmentDto) {
-  return this.departmentModel.create(dto);
+async createDepartment(dto: CreateDepartmentDto) {
+  let headPositionId: Types.ObjectId | undefined = undefined;
+
+  if (dto.employeeNumber) {
+    const employee = await this.employeeProfileModel.findOne({
+      employeeNumber: dto.employeeNumber,
+      status: 'ACTIVE',
+    });
+
+    if (!employee || !employee.primaryPositionId) {
+      throw new BadRequestException('Invalid department head');
+    }
+
+    headPositionId = employee.primaryPositionId;
+  }
+
+  return this.departmentModel.create({
+    code: dto.code,
+    name: dto.name,
+    description: dto.description,
+    headPositionId,
+    isActive: dto.isActive ?? true,
+  });
 }
+
 
   // ===========================
   // 📌 GET DEPARTMENT BY ID
@@ -126,16 +161,21 @@ async activateDepartment(id: string) {
   // 📌 CREATE POSITION
   // ======================
   async createPosition(dto: CreatePositionDto) {
-    const department = await this.departmentModel.findById(dto.departmentId);
-    if (!department) throw new NotFoundException('Department not found');
-
-    const pos = await this.positionModel.create({
-      ...dto,
-      reportsToPositionId: null
-    });
-
-    return pos;
+  const department = await this.departmentModel.findById(dto.departmentId);
+  if (!department) {
+    throw new NotFoundException('Department not found');
   }
+
+  // 🔑 THIS IS THE KEY LINE
+  const reportsToPositionId = department.headPositionId ?? undefined;
+
+  const position = await this.positionModel.create({
+    ...dto,
+    reportsToPositionId,
+  });
+
+  return position;
+}
 
   // ======================
   // 📌 GET ALL POSITIONS

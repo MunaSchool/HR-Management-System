@@ -12,7 +12,9 @@ export class HrAdminService {
     private employeeProfileModel: Model<EmployeeProfileDocument>,
   ) {}
 
+  // ===============================================
   // Search employees (US-E6-03)
+  // ===============================================
   async searchEmployees(
     searchQuery: string,
     status?: EmployeeStatus,
@@ -37,28 +39,43 @@ export class HrAdminService {
       filter.primaryDepartmentId = departmentId;
     }
 
-    return await this.employeeProfileModel
-      .find(filter)
-      .populate('primaryPositionId')
-      .populate('primaryDepartmentId')
-      .exec();
+    // Fetch employees without populate first
+    const employees = await this.employeeProfileModel.find(filter).exec();
+
+    // Manually populate only valid ObjectIds (not empty strings)
+    for (const emp of employees) {
+      if (emp.primaryPositionId && emp.primaryPositionId.toString() !== '') {
+        await emp.populate('primaryPositionId');
+      }
+      if (emp.primaryDepartmentId && emp.primaryDepartmentId.toString() !== '') {
+        await emp.populate('primaryDepartmentId');
+      }
+    }
+
+    return employees;
   }
 
+  // ===============================================
   // Update employee master data (US-EP-04)
+  // ===============================================
   async updateEmployeeMasterData(
     employeeId: string,
     userId: string,
     userRole: string,
     updateDto: UpdateEmployeeMasterDto,
   ): Promise<EmployeeProfileDocument> {
-    // Verify user has permission
     if (
-      ![SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN].includes(
-        userRole as SystemRole,
-      )
+      ![
+        SystemRole.HR_ADMIN,
+        SystemRole.HR_MANAGER,
+        SystemRole.SYSTEM_ADMIN,
+      ].includes(userRole as SystemRole)
     ) {
       throw new ForbiddenException('Insufficient permissions');
     }
+
+    console.log('🔍 Updating employee:', employeeId);
+    console.log('📦 Update data received:', JSON.stringify(updateDto, null, 2));
 
     const updated = await this.employeeProfileModel.findByIdAndUpdate(
       employeeId,
@@ -69,13 +86,25 @@ export class HrAdminService {
       },
       { new: true },
     );
+
     if (!updated) {
       throw new NotFoundException('Employee profile not found');
     }
+
+    console.log('✅ Employee updated:', {
+      id: updated._id,
+      name: updated.fullName,
+      primaryDepartmentId: updated.primaryDepartmentId,
+      primaryPositionId: updated.primaryPositionId,
+      supervisorPositionId: updated.supervisorPositionId,
+    });
+
     return updated;
   }
 
+  // ===============================================
   // Deactivate employee or change status (US-EP-05)
+  // ===============================================
   async deactivateEmployee(
     employeeId: string,
     userId: string,
@@ -83,11 +112,12 @@ export class HrAdminService {
     status: EmployeeStatus,
     effectiveDate?: Date,
   ): Promise<EmployeeProfileDocument> {
-    // Verify user has permission
     if (
-      ![SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN].includes(
-        userRole as SystemRole,
-      )
+      ![
+        SystemRole.HR_ADMIN,
+        SystemRole.HR_MANAGER,
+        SystemRole.SYSTEM_ADMIN,
+      ].includes(userRole as SystemRole)
     ) {
       throw new ForbiddenException('Insufficient permissions');
     }
@@ -102,9 +132,11 @@ export class HrAdminService {
       },
       { new: true },
     );
+
     if (!updated) {
       throw new NotFoundException('Employee profile not found');
     }
+
     return updated;
   }
 }

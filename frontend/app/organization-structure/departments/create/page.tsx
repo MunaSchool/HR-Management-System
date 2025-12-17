@@ -1,22 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function CreateDepartmentPage() {
   const router = useRouter();
 
+  // ===============================
+  // STATE
+  // ===============================
   const [form, setForm] = useState({
     name: "",
     code: "",
     status: "Active",
+    employeeNumber: "", // 👈 Head Department (metaphorical)
   });
 
+  const [employees, setEmployees] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // ===============================
-  // 🔥 SUBMIT
+  // FETCH EMPLOYEES (employeeNumbers)
+  // ===============================
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:4000/employee-profile",
+          { credentials: "include" }
+        );
+
+        if (!res.ok) throw new Error("Failed to load employees");
+
+        const data = await res.json();
+        setEmployees(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
+
+  // ===============================
+  // SUBMIT
   // ===============================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +58,12 @@ export default function CreateDepartmentPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            name: form.name,
+            code: form.code,
+            employeeNumber: form.employeeNumber || undefined,
+            isActive: form.status === "Active",
+          }),
         }
       );
 
@@ -48,7 +81,7 @@ export default function CreateDepartmentPage() {
   };
 
   // ===============================
-  // 🔥 UI
+  // UI
   // ===============================
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -105,6 +138,27 @@ export default function CreateDepartmentPage() {
                 }
                 className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
               />
+            </div>
+
+            {/* Head Department (Employee Number) */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Head Department
+              </label>
+              <select
+                value={form.employeeNumber}
+                onChange={(e) =>
+                  setForm({ ...form, employeeNumber: e.target.value })
+                }
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+              >
+                <option value="">Select Employee</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp.employeeNumber}>
+                    {emp.employeeNumber}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Status */}

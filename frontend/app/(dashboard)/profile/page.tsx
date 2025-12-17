@@ -26,11 +26,20 @@ interface EmployeeProfile {
   dateOfHire?: string;
   status: string;
   profilePictureUrl?: string;
-  primaryDepartmentId?: any;
-  primaryPositionId?: any;
+  primaryDepartmentId?: {
+    _id: string;
+    name: string;
+  };
+  primaryPositionId?: {
+    _id: string;
+    title: string;
+  };
   payGradeId?: any;
   roles?: any[];
   biography?: string;
+  lastAppraisalDate?: string;
+  lastAppraisalScore?: number;
+  lastAppraisalRatingLabel?: string;
 }
 
 export default function ProfilePage() {
@@ -221,12 +230,124 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Employment Information */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Employment Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-neutral-400">Department</label>
+            <p className="text-white">
+              {profile.primaryDepartmentId?.name || "Not Assigned"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Position</label>
+            <p className="text-white">
+              {profile.primaryPositionId?.title || "Not Assigned"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Date of Hire</label>
+            <p className="text-white">
+              {profile.dateOfHire
+                ? new Date(profile.dateOfHire).toLocaleDateString()
+                : "N/A"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Employment Status</label>
+            <p className="text-white">
+              <span
+                className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                  profile.status === "ACTIVE"
+                    ? "bg-green-900 text-green-300"
+                    : profile.status === "ON_LEAVE"
+                    ? "bg-yellow-900 text-yellow-300"
+                    : "bg-red-900 text-red-300"
+                }`}
+              >
+                {profile.status}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Performance Appraisal */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Performance Appraisal</h2>
+        {profile.lastAppraisalDate ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm text-neutral-400">Last Appraisal Date</label>
+              <p className="text-white">
+                {new Date(profile.lastAppraisalDate).toLocaleDateString()}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm text-neutral-400">Score</label>
+              <p className="text-white text-2xl font-bold">
+                {profile.lastAppraisalScore?.toFixed(2) || "N/A"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm text-neutral-400">Rating</label>
+              <p className="text-white">
+                <span className="inline-block px-3 py-1 rounded bg-blue-900 text-blue-300 font-medium">
+                  {profile.lastAppraisalRatingLabel || "N/A"}
+                </span>
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-neutral-400">No appraisal history available yet.</p>
+        )}
+      </div>
+
       {/* Biography */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Biography</h2>
-        <p className="text-neutral-300 whitespace-pre-wrap">
-          {profile.biography || "No biography added yet."}
-        </p>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Biography</h2>
+          {!editBioMode && (
+            <button
+              onClick={() => setEditBioMode(true)}
+              className="px-3 py-1 bg-neutral-800 text-white text-sm rounded hover:bg-neutral-700"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+        {editBioMode ? (
+          <div className="space-y-4">
+            <textarea
+              value={biography}
+              onChange={(e) => setBiography(e.target.value)}
+              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white min-h-[150px]"
+              placeholder="Tell us about yourself..."
+            />
+            <div className="flex space-x-3">
+              <button
+                onClick={handleUpdateBiography}
+                className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setEditBioMode(false);
+                  setBiography(profile.biography || "");
+                }}
+                className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-neutral-300 whitespace-pre-wrap">
+            {profile.biography || "No biography added yet."}
+          </p>
+        )}
       </div>
 
       {/* Contact Information (Editable) */}

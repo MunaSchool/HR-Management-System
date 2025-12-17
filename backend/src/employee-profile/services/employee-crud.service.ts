@@ -107,29 +107,23 @@ export class EmployeeCrudService {
     const employees = await this.employeeProfileModel
       .find()
       .populate('accessProfileId')
-      .populate('primaryDepartmentId')
-      .populate('primaryPositionId')
       .exec();
 
-    // Manually populate payGradeId only for valid ObjectIds
-    const populatedEmployees = await Promise.all(
-      employees.map(async (emp) => {
-        const empObj = emp.toObject();
-
-        // Only populate payGradeId if it's a valid ObjectId
-        if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
-          const populated = await this.employeeProfileModel
-            .findById(emp._id)
-            .populate('payGradeId')
-            .exec();
-          return populated || emp;
-        }
-        return emp;
-      })
-    );
+    // Manually populate all fields only when valid
+    for (const emp of employees) {
+      if (emp.primaryPositionId && emp.primaryPositionId.toString() !== '') {
+        await emp.populate('primaryPositionId');
+      }
+      if (emp.primaryDepartmentId && emp.primaryDepartmentId.toString() !== '') {
+        await emp.populate('primaryDepartmentId');
+      }
+      if (emp.payGradeId && Types.ObjectId.isValid(emp.payGradeId)) {
+        await emp.populate('payGradeId');
+      }
+    }
 
     // Map employees to include roles and properly formatted data
-    return populatedEmployees.map(emp => {
+    return employees.map(emp => {
       const empObj = emp.toObject();
       const roles = (empObj.accessProfileId as any)?.roles || [];
       const payGrade = (empObj.payGradeId as any)?.grade || null;
@@ -148,28 +142,21 @@ export class EmployeeCrudService {
     let employee = await this.employeeProfileModel
       .findById(id)
       .populate('accessProfileId')
-      .populate('primaryDepartmentId')
-      .populate('primaryPositionId')
       .exec();
 
     if (!employee) {
       throw new NotFoundException('Employee profile not found');
     }
 
-    // Only populate payGradeId if it's a valid ObjectId
-    const empObj = employee.toObject();
-    if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
-      const populatedEmployee = await this.employeeProfileModel
-        .findById(id)
-        .populate('accessProfileId')
-        .populate('primaryDepartmentId')
-        .populate('primaryPositionId')
-        .populate('payGradeId')
-        .exec();
-
-      if (populatedEmployee) {
-        employee = populatedEmployee;
-      }
+    // Manually populate only valid fields (handles null and empty string)
+    if (employee.primaryPositionId && employee.primaryPositionId.toString() !== '') {
+      await employee.populate('primaryPositionId');
+    }
+    if (employee.primaryDepartmentId && employee.primaryDepartmentId.toString() !== '') {
+      await employee.populate('primaryDepartmentId');
+    }
+    if (employee.payGradeId && Types.ObjectId.isValid(employee.payGradeId)) {
+      await employee.populate('payGradeId');
     }
 
     const finalEmpObj = employee.toObject();

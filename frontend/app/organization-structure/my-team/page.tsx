@@ -11,12 +11,22 @@ export default function MyTeamHierarchyPage() {
 
   const fetchMyTeam = async () => {
     try {
-      const res = await axiosInstance.get(
-        "/organization-structure/hierarchy/my-team"
-      );
+      // Fetch actual team members (employees) instead of positions
+      const teamResponse = await axiosInstance.get("/employee-profile/team");
+      const meResponse = await axiosInstance.get("/employee-profile/me");
 
-      setManager(res.data.manager);
-      setTeamPositions(res.data.teamPositions || []);
+      setManager(meResponse.data);
+
+      // Convert employees to position-like format for display
+      const teamData = teamResponse.data.map((emp: any) => ({
+        _id: emp._id,
+        title: emp.primaryPositionId?.title || 'No Position',
+        departmentId: emp.primaryDepartmentId,
+        employeeName: `${emp.firstName} ${emp.lastName}`,
+        employeeNumber: emp.employeeNumber,
+      }));
+
+      setTeamPositions(teamData);
     } catch (err) {
       console.error(err);
       setError("Failed to load team hierarchy");
@@ -91,6 +101,9 @@ export default function MyTeamHierarchyPage() {
                 >
                   <div>
                     <p className="text-gray-900 dark:text-white font-medium">
+                      {pos.employeeName} ({pos.employeeNumber})
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {pos.title}
                     </p>
 
@@ -103,7 +116,7 @@ export default function MyTeamHierarchyPage() {
 
                   <span className="text-sm text-gray-500 dark:text-gray-400 mt-1 sm:mt-0">
                     → reports to{" "}
-                    {manager?.primaryPosition?.title || "Manager"}
+                    {manager?.primaryPositionId?.title || "Manager"}
                   </span>
                 </li>
               ))}
