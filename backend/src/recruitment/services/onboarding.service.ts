@@ -30,6 +30,8 @@ import { AuthService } from 'src/auth/auth.service';
 import { PayrollConfigurationService } from 'src/payroll-configuration/payroll-configuration.service';
 import { ConfigStatus } from 'src/payroll-configuration/enums/payroll-configuration-enums';
 import { PayRollStatus } from 'src/payroll-execution/enums/payroll-execution-enum';
+import { customAlphabet } from 'nanoid';
+
 
 @Injectable()
 export class OnboardingService {
@@ -92,6 +94,20 @@ export class OnboardingService {
 
     if (!contract) {
       throw new NotFoundException(`Contract with ID ${contractId} not found`);
+    }
+
+    return contract;
+  }
+
+    async getContractByOfferId(offerId: string): Promise<ContractDocument> {
+    const contract = await this.contractModel
+      .findOne({ offerId: offerId })
+      .populate('offerId')
+      .populate('documentId')
+      .exec();
+
+    if (!contract) {
+      throw new NotFoundException(`Contract for offer ID ${offerId} not found`);
     }
 
     return contract;
@@ -160,27 +176,27 @@ export class OnboardingService {
 
           //send notification to a payroll mananger
          await this.notificationLogService.sendNotification({
-            to: payrollManager.id,
+            to: payrollManager.employeeProfileId,
             type: 'Payroll provisioning required',
             message: `Require payroll provisioning for new hire ${candidateID}`,
           });
 
           //send notification for system access provisioning
            await this.notificationLogService.sendNotification({
-            to: systemAdmin.id,
+            to: systemAdmin.employeeProfileId,
             type: 'System access provisioning required',
             message: `Require requires system access provisioning for new hire ${candidateID}`,
           }); 
 
           //send notification for email access provisioning
            await this.notificationLogService.sendNotification({
-            to: systemAdmin._id,
+            to: systemAdmin.employeeProfileId,
             type: 'Email access provisioning required',
             message: `Require Email system access provisioning for new hire ${candidateID}`,
           }); 
 
           await this.notificationLogService.sendNotification({
-          to: systemAdmin.id,
+          to: systemAdmin.employeeProfileId,
           type: 'New Hire Equipment Setup Required',
           message: `New hire equipment and workspace setup needed for employee ID: ${offer.candidateId}. Please reserve: desk, laptop, access card, and other equipment.`,
         });
@@ -188,20 +204,33 @@ export class OnboardingService {
         //As a HR Manager, I want automated account provisioning (SSO/email/tools) on start date and scheduled revocation on exit, so access is consistent and secure. Will regsiter a new employee account automatically
 
         try {
-          //will create it blank with no details and admin should edit their employee details internally
-        await this.authService.register({
-          employeeNumber: '--', // Must be uniqu
-          workEmail: '--', // Must be unique and valid format
-          password: '--',
+        const nanoid = customAlphabet('0123456789', 4);
+        const employeeNumber = `EMP-${nanoid()}`;
+        const emailUsername = employeeNumber.replace(/-/g, ''); // "EMP4821"
+        
+        const registerData = {
+          employeeNumber: employeeNumber,
+          workEmail: `${emailUsername}@gmail.com`,
+          password: "password@resetThis",
           firstName: '--',
           lastName: '--',
-          nationalId:  '--', // Must be unique
-          dateOfHire: new Date().toISOString() ,
+          nationalId: '--',
+          dateOfHire: new Date().toISOString(),
+        };
+        
+        const result = await this.authService.register(registerData);
+
+        // Send notification with the data we already have
+        await this.notificationLogService.sendNotification({
+          to: candidateID,
+          type: 'Employee Credentials',
+          message: `Your employee account has been created. Login credentials - Email: ${registerData.workEmail}, Password: ${registerData.password} ,Employee Number: ${registerData.employeeNumber} . Please reset your password after first login.`,
         });
         
-        console.log('Employee account provisioned with placeholder data');
+        console.log(` Employee account provisioned: ${employeeNumber}`);
       } catch (error) {
-        console.error('Failed to provision employee account:', error);
+        console.error(' Failed to provision employee account:', error);
+        throw error;
       }
       
       //As a HR Manager, I want the system to automatically process signing bonuses based on contract after a new hire is signed. which means you need to trigger service that fills collection that relates user to signing Bonuswhich is in payroll execution module
@@ -281,13 +310,9 @@ export class OnboardingService {
     return document;
   }
 
-  async getDocumentsByCandidate(candidateId: string): Promise<DocumentDocument[]> {
-    return this.documentModel.find({ candidateId }).exec();
+  async getDocumentsByOwner(ownerId: string): Promise<DocumentDocument[]> {
+    return this.documentModel.find({ ownerId }).exec();
   }
-
-  async getDocumentsByEmployee(employeeId: string): Promise<DocumentDocument[]> {
-  return this.documentModel.find({ employeeId }).exec();
-}
 
   async updateOnboardingDocument(id: string,documentData: UpdateOnboardingDocumentDto): Promise<DocumentDocument> {
     const updatedDocument = await this.documentModel.findByIdAndUpdate(id,documentData,{ new: true, runValidators: true });
@@ -331,6 +356,22 @@ export class OnboardingService {
 
     return onboarding;
   }
+
+  async getTasksByEmployeeId(employeeId: string): Promise<OnboardingDocument[]> {
+  const tasks = await this.onboardingModel
+    .find({ employeeId }) // field name in schema
+    /* .populate('employeeId') */
+    .exec();
+
+  if (!tasks || tasks.length === 0) {
+    throw new NotFoundException(
+      `No onboarding tasks found for employee ID ${employeeId}`,
+    );
+  }
+
+  return tasks;
+}
+
 
   async updateOnboardingTask(id: string, updateOnboardingDto: UpdateOnboardingTaskDto): Promise<OnboardingDocument> {
 

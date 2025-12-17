@@ -12,6 +12,30 @@ export default function HomePage() {
     await logout();
   };
 
+  // Check both roles array AND userType for different user types
+  const userRoles = user?.roles || [];
+  const userType = user?.userType;
+
+  const isHR =
+    userRoles.includes("HR Manager") ||
+    userRoles.includes("HR Employee") ;
+
+
+  const isEmployee =
+    userRoles.includes("department employee");
+
+  const isCandidate =
+    userRoles.includes("candidate") ||
+    userType === "candidate";
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -63,12 +87,25 @@ export default function HomePage() {
               />
             </Link>
 
-            {/* Recruitment */}
-            <DashboardCard
-              title="Recruitment"
-              description="Manage job postings and applications"
-              icon="🎯"
-            />
+              {/* Recruitment */}
+            {(isHR || isEmployee || isCandidate) && (
+              <Link
+                href={
+                  isHR
+                    ? "/recruitment/hr/dashboard"
+                    : isEmployee
+                    ? "/recruitment/newHire/dashboard"
+                    : "/recruitment/candidate/dashboard"
+                }
+              >
+                <DashboardCard
+                  title="Recruitment"
+                  description="Manage job postings and applications"
+                  icon="🎯"
+                />
+              </Link>
+            )}
+
 
             {/* Time Management */}
             <DashboardCard

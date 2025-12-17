@@ -70,7 +70,7 @@ import {SystemRole} from'../employee-profile/enums/employee-profile.enums';
     PayrollPhase3Service,
     PayrollPhase4Service
   ],
-  exports: [PayrollExecutionService],
+  exports: [PayrollExecutionService , MongooseModule],
 })
 export class PayrollExecutionModule {}
 
