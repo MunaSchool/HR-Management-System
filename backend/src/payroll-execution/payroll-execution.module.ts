@@ -3,6 +3,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PayrollExecutionController } from './payroll-execution.controller';
 import { PayrollExecutionService } from './payroll-execution.service';
 import { terminationAndResignationBenefits, terminationAndResignationBenefitsSchema } from '../payroll-configuration/models/terminationAndResignationBenefits';
+import { taxRules, taxRulesSchema } from '../payroll-configuration/models/taxRules.schema';
+import { insuranceBrackets, insuranceBracketsSchema } from '../payroll-configuration/models/insuranceBrackets.schema';
+import { allowance, allowanceSchema } from '../payroll-configuration/models/allowance.schema';
 import { employeePayrollDetails, employeePayrollDetailsSchema } from './models/employeePayrollDetails.schema';
 import { employeePenalties, employeePenaltiesSchema } from './models/employeePenalties.schema';
 import { employeeSigningBonus, employeeSigningBonusSchema } from './models/EmployeeSigningBonus.schema';
@@ -17,6 +20,7 @@ import { EmployeeTerminationResignation, EmployeeTerminationResignationSchema,} 
 import { PayrollPhase1_1Service } from './payroll-phase1-1.service';
 import { EmployeeProfile , EmployeeProfileSchema } from '../employee-profile/models/employee-profile.schema';
 import { EmployeeSystemRole, EmployeeSystemRoleSchema } from '../employee-profile/models/employee-system-role.schema';
+import { Position, PositionSchema } from '../organization-structure/models/position.schema';
 
 
 import { PayrollPhase1_1AService } from './payroll-phase1-1A.service';
@@ -49,10 +53,14 @@ import {SystemRole} from'../employee-profile/enums/employee-profile.enums';
       { name: employeePayrollDetails.name, schema: employeePayrollDetailsSchema },
       { name: employeeSigningBonus.name, schema: employeeSigningBonusSchema },
       { name: terminationAndResignationBenefits.name, schema: terminationAndResignationBenefitsSchema },
+      { name: taxRules.name, schema: taxRulesSchema },
+      { name: insuranceBrackets.name, schema: insuranceBracketsSchema },
+      { name: allowance.name, schema: allowanceSchema },
       { name: employeePenalties.name, schema: employeePenaltiesSchema },
       { name: EmployeeTerminationResignation.name, schema: EmployeeTerminationResignationSchema },
       { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
       { name: EmployeeSystemRole.name, schema: EmployeeSystemRoleSchema },
+      { name: Position.name, schema: PositionSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
@@ -70,9 +78,7 @@ import {SystemRole} from'../employee-profile/enums/employee-profile.enums';
     PayrollPhase3Service,
     PayrollPhase4Service
   ],
-  exports: [PayrollExecutionService, 
-            MongooseModule // Export MongooseModule so other modules can access the models
-  ],
+  exports: [PayrollExecutionService , MongooseModule],
 })
 export class PayrollExecutionModule {}
 
