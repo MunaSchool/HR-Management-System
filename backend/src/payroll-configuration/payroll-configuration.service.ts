@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as Mongoose from 'mongoose';
 
@@ -520,16 +520,26 @@ export class PayrollConfigurationService
   }
 
   async createTaxRule(taxRuleData: createTaxRulesDTO): Promise<taxRulesDocument> {
-    const newTaxRule = new this.taxRulesModel(taxRuleData);
+    const newTaxRule = new this.taxRulesModel({
+      ...taxRuleData,
+      status: ConfigStatus.DRAFT,
+    });
     return newTaxRule.save();
   }
 
   async updateTaxRule(id: string, updateData: editTaxRulesDTO): Promise<taxRulesDocument | null> {
     const taxRule = await this.taxRulesModel.findById(id) as taxRulesDocument;
-    if (taxRule.status !== 'draft') {
-      throw new Error('Only draft tax rules can be updated');
-    } else
-    return this.taxRulesModel.findByIdAndUpdate(id, updateData, { new: true }).exec();
+    if (!taxRule) {
+      throw new BadRequestException('Tax rule not found');
+    }
+    if (taxRule.status !== ConfigStatus.DRAFT) {
+      throw new BadRequestException('Only draft tax rules can be updated');
+    }
+    return this.taxRulesModel.findByIdAndUpdate(
+      id,
+      { ...updateData, status: ConfigStatus.DRAFT },
+      { new: true },
+    ).exec();
   }
 
   async deleteTaxRule(id: string): Promise<taxRulesDocument | null> {
