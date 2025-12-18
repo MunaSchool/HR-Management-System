@@ -29,7 +29,7 @@ import { EmployeeRoleService } from 'src/employee-profile/services/employee-role
 import { AuthService } from 'src/auth/auth.service';
 import { PayrollConfigurationService } from 'src/payroll-configuration/payroll-configuration.service';
 import { ConfigStatus } from 'src/payroll-configuration/enums/payroll-configuration-enums';
-import { PayRollStatus } from 'src/payroll-execution/enums/payroll-execution-enum';
+import { BonusStatus, PayRollStatus } from 'src/payroll-execution/enums/payroll-execution-enum';
 import { customAlphabet } from 'nanoid';
 
 
@@ -149,7 +149,7 @@ export class OnboardingService {
     }
 
     // Trigger: Both signatures complete - update to HIRED and trigger all systems
-    if ( updatedContract.employeeSignedAt && updatedContract.employerSignedAt &&
+    if ( updatedContract.employeeSignatureUrl && updatedContract.employerSignedAt &&
       (!currentContract.employeeSignedAt || !currentContract.employerSignedAt)) {
 
       //update application to hired
@@ -214,20 +214,89 @@ export class OnboardingService {
           password: "password@resetThis",
           firstName: '--',
           lastName: '--',
-          nationalId: '--',
+          nationalId: `PENDING-${employeeNumber}`,
           dateOfHire: new Date().toISOString(),
         };
-        
         const result = await this.authService.register(registerData);
+        console.log(result);
 
         // Send notification with the data we already have
         await this.notificationLogService.sendNotification({
           to: candidateID,
           type: 'Employee Credentials',
-          message: `Your employee account has been created. Login credentials - Email: ${registerData.workEmail}, Password: ${registerData.password} ,Employee Number: ${registerData.employeeNumber} . Please reset your password after first login.`,
+          message: `Your employee account has been created. Login credentials - Email: ${registerData.workEmail}, Password: ${registerData.password} ,Employee Number: ${registerData.employeeNumber} . Please reset your password after first login and add your actual national id.`,
         });
         
         console.log(` Employee account provisioned: ${employeeNumber}`);
+
+          //   if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
+          //   const bonusResult = await this.payrollExecutionService.createEmployeeSigningBonuses([
+          //   result //result returned is already the id
+          // ]);
+          // console.log('Employee signing bonuses created:', bonusResult);
+
+          // }
+
+           // const newSigningBonus = await this.payrollConfigurationService.createSigningBonuses({
+      //       //   positionName: updatedContract.role,
+      //       //   amount: updatedContract.signingBonus,
+      //       //   status: ConfigStatus.DRAFT
+      //       // });
+            
+
+      //       // await this.payrollExecutionService.approveSigningBonus(newSigningBonus?.id);
+
+      //       const bonusResult = await this.payrollExecutionService.createEmployeeSigningBonuses([
+      //       //offer.candidateId.toString()
+      //       result.id;
+      //     ]);
+      //     console.log('Employee signing bonuses created:', bonusResult);
+      //     }
+
+
+            if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
+        try {
+          console.log(' Creating signing bonus template..');
+          
+          // 1. Create the signing bonus configuration/template
+          const newSigningBonus = await this.payrollConfigurationService.createSigningBonuses({
+            positionName: updatedContract.role,
+            amount: updatedContract.signingBonus,
+            status: ConfigStatus.APPROVED
+          });
+
+          // ✅ Check if creation was successful
+          if (!newSigningBonus) {
+            throw new Error('Failed to create signing bonus template');
+          }
+
+          console.log(' Signing bonus template created:', newSigningBonus._id);
+
+          // 2. Create employee signing bonus record directly
+          const employeeSigningBonus = await this.employeeSigningBonusModel.create({
+            employeeId: new Types.ObjectId(result),
+            signingBonusId: newSigningBonus._id,
+            status: BonusStatus.PENDING,
+          });
+
+          console.log(' Employee signing bonus created:', employeeSigningBonus._id);
+
+          // 3. Approve it
+          await this.payrollExecutionService.approveSigningBonus(employeeSigningBonus._id.toString());
+          
+          console.log(' Signing bonus approved successfully');
+
+        } catch (error) {
+          console.error(' Error processing signing bonus:', error);
+          
+          await this.notificationLogService.sendNotification({
+            to: hrManagerID,
+            type: 'Signing Bonus Processing Failed',
+            message: `Failed to process signing bonus for employee ${result}. Position: ${updatedContract.role}, Amount: $${updatedContract.signingBonus}. Error: ${error.message}. Please process manually.`,
+          });
+        }
+      }
+
       } catch (error) {
         console.error(' Failed to provision employee account:', error);
         throw error;
@@ -235,58 +304,53 @@ export class OnboardingService {
       
       //As a HR Manager, I want the system to automatically process signing bonuses based on contract after a new hire is signed. which means you need to trigger service that fills collection that relates user to signing Bonuswhich is in payroll execution module
 
-      //will call a new signing bonus and call the approve signing bonus to execute it automatically
-      try {
-          if (updatedContract.signingBonus && updatedContract.signingBonus > 0) {
-            
-            const newSigningBonus = await this.payrollConfigurationService.createSigningBonuses({
-              positionName: updatedContract.role,
-              amount: updatedContract.signingBonus,
-              status: ConfigStatus.DRAFT
-            });
-
-            await this.payrollExecutionService.approveSigningBonus(newSigningBonus?.id);
-          }
-        } catch (error) {
-          console.error('Error processing signing bonus:', error);
-      }
 
       //As a HR Manager, I want the system to automatically handle payroll initiation based on the contract signing day for the current payroll cycle. just setting start date if done in any prev phase you can skip since it is handled
 
       //As a HR Manager, I want the system to automatically handle payroll initiation based on the contract signing day for the current payroll cycle.
-      try {
-        const contractSigningDate = updatedContract.employerSignedAt || new Date();
-        
-        // Calculate the payroll period end date (last day of the current month)
-        const payrollPeriodEnd = new Date(contractSigningDate.getFullYear(),
-          contractSigningDate.getMonth() + 1,
-          0 // Last day of the month
-        );
+ try {
+  const contractSigningDate = updatedContract.employerSignedAt || new Date();
+  
+  const payrollPeriodEnd = new Date(
+    contractSigningDate.getFullYear(),
+    contractSigningDate.getMonth() + 1,
+    0
+  );
 
-        // Find existing draft payroll run for this period
-        const existingPayrollRun = await this.payrollRunsModel.findOne({ 
-          payrollPeriod: payrollPeriodEnd,
-          status: PayRollStatus.DRAFT
-        }).exec();
+  console.log('📅 Looking for payroll period:', payrollPeriodEnd.toISOString());
 
-        if (!existingPayrollRun) {
-          console.warn('No draft payroll run found for this period.');
-        } else {
-          console.log(`Found existing draft payroll run: ${existingPayrollRun.runId}`);
-          
-          // Start payroll initiation
-          const initiationResult = await this.payrollExecutionService.startPayrollInitiation({
-            payrollRunId: existingPayrollRun._id.toString(),
-            payrollSpecialistId: payrollManager.id.toString(),
-          });
-          
-          console.log(`Payroll initiation started: ${initiationResult.message}`);
-        }
+  //  Create completely independent Date objects using the timestamp
+  const startOfDay = new Date(payrollPeriodEnd.getTime());
+  startOfDay.setUTCHours(0, 0, 0, 0);
 
-      } catch (error) {
-        console.error('Error handling payroll initiation:', error);
-      }
+  const endOfDay = new Date(payrollPeriodEnd.getTime());
+  endOfDay.setUTCHours(23, 59, 59, 999);
+  
+  console.log(' Date range:', startOfDay.toISOString(), 'to', endOfDay.toISOString());
 
+  const existingPayrollRun = await this.payrollRunsModel.findOne({ 
+    payrollPeriod: {
+      $gte: startOfDay,
+      $lte: endOfDay
+    },
+    status: PayRollStatus.DRAFT
+  }).exec();
+
+  if (!existingPayrollRun) {
+    console.warn(' No draft payroll run found for this period:', payrollPeriodEnd.toISOString());
+  } else {
+    console.log(` Found existing draft payroll run: ${existingPayrollRun.runId}`);
+    
+    const initiationResult = await this.payrollExecutionService.startPayrollInitiation({
+      payrollRunId: existingPayrollRun._id.toString(),
+      payrollSpecialistId: payrollManager.id.toString(),
+    });
+    
+    console.log(`✅ Payroll initiation started: ${initiationResult.message}`);
+  }
+} catch (error) {
+  console.error('❌ Error handling payroll initiation:', error);
+}
       }
     }
 

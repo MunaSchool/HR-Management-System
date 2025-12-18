@@ -332,7 +332,7 @@ export default function CareerPage() {
             {/* Apply Button */}
             <div className={styles.actions}>
               <Link 
-                href="/careers/applications/" 
+                href="/recruitment/careers/applications/" 
                 className={styles.createButton}
                 style={{
                   fontSize: "16px",
@@ -372,7 +372,7 @@ export default function CareerPage() {
             Take the next step in your career journey with us
           </p>
           <Link 
-            href="/careers/applications/" 
+            href="/recruitment/careers/applications/" 
             className={styles.createButton}
             style={{
               fontSize: "18px",

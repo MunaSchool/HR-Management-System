@@ -452,7 +452,7 @@ export class OffboardingService {
     }
 
     //As a System Admin, I want to revoke system and account access upon termination, so security is maintained. Deactivate employee/revoke system access profile using HrAdminService if hr initiated it and if employee is on leave
-     if (updatedTerminationRequest.initiator === TerminationInitiation.HR){
+   //  if (updatedTerminationRequest.initiator === TerminationInitiation.HR){
 
      // const systemAdminUserId = systemAdmins && systemAdmins.length > 0 ? systemAdmins[0].employeeProfileId.toString() : 'SYSTEM';
     
@@ -463,7 +463,7 @@ export class OffboardingService {
       EmployeeStatus.TERMINATED,
       updatedTerminationRequest.terminationDate || new Date(),
     );
-    }
+    //}
 
     // Delete employee profile using EmployeeCrudService if hr initiated it 
     // if (updatedTerminationRequest.initiator === TerminationInitiation.HR)

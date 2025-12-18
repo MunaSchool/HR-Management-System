@@ -70,12 +70,6 @@ export default function UpdateApplicationPage() {
       required: true,
     },
     {
-      name: "appliedDate",
-      label: "Applied Date",
-      type: "date",
-      required: true,
-    },
-    {
       name: "status",
       label: "Application Status",
       type: "select",

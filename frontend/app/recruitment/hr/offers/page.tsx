@@ -451,6 +451,8 @@ export default function OfferDashboardPage() {
       <div className={styles.actions} style={{ marginTop: '30px' }}>
         <Link href="/recruitment/hr/offers/create" className={styles.button}>Create Offer</Link>
         <Link href="/recruitment/hr/contracts" className={styles.button}>View All contracts</Link>
+        <Link href="/recruitment/hr/documents" className={styles.button}>View all contract documents</Link>
+        <Link href="/recruitment/hr/onboardingChecklist" className={styles.button}>onboarding checklist</Link>
       </div>
 
       {/* Confirmation Dialog */}

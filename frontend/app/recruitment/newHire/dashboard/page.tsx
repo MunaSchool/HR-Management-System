@@ -4,9 +4,10 @@ import Link from "next/link";
 import styles from '@/app/recruitment/component/shared-hr-styles.module.css';
 import axiosInstance from "@/app/utils/ApiClient";
 import { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
 
 export default function NewHireDashboard() {
+  const router = useRouter();
   const [tasks, setTasks] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -15,53 +16,72 @@ export default function NewHireDashboard() {
   const [employeeId, setEmployeeId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  // Hardcoded token - replace with your actual token
-  const HARDCODED_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOiI2OTNkZDZkYTY0MzJkMmM3YThmMjAyZjUiLCJyb2xlcyI6WyJkZXBhcnRtZW50IGVtcGxveWVlIl0sImVtcGxveWVlTnVtYmVyIjoiRU1QLTE4OTMiLCJlbWFpbCI6IkVNUDE4OTNAZ21haWwuY29tIiwic3RhdHVzIjoiQUNUSVZFIiwiaWF0IjoxNzY1NjgxNDA0LCJleHAiOjE3NjU3Njc4MDR9.IM2ta_Adza2F4zhcZ_FbE094_-OQ9LiWW2JqhQBPClE";
-
   useEffect(() => {
-    async function loadDashboard() {
-      try {
-        // Use hardcoded token instead of localStorage
-        const decoded: any = jwtDecode(HARDCODED_TOKEN);
-        const userId = decoded.userid;
-        setEmployeeId(userId);
-
-        if (!userId) {
-          console.error("❌ No user ID in token!");
-          return;
-        }
-
-        // Set token in axios instance
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${HARDCODED_TOKEN}`;
-
-        // Get current user info
-        const userResponse = await axiosInstance.get("/auth/me");
-        setEmployeeInfo(userResponse.data);
-
-        // Load employee onboarding data
-        await Promise.all([
-          loadTasks(userId),
-          loadDocuments(userId),
-          loadNotifications(userId),
-          loadTerminationRequests(userId),
-        ]);
-
-      } catch (err) {
-        console.error("Error loading dashboard:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadDashboard();
   }, []);
 
-   const loadTasks = async (userId: string) => {
+  async function loadDashboard() {
+    try {
+      // Get current user info from /auth/me endpoint
+      // The token is automatically sent via HTTP-only cookie
+      console.log("🔍 Fetching user info from /auth/me...");
+      const userResponse = await axiosInstance.get("/auth/me");
+      console.log("✅ /auth/me response:", userResponse.data);
+      
+      const userData = userResponse.data;
+      
+      // Try multiple possible ID fields
+      const userId = userData.userid
+                  || userData._id 
+                  || userData.userId 
+                  || userData.id
+                  || userData.user?._id
+                  || userData.user?.userId
+                  || userData.user?.id;
+      
+      console.log("📋 Extracted user ID:", userId);
+      console.log("📋 Full user data structure:", JSON.stringify(userData, null, 2));
+      
+      if (!userId) {
+        console.error("❌ No user ID in response!");
+        console.error("Available fields:", Object.keys(userData));
+        setLoading(false);
+        return;
+      }
+
+      setEmployeeId(userId);
+      setEmployeeInfo(userData);
+
+      // Load all employee data
+      await Promise.all([
+        loadTasks(userId),
+        loadDocuments(userId),
+        loadNotifications(userId),
+        loadTerminationRequests(userId),
+      ]);
+
+    } catch (err: any) {
+      console.error("❌ Error loading dashboard:", err);
+      console.error("Error response:", err.response?.data);
+      console.error("Error status:", err.response?.status);
+      
+      // If unauthorized, redirect to login
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        console.log("🔄 Redirecting to login...");
+        router.push("/login");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const loadTasks = async (userId: string) => {
     try {
       const allTasks = await axiosInstance.get(`/onboarding/tasks/employee/${userId}`);
       setTasks(allTasks.data);
     } catch (err) {
       console.error("Error loading tasks:", err);
+      setTasks([]);
     }
   };
 
@@ -119,6 +139,17 @@ export default function NewHireDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/auth/logout");
+      router.push("/login");
+    } catch (err) {
+      console.error("Logout error:", err);
+      // Force redirect even if logout fails
+      router.push("/login");
+    }
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading onboarding...</div>;
   }
@@ -136,27 +167,46 @@ export default function NewHireDashboard() {
           borderRadius: '12px',
           marginBottom: '30px',
           color: '#ffffff',
-          border: '2px solid #9570DD'
+          border: '2px solid #9570DD',
+          flexWrap: 'wrap',
+          gap: '10px'
         }}>
           <div>
             <p style={{ margin: 0, fontSize: '14px', opacity: 0.9 }}>Logged in as</p>
             <p style={{ margin: '5px 0 0 0', fontSize: '18px', fontWeight: '700' }}>{employeeInfo.email}</p>
           </div>
-          <span style={{
-            padding: '8px 16px',
-            backgroundColor: '#10b981',
-            borderRadius: '12px',
-            fontSize: '14px',
-            fontWeight: '600'
-          }}>
-            New Employee
-          </span>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <span style={{
+              padding: '8px 16px',
+              backgroundColor: '#10b981',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '600'
+            }}>
+              {employeeInfo.status || 'New Employee'}
+            </span>
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#ef4444',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </div>
       )}
 
       {/* Quick Actions */}
       <div className={styles.actions} style={{ marginBottom: '30px' }}>
-        <Link href={`/recruitment/documents/create?candidateId=${employeeId}`} className={styles.createButton}>
+        <Link href={`/recruitment/documents/create?employeeId=${employeeId}`} className={styles.createButton}>
           Upload Document
         </Link>
       </div>
@@ -319,7 +369,7 @@ export default function NewHireDashboard() {
             {tasks.map((taskGroup) => (
               <div key={taskGroup._id} className={styles.card}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '15px', color: '#ffffff' }}>Task Group</h3>
-                {taskGroup.tasks.map((task: any, index: number) => (
+                {taskGroup.tasks?.map((task: any, index: number) => (
                   <div 
                     key={index} 
                     style={{
@@ -396,7 +446,7 @@ export default function NewHireDashboard() {
             {documents.map((doc) => (
               <div key={doc._id} className={styles.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-                  <span style={{ fontSize: '18px', fontWeight: '700' }}>{doc.documentName}</span>
+                  <span style={{ fontSize: '18px', fontWeight: '700' }}>{doc.documentName || 'Document'}</span>
                   <span style={{
                     padding: '4px 12px',
                     borderRadius: '12px',
@@ -408,7 +458,7 @@ export default function NewHireDashboard() {
                   </span>
                 </div>
                 <p><strong>File:</strong> {doc.filePath}</p>
-                <p><strong>Uploaded:</strong> {new Date(doc.createdAt).toLocaleDateString()}</p>
+                <p><strong>Uploaded:</strong> {new Date(doc.createdAt || doc.uploadedAt).toLocaleDateString()}</p>
               </div>
             ))}
           </div>
@@ -426,7 +476,9 @@ function getStatusColor(status: string) {
     ID: { backgroundColor: '#8b5cf6', color: 'white' },
     CERTIFICATE: { backgroundColor: '#ec4899', color: 'white' },
     CONTRACT: { backgroundColor: '#3b82f6', color: 'white' },
+    CV: { backgroundColor: '#06b6d4', color: 'white' },
     DOCUMENT: { backgroundColor: '#6b7280', color: 'white' },
+    RESIGNATION: { backgroundColor: '#ef4444', color: 'white' },
   };
   return colors[status] || { backgroundColor: '#6b7280', color: 'white' };
 }

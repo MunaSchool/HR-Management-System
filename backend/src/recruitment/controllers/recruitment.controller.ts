@@ -118,7 +118,7 @@ export class RecruitmentController {
 
 
   @Patch('offers/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE )
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE , SystemRole.JOB_CANDIDATE)
   updateOffer(@Param('id') id: string, @Body() updateJobOfferDto: UpdateJobOfferDto) {
     return this.recruitmentService.updateOffer(id, updateJobOfferDto);
   }

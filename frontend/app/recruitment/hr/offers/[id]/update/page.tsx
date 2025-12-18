@@ -132,18 +132,6 @@ export default function UpdateOfferPage() {
       required: true,
     },
     {
-      name: "applicantResponse",
-      label: "Applicant Response",
-      type: "select",
-      required: true,
-      options: [
-        { value: "pending", label: "Pending" },
-        { value: "accepted", label: "Accepted" },
-        { value: "rejected", label: "Rejected" },
-        { value: "negotiating", label: "Negotiating" },
-      ],
-    },
-    {
       name: "finalStatus",
       label: "Final Status",
       type: "select",

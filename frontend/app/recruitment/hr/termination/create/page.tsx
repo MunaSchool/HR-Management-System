@@ -91,7 +91,6 @@ export default function CreateTerminationRequestPage() {
       
       console.log(" Success:", response.data);
       alert(" Termination request created successfully!");
-      router.push("/recruitment/offboarding/termination");
     } catch (err: any) {
       console.error(" Full error:", err);
       console.error(" Status:", err.response?.status);

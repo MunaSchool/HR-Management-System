@@ -83,13 +83,6 @@ export default function CreateOfferPage() {
       type: "date",
       required: true,
     },
-    
-    {
-      name: "acceptanceDate",
-      label: "Contract Acceptance Date",
-      type: "date",
-      required: true,
-    },
     {
       name: "documentId",
       label: "Contract Document ID",

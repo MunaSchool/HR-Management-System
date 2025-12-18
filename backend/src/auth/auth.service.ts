@@ -94,7 +94,9 @@ export class AuthService {
 
     console.log('✅ Registration completed successfully for:', registerDto.employeeNumber);
 
-    return 'Registered successfully';
+    //return 'Registered successfully';
+      return newEmployee._id.toString(); //need the employee id returned for a functionality
+
   }
 
   async signIn(

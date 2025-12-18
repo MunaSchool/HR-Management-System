@@ -435,7 +435,7 @@ export default function ContractsDashboardPage() {
 
       {/* Action links */}
       <div className={styles.actions} style={{ marginTop: '30px' }}>
-        <Link href="/hr/contracts/create" className={styles.button}>Create Contract</Link>
+        <Link href="/recruitment/hr/contracts/create" className={styles.button}>Create Contract</Link>
       </div>
     </div>
   );

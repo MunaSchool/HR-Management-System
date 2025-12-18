@@ -222,25 +222,61 @@ export default function CandidateDashboard() {
     }
   };
 
-  const handleContractSign = async (contractId: string, signatureUrl: string) => {
+   const handleContractSign = async (contractId: string, signatureUrl: string) => {
     if (!signatureUrl?.trim()) {
       alert("Please enter your signature URL");
       return;
     }
 
     try {
-      await axiosInstance.patch(`/onboarding/contracts/${contractId}`, {
+      console.log("🔏 Attempting to sign contract:", contractId);
+      console.log("🔏 Signature URL:", signatureUrl);
+      console.log("🔏 Request payload:", {
         employeeSignatureUrl: signatureUrl,
         employeeSignedAt: new Date().toISOString(),
       });
       
+      const response = await axiosInstance.patch(`/onboarding/contracts/${contractId}`, {
+        employeeSignatureUrl: signatureUrl,
+        employeeSignedAt: new Date().toISOString(),
+      });
+      
+      console.log("✅ Contract signed successfully:", response.data);
       alert("Contract signed successfully!");
       loadContracts(candidateId);
-    } catch (err) {
-      console.error("Error signing contract:", err);
-      alert("Failed to sign contract");
+    } catch (err: any) {
+      console.error("❌ Error signing contract:", err);
+      console.error("❌ Error response data:", err.response?.data);
+      console.error("❌ Error status:", err.response?.status);
+      console.error("❌ Full error:", JSON.stringify(err.response, null, 2));
+      
+      // Handle specific error cases with detailed messages
+      if (err.response?.status === 409) {
+        alert("⚠️ Conflict: This contract has already been signed or cannot be modified.");
+      } else if (err.response?.status === 400) {
+        const errorMsg = err.response?.data?.message 
+          || err.response?.data?.error 
+          || JSON.stringify(err.response?.data)
+          || 'Invalid request';
+        alert(`❌ Bad Request: ${errorMsg}\n\nPlease check that:\n- The contract exists\n- You haven't already signed it\n- The signature URL is valid`);
+      } else if (err.response?.status === 404) {
+        alert("❌ Contract not found. It may have been deleted or doesn't exist.");
+      } else if (err.response?.status === 403) {
+        alert("❌ Permission Denied: You don't have permission to sign this contract.");
+      } else if (err.response?.status === 500) {
+        const serverError = err.response?.data?.message || err.response?.data?.error || 'Internal server error';
+        alert(`❌ Server Error: ${serverError}\n\nPlease try again later or contact support.`);
+      } else {
+        // Show the most detailed error message available
+        const errorMsg = err.response?.data?.message 
+          || err.response?.data?.error 
+          || err.message 
+          || 'Unknown error occurred';
+        alert(`❌ Failed to sign contract:\n\n${errorMsg}\n\nStatus: ${err.response?.status || 'Unknown'}\n\nCheck the console for more details.`);
+      }
     }
   };
+
 
   const handleLogout = async () => {
     try {
@@ -534,8 +570,8 @@ export default function CandidateDashboard() {
                       className={styles.select}
                     >
                       <option value="">Select Response</option>
-                      <option value="ACCEPTED">Accept</option>
-                      <option value="REJECTED">Reject</option>
+                      <option value="accepted">Accept</option>
+                      <option value="rejected">Reject</option>
                     </select>
                     <button
                       onClick={() => handleOfferResponse(offer._id)}

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import GenericForm, { FieldConfig } from "@/app/recruitment/component/generic-form";
+import FormPageWrapper from "@/app/recruitment/component/FormPageWrapper";
 import styles from '@/app/recruitment/component/shared-hr-styles.module.css';
+import formStyles from '@/app/recruitment/component/generic-form.module.css';
 import axiosInstance from "@/app/utils/ApiClient";
 import { useRouter } from "next/navigation";
 
@@ -87,7 +89,7 @@ export default function CreateApplicationPage() {
       const documentData = {
         candidateId: data.candidateId.trim(),
         applicationId: applicationId,
-        filePath: "/uploads/resume.pdf", // Path where file is stored
+        filePath: "/uploads/resume.pdf",
         type: "cv",
         uploadedAt: new Date(),
         consents: {
@@ -112,247 +114,226 @@ export default function CreateApplicationPage() {
   };
 
   return (
-    <div className={styles.formWrapper}>
-      <div className={styles.formContainer}>
-        
-        <h1 className={styles.formTitle}>Create Job Application</h1>
-        <div className={styles.formDivider}></div>
-
-        <div className={styles.formDescription}>
-          <h3>Application Information</h3>
-          <p>Create a new job application by providing candidate and requisition details.</p>
-          <p><strong>Note:</strong> All required fields must be completed, including document upload and consent checkboxes.</p>
+    <FormPageWrapper
+      title="Create Job Application"
+      description="Create a new job application by providing candidate and requisition details. All required fields must be completed, including document upload and consent checkboxes."
+      icon="📝"
+    >
+      {/* Error Display */}
+      {error && (
+        <div style={{ 
+          padding: '16px', 
+          background: 'rgba(239, 68, 68, 0.1)', 
+          border: '2px solid #ef4444', 
+          borderRadius: '8px',
+          color: '#dc2626',
+          marginBottom: '20px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }}>
+          ⚠️ {error}
         </div>
+      )}
 
-        {error && (
-          <div style={{ 
-            padding: '16px', 
-            background: 'rgba(239, 68, 68, 0.1)', 
-            border: '2px solid #ef4444', 
+      {/* Main Form Fields */}
+      <GenericForm
+        fields={applicationFields}
+        onSubmit={handleSubmit}
+        submitButtonText={loading ? "Submitting..." : "Submit Application"}
+        showResetButton={false}
+      />
+
+      {/* Document Upload Section */}
+      <div className={formStyles.formGroup} style={{ marginTop: '20px' }}>
+        <h3 style={{ 
+          margin: '0 0 15px 0', 
+          fontSize: '18px',
+          fontWeight: '700',
+          color: '#ffffff'
+        }}>
+          Upload Documents
+        </h3>
+        
+        <label className={formStyles.label} style={{ color: '#ffffff' }}>
+          CV/Resume <span className={formStyles.required}>*</span>
+        </label>
+        <input
+          type="file"
+          accept=".pdf,.doc,.docx"
+          onChange={handleFileChange}
+          className={formStyles.input}
+          style={{ cursor: 'pointer' }}
+        />
+
+        {documents.length > 0 && (
+          <div style={{
+            marginTop: '15px',
+            padding: '15px',
+            backgroundColor: '#ffffff',
             borderRadius: '8px',
-            color: '#dc2626',
-            marginBottom: '20px',
-            fontSize: '14px'
+            border: '2px solid #e9d5ff'
           }}>
-            ⚠️ {error}
+            <h4 style={{ 
+              margin: '0 0 10px 0', 
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#693699'
+            }}>
+              Selected Documents:
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+              {documents.map((doc, i) => (
+                <li key={i} style={{ 
+                  marginBottom: '8px',
+                  color: '#374151',
+                  fontSize: '14px'
+                }}>
+                  <strong>{doc.type.toUpperCase()}:</strong> {doc.file.name}{" "}
+                  <button
+                    type="button"
+                    onClick={() => removeFile(i)}
+                    style={{
+                      marginLeft: '10px',
+                      padding: '4px 12px',
+                      backgroundColor: '#ef4444',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
-
-        <div className={styles.formContentWrapper}>
-          {/* Main Form Fields */}
-          <GenericForm
-            fields={applicationFields}
-            onSubmit={handleSubmit}
-            submitButtonText={loading ? "Submitting..." : "Submit Application"}
-            showResetButton={false}
-          />
-
-          {/* Document Upload Section */}
-          <div style={{
-            marginTop: '30px',
-            padding: '20px',
-            backgroundColor: '#e9d5ff',
-            borderRadius: '8px',
-            border: '2px solid #7C40A9'
-          }}>
-            <h3 style={{ 
-              margin: '0 0 15px 0', 
-              fontSize: '18px',
-              fontWeight: '700',
-              color: '#2d1b4e'
-            }}>
-              Upload Documents
-            </h3>
-            
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#2d1b4e',
-                marginBottom: '8px'
-              }}>
-                CV/Resume <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={handleFileChange}
-                style={{
-                  padding: '10px',
-                  backgroundColor: '#ffffff',
-                  border: '2px solid #7C40A9',
-                  borderRadius: '6px',
-                  width: '100%',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
-              />
-            </div>
-
-            {documents.length > 0 && (
-              <div style={{
-                padding: '15px',
-                backgroundColor: '#ffffff',
-                borderRadius: '6px',
-                border: '2px solid #9570DD'
-              }}>
-                <h4 style={{ 
-                  margin: '0 0 10px 0', 
-                  fontSize: '16px',
-                  color: '#2d1b4e'
-                }}>
-                  Selected Documents:
-                </h4>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                  {documents.map((doc, i) => (
-                    <li key={i} style={{ 
-                      marginBottom: '8px',
-                      color: '#2d1b4e',
-                      fontSize: '14px'
-                    }}>
-                      <strong>{doc.type.toUpperCase()}:</strong> {doc.file.name}{" "}
-                      <button
-                        type="button"
-                        onClick={() => removeFile(i)}
-                        style={{
-                          marginLeft: '10px',
-                          padding: '4px 12px',
-                          backgroundColor: '#ef4444',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Consent Section */}
-          <div style={{ 
-            border: '2px solid #7C40A9', 
-            padding: '20px', 
-            borderRadius: '8px', 
-            backgroundColor: '#e9d5ff',
-            marginTop: '30px'
-          }}>
-            <h3 style={{ 
-              marginBottom: '16px', 
-              fontSize: '18px', 
-              fontWeight: '700',
-              color: '#2d1b4e'
-            }}>
-              Consent & Authorization
-            </h3>
-            
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'start', 
-                gap: '10px', 
-                cursor: 'pointer' 
-              }}>
-                <input
-                  type="checkbox"
-                  checked={consents.dataProcessing}
-                  onChange={(e) => setConsents({ ...consents, dataProcessing: e.target.checked })}
-                  required
-                  style={{ 
-                    marginTop: '4px', 
-                    width: '18px',
-                    height: '18px',
-                    cursor: 'pointer',
-                    accentColor: '#7C40A9'
-                  }}
-                />
-                <span style={{ 
-                  fontSize: '14px', 
-                  lineHeight: '1.5',
-                  color: '#2d1b4e',
-                  fontWeight: '500'
-                }}>
-                  I consent to the processing of my personal data for recruitment purposes in accordance with applicable privacy laws. <span style={{ color: '#ef4444' }}>*</span>
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <label style={{ 
-                display: 'flex', 
-                alignItems: 'start', 
-                gap: '10px', 
-                cursor: 'pointer' 
-              }}>
-                <input
-                  type="checkbox"
-                  checked={consents.backgroundCheck}
-                  onChange={(e) => setConsents({ ...consents, backgroundCheck: e.target.checked })}
-                  required
-                  style={{ 
-                    marginTop: '4px', 
-                    width: '18px',
-                    height: '18px',
-                    cursor: 'pointer',
-                    accentColor: '#7C40A9'
-                  }}
-                />
-                <span style={{ 
-                  fontSize: '14px', 
-                  lineHeight: '1.5',
-                  color: '#2d1b4e',
-                  fontWeight: '500'
-                }}>
-                  I authorize the company to conduct background checks as part of the hiring process. <span style={{ color: '#ef4444' }}>*</span>
-                </span>
-              </label>
-            </div>
-
-            <p style={{ 
-              fontSize: '12px', 
-              color: '#693699', 
-              marginTop: '12px',
-              marginBottom: 0,
-              fontStyle: 'italic'
-            }}>
-              * Required fields - Both consents must be checked to submit
-            </p>
-          </div>
-        </div>
-
-        {/* Back Button */}
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              padding: '12px 24px',
-              background: 'transparent',
-              color: '#7C40A9',
-              border: '2px solid #7C40A9',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '15px',
-              fontWeight: '600',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(124, 64, 169, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
-          >
-            ← Back to Applications
-          </button>
-        </div>
       </div>
-    </div>
+
+      {/* Consent Section */}
+      <div className={formStyles.formGroup} style={{ marginTop: '20px' }}>
+        <h3 style={{ 
+          margin: '0 0 15px 0', 
+          fontSize: '18px', 
+          fontWeight: '700',
+          color: '#ffffff'
+        }}>
+          Consent & Authorization
+        </h3>
+        
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'start', 
+            gap: '10px', 
+            cursor: 'pointer',
+            padding: '10px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '6px',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <input
+              type="checkbox"
+              checked={consents.dataProcessing}
+              onChange={(e) => setConsents({ ...consents, dataProcessing: e.target.checked })}
+              required
+              style={{ 
+                marginTop: '4px', 
+                width: '18px',
+                height: '18px',
+                cursor: 'pointer',
+                accentColor: '#9570DD',
+                flexShrink: 0
+              }}
+            />
+            <span style={{ 
+              fontSize: '14px', 
+              lineHeight: '1.5',
+              color: '#ffffff',
+              fontWeight: '500'
+            }}>
+              I consent to the processing of my personal data for recruitment purposes in accordance with applicable privacy laws. <span style={{ color: '#fca5a5' }}>*</span>
+            </span>
+          </label>
+        </div>
+
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'start', 
+            gap: '10px', 
+            cursor: 'pointer',
+            padding: '10px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            borderRadius: '6px',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <input
+              type="checkbox"
+              checked={consents.backgroundCheck}
+              onChange={(e) => setConsents({ ...consents, backgroundCheck: e.target.checked })}
+              required
+              style={{ 
+                marginTop: '4px', 
+                width: '18px',
+                height: '18px',
+                cursor: 'pointer',
+                accentColor: '#9570DD',
+                flexShrink: 0
+              }}
+            />
+            <span style={{ 
+              fontSize: '14px', 
+              lineHeight: '1.5',
+              color: '#ffffff',
+              fontWeight: '500'
+            }}>
+              I authorize the company to conduct background checks as part of the hiring process. <span style={{ color: '#fca5a5' }}>*</span>
+            </span>
+          </label>
+        </div>
+
+        <p style={{ 
+          fontSize: '12px', 
+          color: '#e9d5ff', 
+          marginTop: '12px',
+          marginBottom: 0,
+          fontStyle: 'italic'
+        }}>
+          * Required fields - Both consents must be checked to submit
+        </p>
+      </div>
+
+      {/* Back Button */}
+      <div style={{ marginTop: '30px', textAlign: 'center' }}>
+        <button
+          onClick={() => router.back()}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#9570DD',
+            color: '#ffffff',
+            border: '2px solid #9570DD',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '15px',
+            fontWeight: '600',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#7C40A9';
+            e.currentTarget.style.borderColor = '#7C40A9';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#9570DD';
+            e.currentTarget.style.borderColor = '#9570DD';
+          }}
+        >
+          ← Back to Applications
+        </button>
+      </div>
+    </FormPageWrapper>
   );
 }

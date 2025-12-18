@@ -90,7 +90,11 @@ async getDocument(@Param('id') id: string) {
   }
 
   // Onboarding task related controller functions
-
+  @Get('tasks')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE , SystemRole.JOB_CANDIDATE)
+  async getAllTasks() {
+    return this.onboardingService.getAllTasks();
+  }
   
   @Get('tasks/employee/:employeeId')
   @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.JOB_CANDIDATE , SystemRole.DEPARTMENT_EMPLOYEE)
@@ -101,14 +105,9 @@ async getDocument(@Param('id') id: string) {
   }
 
   @Get('tasks/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE ,SystemRole.DEPARTMENT_EMPLOYEE , SystemRole.JOB_CANDIDATE)
   async getTask(@Param('id') id: string) {
     return this.onboardingService.getTaskById(id);
-  }
-  @Get('tasks')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.JOB_CANDIDATE , SystemRole.JOB_CANDIDATE)
-  async getAllTasks() {
-    return this.onboardingService.getAllTasks();
   }
 
   @Post('tasks')
