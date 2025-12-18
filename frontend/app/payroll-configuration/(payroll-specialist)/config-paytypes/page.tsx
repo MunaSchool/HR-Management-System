@@ -89,22 +89,7 @@ export default function ConfigPayTypesPage() {
     }
   };
 
-  // Delete pay type
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this pay type?")) {
-      try {
-        setLoading(true);
-        await axiosInstance.delete(`/payroll-configuration/pay-types/${id}`);
-        setSuccess("Pay type deleted successfully");
-        fetchPayTypes();
-        setTimeout(() => setSuccess(null), 3000);
-      } catch (err: any) {
-        setError(err?.response?.data?.message || "Failed to delete pay type");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
+  // NOTE: Payroll Specialist is not allowed to delete pay types.
 
   // Filter pay types
   const filteredPayTypes = statusFilter === "all" 
@@ -218,13 +203,7 @@ export default function ConfigPayTypesPage() {
                       >
                         ✏️
                       </button>
-                      <button
-                        onClick={() => handleDelete(payType._id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition text-lg"
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
+                      {/* Payroll Specialist: view/edit only, no delete */}
                     </div>
                   </td>
                 </tr>

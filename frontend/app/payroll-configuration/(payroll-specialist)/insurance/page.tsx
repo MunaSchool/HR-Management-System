@@ -123,16 +123,7 @@ export default function InsurancePage() {
     });
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await axiosInstance.delete(
-        `/payroll-configuration/insurance-brackets/${id}`
-      );
-      await fetchList();
-    } catch (e: any) {
-      setError(e?.response?.data?.message || "Delete failed");
-    }
-  };
+  // NOTE: Payroll Specialist is not allowed to delete insurance brackets.
 
   const approve = async (id: string) => {
     try {
@@ -311,12 +302,6 @@ export default function InsurancePage() {
                             className="text-blue-600 hover:underline"
                           >
                             Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item._id)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Delete
                           </button>
                         </>
                       )}

@@ -88,22 +88,7 @@ export default function ConfigSigningBonusesPage() {
     }
   };
 
-  // Delete bonus
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this signing bonus?")) {
-      try {
-        setLoading(true);
-        await axiosInstance.delete(`/payroll-configuration/signing-bonuses/${id}`);
-        setSuccess("Signing bonus deleted successfully");
-        fetchBonuses();
-        setTimeout(() => setSuccess(null), 3000);
-      } catch (err: any) {
-        setError(err?.response?.data?.message || "Failed to delete signing bonus");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
+  // NOTE: Payroll Specialist is not allowed to delete signing bonuses.
 
   // Filter bonuses
   const filteredBonuses = statusFilter === "all" 
@@ -217,13 +202,7 @@ export default function ConfigSigningBonusesPage() {
                       >
                         ✏️
                       </button>
-                      <button
-                        onClick={() => handleDelete(bonus._id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition text-lg"
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
+                      {/* Payroll Specialist: view/edit only, no delete */}
                     </div>
                   </td>
                 </tr>

@@ -51,16 +51,7 @@ export default function CompensationBenefitsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this benefit?")) {
-      try {
-        await axiosInstance.delete(`/payroll-configuration/termination-resignation-benefits/${id}`);
-        setBenefits(benefits.filter(i => i._id !== id));
-      } catch (err: any) {
-        alert("Failed to delete benefit");
-      }
-    }
-  };
+  // NOTE: Payroll Specialist is not allowed to delete benefits.
 
   const filtered = statusFilter === "all" ? benefits : benefits.filter(i => i.status === statusFilter);
 
@@ -157,7 +148,7 @@ export default function CompensationBenefitsPage() {
                     <div className="flex items-center justify-center gap-3">
                       <button onClick={() => handleView(item._id)} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition" title="View">👁️</button>
                       <button onClick={() => router.push(`./config-benefits/${item._id}/edit`)} className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition" title="Edit">✏️</button>
-                      <button onClick={() => handleDelete(item._id)} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition" title="Delete">🗑️</button>
+                      {/* Payroll Specialist: view/edit only, no delete */}
                     </div>
                   </td>
                 </tr>

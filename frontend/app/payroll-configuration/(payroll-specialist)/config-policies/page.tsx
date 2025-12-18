@@ -57,30 +57,8 @@ export default function ConfigPoliciesPage() {
     }
   };
 
-  /*
-  //edit policy by id
-  const handleEdit = (id: string) => {
-    try {
-        const response = axiosInstance.post(`/payroll-configuration/policies/${id}`);
-      //router.push(`./config-policies/${id}/edit`);
-    } catch (err: any) {
-      alert("Failed to navigate to edit page");
-    }    
-  };
-*/
+  // NOTE: Payroll Specialist is not allowed to delete policies.
 
-    //delete policy
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this policy?")) {
-      try {
-        await axiosInstance.delete(`/payroll-configuration/policies/${id}`);
-        setPolicies(policies.filter(p => p._id !== id));
-      } catch (err: any) {
-        alert("Failed to delete policy");
-      }
-    }
-  };
-  
   //for filtering
   const filteredPolicies = statusFilter === "all" 
     ? policies 
@@ -246,20 +224,7 @@ export default function ConfigPoliciesPage() {
                       >
                         👁️
                       </button>
-                      <button
-                        onClick={() => router.push(`./${policy._id}/edit`)}
-                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition"
-                        title="Edit"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => handleDelete(policy._id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition"
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
+                      {/* Payroll Specialist: view only, no delete */}
                       {policy.status === "draft" && (
                         <>
                           <button
