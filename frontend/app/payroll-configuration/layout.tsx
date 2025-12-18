@@ -9,65 +9,131 @@ type Props = {
 
 export default function PayrollConfigLayout({ children }: Props) {
   const { user } = useAuth();
-  const roleLabel = user?.roles?.length ? user.roles.join(", ") : "Unknown";
+  const roles = user?.roles ?? [];
+  const roleLabel = roles.length ? roles.join(", ") : "Unknown";
+
+  const hasRole = (role: string) => roles.includes(role);
+
+  const canSeePayrollConfigs =
+    hasRole("Payroll Specialist") ||
+    hasRole("Payroll Manager") ||
+    hasRole("System Admin");
+
+  const canSeeHrManagerSection =
+    hasRole("HR Manager") || hasRole("System Admin");
+
+  const canSeeLegalPolicySection =
+    hasRole("Legal & Policy Admin") || hasRole("System Admin");
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {/* Sidebar (empty for now) */}
       <aside className="w-64 hidden md:flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800">
         <div className="h-16 flex items-center px-4 font-semibold">Payroll</div>
         <nav className="flex-1 p-4">
           <div className="space-y-2">
-            <details className="group">
-              <summary className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                <span className="font-medium">Payroll Configs</span>
-                <span className="text-sm text-gray-500 group-open:rotate-180 transition-transform">▾</span>
-              </summary>
-              <div className="mt-2 pl-2 border-l border-gray-200 dark:border-gray-700">
-                <ul className="space-y-1">
-                  <li>
-                    <Link href="/payroll-configuration/config-policies" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Policies
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/payroll-configuration/config-paygrade" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Pay Grades
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/payroll-configuration/config-paytypes" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Pay Types
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/payroll-configuration/config-allowances" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Allowances
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/payroll-configuration/config-benefits" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Termination & Resignation Benefits
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/payroll-configuration/insurance" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Insurance Brackets
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/payroll-configuration/config-signing-bonuses" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Signing Bonus
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/payroll-configuration/company-settings" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                      Company Settings
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </details>
+            {canSeePayrollConfigs && (
+              <details className="group">
+                <summary className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                  <span className="font-medium">Payroll Configs</span>
+                  <span className="text-sm text-gray-500 group-open:rotate-180 transition-transform">▾</span>
+                </summary>
+                <div className="mt-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                  <ul className="space-y-1">
+                    <li>
+                      <Link href="/payroll-configuration/config-policies" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Policies
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/config-paygrade" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Pay Grades
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/config-paytypes" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Pay Types
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/config-allowances" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Allowances
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/config-benefits" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Termination & Resignation Benefits
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/insurance" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Insurance Brackets
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/config-signing-bonuses" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Signing Bonus
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/company-settings" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Company Settings
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </details>
+            )}
+
+            {canSeeHrManagerSection && (
+              <details className="group">
+                <summary className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                  <span className="font-medium">HR Manager</span>
+                  <span className="text-sm text-gray-500 group-open:rotate-180 transition-transform">▾</span>
+                </summary>
+                <div className="mt-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                  <ul className="space-y-1">
+                    <li>
+                      <Link href="/payroll-configuration/review-insurance-brackets" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Review Insurance Brackets
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/review-policies" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Review Payroll Policies
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/disputes" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Payroll Disputes
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </details>
+            )}
+
+            {canSeeLegalPolicySection && (
+              <details className="group">
+                <summary className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                  <span className="font-medium">Legal &amp; Policy Admin</span>
+                  <span className="text-sm text-gray-500 group-open:rotate-180 transition-transform">▾</span>
+                </summary>
+                <div className="mt-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                  <ul className="space-y-1">
+                    <li>
+                      <Link href="/payroll-configuration/config-tax-rules" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Tax Rules &amp; Laws
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/payroll-configuration/tax-documents" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        Tax Documents
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </details>
+            )}
           </div>
         </nav>
       </aside>
