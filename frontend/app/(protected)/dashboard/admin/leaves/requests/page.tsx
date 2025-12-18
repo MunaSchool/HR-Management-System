@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Table,
@@ -31,6 +31,9 @@ export default function LeaveRequestsAdminPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // ✅ NEW: bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     fetchRequests();
   }, []);
@@ -49,7 +52,10 @@ export default function LeaveRequestsAdminPage() {
     }
   };
 
-  // 🔹 Handle approval or rejection
+  // ✅ Normalize status (handles APPROVED/approved/etc.)
+  const normStatus = (s: any) => String(s || '').toLowerCase();
+
+  // 🔹 Handle approval or rejection (single)
   const handleDecision = async (id: string, action: 'approved' | 'rejected') => {
     setLoading(true);
     try {
@@ -63,15 +69,12 @@ export default function LeaveRequestsAdminPage() {
       let payload: any;
 
       if (isManager && !isHR) {
-        // Department / HR manager → dedicated manager endpoint
         endpoint = `/leaves/requests/${id}/manager-decision`;
         payload = { decision: action };
       } else if (isHR) {
-        // HR Admin / HR Employee → HR compliance endpoint
         endpoint = `/leaves/requests/${id}/hr-review`;
         payload = { action };
       } else {
-        // Fallback: direct status update
         endpoint = `/leaves/requests/${id}`;
         payload = { status: action };
       }
@@ -89,6 +92,17 @@ export default function LeaveRequestsAdminPage() {
     }
   };
 
+  // ✅ NEW: bulk helpers
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
   // 🔹 Safe helper for employee name
   const getEmployeeName = (emp: any) => {
     if (!emp) return 'Unknown';
@@ -99,28 +113,103 @@ export default function LeaveRequestsAdminPage() {
   };
 
   // 🔹 Filter safely by employee or leave type
-  const filtered = requests.filter((r) => {
-    const empName = getEmployeeName(r.employeeId)?.toLowerCase() ?? '';
-    const leaveName = r?.leaveTypeId?.name?.toLowerCase() ?? '';
-    return (
-      empName.includes(search.toLowerCase()) ||
-      leaveName.includes(search.toLowerCase())
-    );
-  });
+  const filtered = useMemo(() => {
+    return requests.filter((r) => {
+      const empName = getEmployeeName(r.employeeId)?.toLowerCase() ?? '';
+      const leaveName = r?.leaveTypeId?.name?.toLowerCase() ?? '';
+      return (
+        empName.includes(search.toLowerCase()) ||
+        leaveName.includes(search.toLowerCase())
+      );
+    });
+  }, [requests, search]);
+
+  const pendingIdsInFiltered = useMemo(() => {
+    return filtered
+      .filter((r) => normStatus(r.status) === 'pending')
+      .map((r) => r._id);
+  }, [filtered]);
+
+  const allPendingSelected =
+    pendingIdsInFiltered.length > 0 &&
+    pendingIdsInFiltered.every((id) => selectedIds.has(id));
+
+  const toggleSelectAllPendingInFiltered = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allPendingSelected) {
+        // unselect only pending ones in filtered
+        pendingIdsInFiltered.forEach((id) => next.delete(id));
+      } else {
+        // select all pending ones in filtered
+        pendingIdsInFiltered.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const handleBulkDecision = async (action: 'approved' | 'rejected') => {
+    // only operate on selected + pending
+    const ids = filtered
+      .filter((r) => selectedIds.has(r._id) && normStatus(r.status) === 'pending')
+      .map((r) => r._id);
+
+    if (ids.length === 0) {
+      toast.error('Select at least 1 pending request');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const results = await Promise.allSettled(ids.map((id) => handleDecision(id, action)));
+
+      const ok = results.filter((r) => r.status === 'fulfilled').length;
+      const fail = results.length - ok;
+
+      toast.success(`Bulk ${action}: ${ok} succeeded${fail ? `, ${fail} failed` : ''}`);
+
+      clearSelection();
+      await fetchRequests();
+      setSelected(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold">Leave Requests</h1>
           <p className="text-gray-500">
             Review, approve, or reject employee leave submissions.
           </p>
         </div>
-        <Button variant="outline" onClick={fetchRequests} disabled={loading}>
-          <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
-        </Button>
+
+        <div className="flex gap-2 items-center flex-wrap">
+          {selectedIds.size > 0 && (
+            <>
+              <Button onClick={() => handleBulkDecision('approved')} disabled={loading}>
+                Approve Selected ({selectedIds.size})
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleBulkDecision('rejected')}
+                disabled={loading}
+              >
+                Reject Selected ({selectedIds.size})
+              </Button>
+              <Button variant="outline" onClick={clearSelection} disabled={loading}>
+                Clear
+              </Button>
+            </>
+          )}
+
+          <Button variant="outline" onClick={fetchRequests} disabled={loading}>
+            <RefreshCcw className="h-4 w-4 mr-2" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -155,6 +244,16 @@ export default function LeaveRequestsAdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {/* ✅ NEW: select-all (only for pending in current filter) */}
+                    <TableHead className="w-[50px]">
+                      <input
+                        type="checkbox"
+                        checked={allPendingSelected}
+                        onChange={toggleSelectAllPendingInFiltered}
+                        title="Select all pending in this list"
+                      />
+                    </TableHead>
+
                     <TableHead>Employee</TableHead>
                     <TableHead>Leave Type</TableHead>
                     <TableHead>From → To</TableHead>
@@ -163,78 +262,86 @@ export default function LeaveRequestsAdminPage() {
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
+
                 <TableBody>
-                  {filtered.map((r) => (
-                    <TableRow key={r._id}>
-                      <TableCell>{getEmployeeName(r.employeeId)}</TableCell>
-                      <TableCell>{r.leaveTypeId?.name || 'Unknown'}</TableCell>
-                      <TableCell>
-                        {r.dates?.from
-                          ? new Date(r.dates.from).toLocaleDateString()
-                          : '—'}{' '}
-                        →{' '}
-                        {r.dates?.to
-                          ? new Date(r.dates.to).toLocaleDateString()
-                          : '—'}
-                      </TableCell>
-                      <TableCell>{r.durationDays ?? '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {r.status === 'approved' ? (
-                            <Check className="text-green-600 h-4 w-4" />
-                          ) : r.status === 'rejected' ? (
-                            <X className="text-red-600 h-4 w-4" />
-                          ) : (
-                            <Clock className="text-yellow-600 h-4 w-4" />
+                  {filtered.map((r) => {
+                    const status = normStatus(r.status);
+                    const isPending = status === 'pending';
+
+                    return (
+                      <TableRow key={r._id}>
+                        {/* ✅ NEW: per-row checkbox (disabled if not pending) */}
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(r._id)}
+                            onChange={() => toggleOne(r._id)}
+                            disabled={!isPending}
+                            title={!isPending ? 'Only pending requests can be bulk processed' : ''}
+                          />
+                        </TableCell>
+
+                        <TableCell>{getEmployeeName(r.employeeId)}</TableCell>
+                        <TableCell>{r.leaveTypeId?.name || 'Unknown'}</TableCell>
+                        <TableCell>
+                          {r.dates?.from ? new Date(r.dates.from).toLocaleDateString() : '—'} →{' '}
+                          {r.dates?.to ? new Date(r.dates.to).toLocaleDateString() : '—'}
+                        </TableCell>
+                        <TableCell>{r.durationDays ?? '-'}</TableCell>
+
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {status === 'approved' ? (
+                              <Check className="text-green-600 h-4 w-4" />
+                            ) : status === 'rejected' ? (
+                              <X className="text-red-600 h-4 w-4" />
+                            ) : (
+                              <Clock className="text-yellow-600 h-4 w-4" />
+                            )}
+
+                            <Badge
+                              className={
+                                status === 'approved'
+                                  ? 'bg-green-100 text-green-700'
+                                  : status === 'rejected'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }
+                            >
+                              {status}
+                            </Badge>
+                          </div>
+                        </TableCell>
+
+                        <TableCell className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => setSelected(r)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+
+                          {isPending && (
+                            <>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleDecision(r._id, 'approved')}
+                                disabled={loading}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDecision(r._id, 'rejected')}
+                                disabled={loading}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
-                          <Badge
-                            className={
-                              r.status === 'approved'
-                                ? 'bg-green-100 text-green-700'
-                                : r.status === 'rejected'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-yellow-100 text-yellow-700'
-                            }
-                          >
-                            {r.status}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelected(r)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {r.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() =>
-                                handleDecision(r._id, 'approved')
-                              }
-                              disabled={loading}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() =>
-                                handleDecision(r._id, 'rejected')
-                              }
-                              disabled={loading}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -277,8 +384,7 @@ export default function LeaveRequestsAdminPage() {
 
                   {selected.attachmentId && (
                     <p>
-                      <b>Attachment:</b>{' '}
-                      {selected.attachmentId.fileName || 'Uploaded file'}
+                      <b>Attachment:</b> {selected.attachmentId.fileName || 'Uploaded file'}
                     </p>
                   )}
 
@@ -290,14 +396,14 @@ export default function LeaveRequestsAdminPage() {
                           <li
                             key={idx}
                             className={`p-2 rounded-md border ${
-                              step.status === 'approved'
+                              String(step.status).toLowerCase() === 'approved'
                                 ? 'bg-green-50 border-green-300'
-                                : step.status === 'rejected'
+                                : String(step.status).toLowerCase() === 'rejected'
                                 ? 'bg-red-50 border-red-300'
                                 : 'bg-yellow-50 border-yellow-300'
                             }`}
                           >
-                            <b>{step.role}</b> — {step.status}
+                            <b>{step.role}</b> — {String(step.status).toLowerCase()}
                             {step.decidedAt && (
                               <span className="text-gray-500 ml-2">
                                 ({new Date(step.decidedAt).toLocaleString()})
@@ -312,8 +418,9 @@ export default function LeaveRequestsAdminPage() {
               )}
             </DialogDescription>
           </DialogHeader>
+
           <DialogFooter>
-            {selected?.status === 'pending' && (
+            {selected && normStatus(selected.status) === 'pending' && (
               <>
                 <Button
                   onClick={() => handleDecision(selected._id, 'approved')}
