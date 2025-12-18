@@ -44,7 +44,7 @@ export default function EvaluateAssignmentPage() {
   const [strengths, setStrengths] = useState('');
   const [improvementAreas, setImprovementAreas] = useState('');
 
-  // Manager-only guard (REQ-AE-03 / BR-41)
+  // Manager-only guard
   useEffect(() => {
     if (!authLoading && user && !isLineManager(user)) {
       router.replace('/performance');

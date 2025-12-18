@@ -268,8 +268,8 @@ export default function OrganizationHierarchyPage() {
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {isManagerUser
-              ? "Graphical view of organizational structure and reporting lines (REQ-SANV-01)"
-              : "Your position in the organization (BR 41)"
+              ? "Graphical view of organizational structure and reporting lines"
+              : "Your position in the organization"
             }
           </p>
         </div>
@@ -280,12 +280,12 @@ export default function OrganizationHierarchyPage() {
           </div>
         )}
 
-        {/* Privacy Note (BR 41) */}
+        {/* Privacy Note */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-6 rounded">
           <p className="text-sm text-blue-700 dark:text-blue-400">
-            <strong>REQ-SANV-01:</strong> {isManagerUser
+            {isManagerUser
               ? "As a manager/HR, you can view the full organizational structure showing all departments and positions."
-              : "As an employee, you can only view your own position and reporting structure for privacy (BR 41)."
+              : "As an employee, you can only view your own position and reporting structure for privacy."
             }
           </p>
         </div>

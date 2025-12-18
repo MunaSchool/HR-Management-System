@@ -277,6 +277,7 @@ export class PerformanceService {
         console.log("📋 Template ID:", templateId);
 
         const createdAssignments: AppraisalAssignmentDocument[] = [];
+        let skippedCount = 0;
 
         // Fetch employees in the specified departments
         const EmployeeProfileModel = this.appraisalAssignmentModel.db.model('EmployeeProfile');
@@ -322,21 +323,22 @@ export class PerformanceService {
                     console.log("👔 Manager found:", manager._id);
                     console.log("👔 Manager primaryPositionId:", manager.primaryPositionId);
                 } else {
-                    console.warn("⚠️ WARNING: No active employee holds supervisorPositionId:", emp.supervisorPositionId);
+                    console.warn("⚠️ SKIPPING: No active employee holds supervisorPositionId:", emp.supervisorPositionId);
                     console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
                     console.warn("   This position may be vacant or the employee may not be ACTIVE");
-                    console.warn("   Creating assignment without manager - can be assigned later");
+                    console.warn("   Cannot create assignment - manager is required");
+                    skippedCount++;
+                    continue;
                 }
             } else {
-                console.warn("⚠️ WARNING: Employee has NO supervisorPositionId set");
+                console.warn("⚠️ SKIPPING: Employee has NO supervisorPositionId set");
                 console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
                 console.warn("   Department:", emp.primaryDepartmentId);
                 console.warn("   Position:", emp.primaryPositionId);
-                console.warn("   Creating assignment without manager - can be assigned later");
+                console.warn("   Cannot create assignment - manager is required");
+                skippedCount++;
+                continue;
             }
-
-            // Continue creating assignment even if no manager is assigned
-            // Manager can be assigned later by HR
 
             console.log("📝 Creating appraisal assignment:", {
                 employeeProfileId: emp._id,
@@ -375,6 +377,8 @@ export class PerformanceService {
             console.warn("⚠️ No assignments created — check departments list and employee filtering rules");
         }
 
+        console.log(`✅ Created ${createdAssignments.length} assignments`);
+        console.log(`⚠️ Skipped ${skippedCount} employees without managers`);
         return createdAssignments;
     }
 

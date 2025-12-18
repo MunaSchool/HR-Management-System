@@ -46,7 +46,7 @@ async function resolveDepartmentHead(
     return undefined;
   }
 
-  if (positionId && department.headPositionId.toString() === positionId.toString()) {
+  if (positionId && department.headPositionId.equals(positionId)) {
     return undefined;
   }
 
@@ -66,7 +66,7 @@ function isObjectIdLike(value: unknown): value is Types.ObjectId | string {
 PositionSchema.pre('save', async function (next) {
   try {
     const doc = this as HydratedDocument<Position>;
-    const DepartmentModel = this.db.model<DepartmentDocument>(Department.name);
+    const DepartmentModel = model<DepartmentDocument>(Department.name);
     doc.reportsToPositionId = await resolveDepartmentHead(
       DepartmentModel,
       doc.departmentId,
