@@ -149,15 +149,23 @@ activatePosition(@Param('id') id: string) {
   }
 
   @Get('change-requests')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER) // HR and System Admin can view all organizational structure change requests
-  getAllChangeRequests() {
+  @Roles(SystemRole.SYSTEM_ADMIN) // ONLY System Admin can view all organizational structure change requests
+  getAllChangeRequests(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: change-requests (GET ALL)");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+    console.log("⚠️ ONLY SYSTEM_ADMIN can view all change requests");
     return this.organizationStructureService.getAllChangeRequests();
   }
 
   @Get('change-requests/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
-  getChangeRequestById(@Param('id') id: string) {
-    return this.organizationStructureService.getChangeRequestById(id);
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD) // System Admin can view all, managers can view their own
+  getChangeRequestById(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: change-requests/:id");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("📋 Request ID:", id);
+    console.log("🎭 User roles:", user.roles);
+    return this.organizationStructureService.getChangeRequestById(id, user.employeeId, user.roles);
   }
 
   @Put('change-requests/:id/approve')
@@ -178,24 +186,43 @@ activatePosition(@Param('id') id: string) {
 
   @Get('hierarchy/organization')
   @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
-  getOrganizationHierarchy() {
+  getOrganizationHierarchy(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/organization");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+
+    const normalizedRoles = user.roles?.map(r =>
+      r.toUpperCase().replace(/\s+/g, "_")
+    );
+    console.log("🎭 Normalized roles:", normalizedRoles);
+
     return this.organizationStructureService.getOrganizationHierarchy();
   }
 
   @Get('hierarchy/department/:departmentId')
   @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
-  getDepartmentHierarchy(@Param('departmentId') departmentId: string) {
+  getDepartmentHierarchy(@Param('departmentId') departmentId: string, @CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/department/:departmentId");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles:", user.roles);
+    console.log("📁 Department ID:", departmentId);
     return this.organizationStructureService.getDepartmentHierarchy(departmentId);
   }
 
   @Get('hierarchy/my-team')
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // added hr amanager THE FRADMIN IS A TEMP FOR TESTING BY ENGY
   getMyTeamHierarchy(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/my-team");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles:", user.roles);
     return this.organizationStructureService.getMyTeamHierarchy(user.employeeId);
   }
 
   @Get('hierarchy/my-structure')
   getMyStructure(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/my-structure");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User role(s):", user.roles);
     return this.organizationStructureService.getMyStructure(user.employeeId);
   }
 }

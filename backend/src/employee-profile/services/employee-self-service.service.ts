@@ -123,19 +123,26 @@ export class EmployeeSelfServiceService {
 
   // Get team members (US-E4-01, US-E4-02)
   async getTeamMembers(managerPositionId: string): Promise<EmployeeProfileDocument[]> {
-    console.log('🔍 Getting team members for position:', managerPositionId);
+    console.log('🔍 Finding team members where supervisorPositionId =', managerPositionId);
 
     // First, try to find employees who report to this position
+    console.log('🧩 Query params:', { supervisorPositionId: managerPositionId, status: EmployeeStatus.ACTIVE });
     const directReports = await this.employeeProfileModel
       .find({ supervisorPositionId: managerPositionId, status: EmployeeStatus.ACTIVE })
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
       .exec();
 
-    console.log('👥 Found', directReports.length, 'direct reports');
-    directReports.forEach(emp => {
-      console.log('  -', emp.fullName, '| supervisorPositionId:', emp.supervisorPositionId);
-    });
+    console.log('📦 Query result count:', directReports.length);
+    console.log('👥 Team members found:', directReports.length);
+    if (directReports.length > 0) {
+      console.log('👤 First team member:', directReports[0]);
+      directReports.forEach(emp => {
+        console.log('  -', emp.fullName, '| supervisorPositionId:', emp.supervisorPositionId);
+      });
+    } else {
+      console.warn('⚠️ EMPTY RESULT: No direct reports found with supervisorPositionId =', managerPositionId);
+    }
 
     // If there are direct reports, return them
     if (directReports.length > 0) {
@@ -144,6 +151,7 @@ export class EmployeeSelfServiceService {
 
     // Otherwise, check if this manager is a department head
     // Find which department has this position as headPositionId
+    console.log('🏢 Checking if position is department head...');
     const Department = this.employeeProfileModel.db.model('Department');
     const department = await Department.findOne({ headPositionId: managerPositionId }).exec();
 
@@ -151,18 +159,20 @@ export class EmployeeSelfServiceService {
 
     if (department) {
       // Return all active employees in this department
+      console.log('🧩 Query params:', { primaryDepartmentId: department._id, status: EmployeeStatus.ACTIVE });
       const deptEmployees = await this.employeeProfileModel
         .find({ primaryDepartmentId: department._id, status: EmployeeStatus.ACTIVE })
         .populate('primaryPositionId')
         .populate('primaryDepartmentId')
         .exec();
 
+      console.log('📦 Query result count:', deptEmployees.length);
       console.log('👥 Found', deptEmployees.length, 'employees in department');
       return deptEmployees;
     }
 
     // No team found
-    console.log('❌ No team members found');
+    console.warn('⚠️ No team members found — check supervisorPositionId mapping');
     return [];
   }
 

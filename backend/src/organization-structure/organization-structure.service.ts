@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
@@ -75,28 +75,44 @@ this.positionModel.schema.pre('findOneAndUpdate', function (next) {
   // 📌 CREATE DEPARTMENT
   // ======================
 async createDepartment(dto: CreateDepartmentDto) {
+  console.log('📁 Creating department');
+  console.log('🧩 Create params:', dto);
+
   let headPositionId: Types.ObjectId | undefined = undefined;
 
+  // ⚠️ employeeNumber is for convenience only — converts to headPositionId
   if (dto.employeeNumber) {
+    console.log('🔍 Resolving department head from employeeNumber:', dto.employeeNumber);
     const employee = await this.employeeProfileModel.findOne({
       employeeNumber: dto.employeeNumber,
       status: 'ACTIVE',
     });
 
     if (!employee || !employee.primaryPositionId) {
+      console.error('❌ ERROR: Invalid department head — employee not found or has no position');
       throw new BadRequestException('Invalid department head');
     }
 
     headPositionId = employee.primaryPositionId;
+    console.log('✅ Resolved headPositionId:', headPositionId);
   }
 
-  return this.departmentModel.create({
+  // Direct headPositionId takes precedence
+  if (dto.headPositionId) {
+    console.log('📌 Using direct headPositionId:', dto.headPositionId);
+    headPositionId = new Types.ObjectId(dto.headPositionId);
+  }
+
+  const department = await this.departmentModel.create({
     code: dto.code,
     name: dto.name,
     description: dto.description,
     headPositionId,
     isActive: dto.isActive ?? true,
   });
+
+  console.log('✅ Department created:', department._id);
+  return department;
 }
 
 
@@ -123,8 +139,30 @@ async createDepartment(dto: CreateDepartmentDto) {
   // 📌 UPDATE DEPARTMENT
   // ============================
   async updateDepartment(id: string, dto: UpdateDepartmentDto) {
+    console.log('📝 Updating department:', id);
+    console.log('🧩 Update params:', dto);
+
+    // 🚨 CRITICAL DTO VALIDATION
+    if ((dto as any).headEmployeeNumber) {
+      console.error('❌ INVALID DTO FIELD — Department head must be a Position');
+      console.error('   Received headEmployeeNumber:', (dto as any).headEmployeeNumber);
+      console.error('   Department head is ALWAYS a Position, not an employee');
+      throw new BadRequestException('Invalid field: headEmployeeNumber. Use headPositionId instead.');
+    }
+
+    // Validate headPositionId if provided
+    if (dto.headPositionId && !Types.ObjectId.isValid(dto.headPositionId)) {
+      console.error('❌ INVALID headPositionId — must be a valid Position ObjectId');
+      throw new BadRequestException('headPositionId must be a valid Position ObjectId');
+    }
+
     const updated = await this.departmentModel.findByIdAndUpdate(id, dto, { new: true });
-    if (!updated) throw new NotFoundException("Department not found");
+    if (!updated) {
+      console.error('❌ ERROR: Department not found');
+      throw new NotFoundException("Department not found");
+    }
+
+    console.log('✅ Department updated:', updated._id);
     return updated;
   }
 
@@ -252,7 +290,9 @@ async activatePosition(id: string) {
   // ======================
   async submitChangeRequest(dto: any, requestedBy: string) {
     try {
+      console.log('📨 Structure change request submitted by manager');
       console.log('📝 Submitting change request:', { dto, requestedBy });
+      console.log('🧩 Request params:', { requestType: dto.requestType, targetDepartmentId: dto.targetDepartmentId, targetPositionId: dto.targetPositionId });
 
       // Generate unique request number
       const requestNumber = `CR-${Date.now()}-${requestedBy.slice(-6)}`;
@@ -271,6 +311,8 @@ async activatePosition(id: string) {
       });
 
       console.log('✅ Change request created:', changeRequest._id);
+      console.log('🛂 Request awaiting SYSTEM_ADMIN approval');
+      console.log('⚠️ Managers CANNOT approve — only SYSTEM_ADMIN can approve structure changes');
 
       // Send notification to System Admin (REQ-OSM-11)
       try {
@@ -278,7 +320,7 @@ async activatePosition(id: string) {
           systemRoles: { $in: ['System Admin'] }
         }).exec();
 
-        console.log(`📧 Sending notifications to ${systemAdmins.length} admins`);
+        console.log(`📧 Sending notifications to ${systemAdmins.length} System Admins`);
 
         for (const admin of systemAdmins) {
           await this.notificationLogService.sendNotification({
@@ -294,7 +336,9 @@ async activatePosition(id: string) {
 
       return changeRequest;
     } catch (error) {
-      console.error('❌ submitChangeRequest error:', error);
+      console.error('❌ submitChangeRequest error:', error.message);
+      console.error('❌ STACK:', error.stack);
+      console.error('❌ FULL ERROR OBJ:', error);
       throw error;
     }
   }
@@ -303,30 +347,103 @@ async activatePosition(id: string) {
   // 📌 GET ALL CHANGE REQUESTS (Admin only)
   // ======================
   async getAllChangeRequests() {
-    return this.changeRequestModel
+    console.log('📋 Fetching all change requests (SYSTEM_ADMIN only)');
+    console.log('🧩 Query params: all requests');
+
+    const requests = await this.changeRequestModel
       .find()
       .populate('requestedByEmployeeId', 'firstName lastName fullName employeeNumber')
       .sort({ submittedAt: -1 })
       .exec();
+
+    console.log('📦 Result count:', requests.length);
+    if (requests.length > 0) {
+      console.log('📦 Sample result:', {
+        id: requests[0]._id,
+        requestType: requests[0].requestType,
+        status: requests[0].status,
+        submittedBy: requests[0].requestedByEmployeeId
+      });
+    } else {
+      console.warn('⚠️ No change requests found');
+    }
+
+    console.log('✅ Change requests response sent');
+    return requests;
   }
 
   // ======================
   // 📌 GET MY CHANGE REQUESTS (Manager)
   // ======================
   async getMyChangeRequests(employeeId: string) {
-    return this.changeRequestModel
+    console.log('📋 Fetching change requests for specific user');
+    console.log('👤 Requesting user:', employeeId);
+    console.log('🧩 Query params:', { requestedByEmployeeId: employeeId });
+
+    const requests = await this.changeRequestModel
       .find({ requestedByEmployeeId: new Types.ObjectId(employeeId) })
       .populate('requestedByEmployeeId', 'firstName lastName fullName employeeNumber')
       .sort({ submittedAt: -1 })
       .exec();
+
+    console.log('📦 Result count:', requests.length);
+    if (requests.length > 0) {
+      console.log('📦 Sample result:', {
+        id: requests[0]._id,
+        requestType: requests[0].requestType,
+        status: requests[0].status,
+        submittedBy: requests[0].requestedByEmployeeId
+      });
+    } else {
+      console.warn('⚠️ No change requests found for this user');
+    }
+
+    console.log('✅ My change requests response sent');
+    return requests;
   }
 
   // ======================
   // 📌 GET CHANGE REQUEST BY ID
   // ======================
-  async getChangeRequestById(id: string) {
-    const req = await this.changeRequestModel.findById(id).exec();
-    if (!req) throw new NotFoundException("Change request not found");
+  async getChangeRequestById(id: string, requestingUserId?: string, userRoles?: string[]) {
+    console.log('🔍 Fetching change request by ID');
+    console.log('📋 Request ID:', id);
+    console.log('👤 Requesting user:', requestingUserId);
+    console.log('🎭 User roles:', userRoles);
+
+    const req = await this.changeRequestModel
+      .findById(id)
+      .populate('requestedByEmployeeId', 'firstName lastName fullName employeeNumber')
+      .exec();
+
+    if (!req) {
+      console.error('❌ ERROR: Change request not found');
+      throw new NotFoundException("Change request not found");
+    }
+
+    console.log('📦 Change request found');
+    console.log('👤 Request submitted by:', req.requestedByEmployeeId);
+
+    // Check authorization: System Admin can see all, others can only see their own
+    if (requestingUserId && userRoles) {
+      const normalizedRoles = userRoles.map(r => r.toUpperCase().replace(/\s+/g, "_"));
+      console.log('🎭 Normalized roles:', normalizedRoles);
+
+      const isSystemAdmin = normalizedRoles.includes('SYSTEM_ADMIN');
+      const isOwnRequest = req.requestedByEmployeeId._id.toString() === requestingUserId;
+
+      console.log('🔐 Authorization check:');
+      console.log('   Is System Admin?', isSystemAdmin);
+      console.log('   Is own request?', isOwnRequest);
+
+      if (!isSystemAdmin && !isOwnRequest) {
+        console.error('❌ FORBIDDEN: User is not System Admin and not the requester');
+        throw new ForbiddenException("You can only view your own change requests");
+      }
+
+      console.log('✅ Authorization passed');
+    }
+
     return req;
   }
 
@@ -350,8 +467,19 @@ async activatePosition(id: string) {
   // 📌 APPROVE CHANGE REQUEST (REQ-OSM-04, BR 36)
   // ======================
   async approveChangeRequest(id: string, approvedBy: string) {
+    console.log('✅ SYSTEM_ADMIN approving change request');
+    console.log('📋 Request ID:', id);
+    console.log('👤 Approved by:', approvedBy);
+
     const request = await this.changeRequestModel.findById(id).exec();
-    if (!request) throw new NotFoundException("Change request not found");
+    if (!request) {
+      console.error('❌ ERROR: Change request not found');
+      throw new NotFoundException("Change request not found");
+    }
+
+    console.log('📝 Request type:', request.requestType);
+    console.log('👤 Requested by:', request.requestedByEmployeeId);
+    console.log('⚠️ Only SYSTEM_ADMIN can approve — enforced by controller @Roles guard');
 
     // Update request status
     const updated = await this.changeRequestModel.findByIdAndUpdate(
@@ -363,12 +491,16 @@ async activatePosition(id: string) {
       { new: true }
     );
 
+    console.log('✅ Change request approved');
+
     // Send notification to requester (REQ-OSM-11)
     await this.notificationLogService.sendNotification({
       to: new Types.ObjectId(request.requestedByEmployeeId.toString()),
       type: 'Structure Change Request Approved',
       message: `Your organizational structure change request has been approved and applied.`,
     });
+
+    console.log('📧 Notification sent to requester');
 
     return updated;
   }
@@ -404,11 +536,45 @@ async activatePosition(id: string) {
   // 📌 GET ORGANIZATION HIERARCHY (REQ-SANV-01, BR 24)
   // ======================
   async getOrganizationHierarchy() {
+    console.log("➡️ Endpoint called: getOrganizationHierarchy");
+    console.log("🧩 Query params:", { isActive: true });
+
     const departments = await this.departmentModel.find({ isActive: true }).exec();
+    console.log("📦 Result count:", departments.length);
+    console.log("📁 Departments found:", departments.length);
+    if (departments.length > 0) {
+      console.log("📦 Sample result:", departments[0]);
+
+      // 🚨 CRITICAL DATA VALIDATION
+      departments.forEach(dept => {
+        if (dept.headPositionId) {
+          // Check if it's a placeholder string
+          const headPosStr = dept.headPositionId.toString();
+          if (headPosStr.includes('PUT_A_VALID') || headPosStr.includes('PLACEHOLDER')) {
+            console.error("❌ INVALID DATA: Department.headPositionId is a placeholder string");
+            console.error("   Department:", dept.name, "has invalid headPositionId:", headPosStr);
+          }
+          // Check if it's a valid ObjectId format
+          if (!Types.ObjectId.isValid(dept.headPositionId)) {
+            console.error("❌ INVALID headPositionId — must be a Position _id");
+            console.error("   Department:", dept.name, "has invalid headPositionId:", dept.headPositionId);
+          }
+        }
+      });
+    }
+
     const positions = await this.positionModel.find({ isActive: true })
       .populate('departmentId')
       //.populate('reportsToPositionId')
       .exec();
+
+    console.log("📦 Result count:", positions.length);
+    console.log("🏷️ Positions found:", positions.length);
+    if (positions.length > 0) {
+      console.log("📦 Sample result:", positions[0]);
+    }
+
+    console.log("🔗 Mapping employees to positions");
 
     return {
       departments,
@@ -460,17 +626,31 @@ async activatePosition(id: string) {
   // 📌 GET MY STRUCTURE (BR 41)
   // ======================
   async getMyStructure(employeeId: string) {
+    console.log("➡️ getMyStructure called");
+    console.log("👤 Employee ID:", employeeId);
+    console.log("🔒 Employee restricted to own reporting line");
+
     const employee = await this.employeeProfileModel.findById(employeeId)
       .populate('primaryPositionId')
       .populate('primaryDepartmentId')
       .exec();
 
-    if (!employee) throw new NotFoundException("Employee not found");
+    if (!employee) {
+      console.error("❌ ERROR: Employee not found");
+      throw new NotFoundException("Employee not found");
+    }
+
+    console.log("👤 Employee:", employee.fullName);
+    console.log("📌 Employee primaryPositionId:", employee.primaryPositionId);
+    console.log("📌 Employee primaryDepartmentId:", employee.primaryDepartmentId);
 
     const position = await this.positionModel.findById(employee.primaryPositionId)
       .populate('reportsToPositionId')
       .populate('departmentId')
       .exec();
+
+    console.log("🏷️ Position:", position?.title);
+    console.log("🔗 Reports to:", position?.reportsToPositionId);
 
     return {
       employee,

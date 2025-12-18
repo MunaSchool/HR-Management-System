@@ -186,9 +186,22 @@ export class EmployeeProfileController {
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER)
   async getTeamMembers(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: /employee-profile/team");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+
+    const normalizedRoles = user.roles?.map(r =>
+      r.toUpperCase().replace(/\s+/g, "_")
+    );
+    console.log("🎭 Normalized roles:", normalizedRoles);
+
+    console.log("🔍 Fetching manager profile");
     // Get the manager's employee profile to find their primaryPositionId
     const manager = await this.employeeProfileService.getMyProfile(user.employeeId);
+    console.log("📌 Manager primaryPositionId:", manager.primaryPositionId);
+
     if (!manager.primaryPositionId) {
+      console.warn("⚠️ No position assigned to manager — returning empty team");
       return []; // No position assigned, return empty team
     }
     // Convert ObjectId to string - handle both string and object types
@@ -196,7 +209,16 @@ export class EmployeeProfileController {
       ? manager.primaryPositionId
       : manager.primaryPositionId._id?.toString() || manager.primaryPositionId.toString();
 
-    return this.employeeProfileService.getTeamMembers(positionId);
+    console.log("🔍 Finding team members where supervisorPositionId =", positionId);
+    const team = await this.employeeProfileService.getTeamMembers(positionId);
+    console.log("👥 Team members found:", team.length);
+    if (team.length > 0) {
+      console.log("👤 First team member:", team[0]);
+    } else {
+      console.warn("⚠️ No team members found — check supervisorPositionId mapping");
+    }
+    console.log("✅ Team response sent");
+    return team;
   }
 
   @Get('team/:id')

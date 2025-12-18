@@ -15,6 +15,36 @@ export class EmployeeCrudService {
     private employeeRoleModel: Model<EmployeeSystemRole>,
   ) {}
 
+  // Helper to resolve supervisorPositionId from organizational structure
+  private async resolveSupervisorPositionId(primaryPositionId: any): Promise<Types.ObjectId | undefined> {
+    if (!primaryPositionId) {
+      console.warn("⚠️ No primaryPositionId provided — cannot resolve supervisor");
+      return undefined;
+    }
+
+    console.log("🔍 Resolving supervisor for position:", primaryPositionId);
+
+    const PositionModel = this.employeeProfileModel.db.model('Position');
+    const position = await PositionModel.findById(primaryPositionId).exec();
+
+    if (!position) {
+      console.error("❌ Position not found:", primaryPositionId);
+      return undefined;
+    }
+
+    console.log("🏷️ Loaded position:", position._id);
+    console.log("📋 Position title:", position.title);
+    console.log("⬆️ Position reportsToPositionId:", position.reportsToPositionId);
+
+    if (!position.reportsToPositionId) {
+      console.warn("⚠️ Position has no reportsToPositionId (department head or top-level position)");
+      return undefined;
+    }
+
+    console.log("✅ supervisorPositionId resolved:", position.reportsToPositionId);
+    return position.reportsToPositionId;
+  }
+
   // Create a new employee profile with role assignment
   async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
     const { systemRoles, permissions, password, ...profileData } = employeeData;
@@ -55,11 +85,23 @@ export class EmployeeCrudService {
       hasPassword: !!hashedPassword,
     });
 
+    // 🔍 CRITICAL: Auto-resolve supervisorPositionId from organizational structure
+    let supervisorPositionId: Types.ObjectId | undefined = undefined;
+    if (profileData.primaryPositionId) {
+      console.log("👤 Creating employee with primaryPositionId:", profileData.primaryPositionId);
+      console.log("📌 Employee primaryPositionId:", profileData.primaryPositionId);
+      supervisorPositionId = await this.resolveSupervisorPositionId(profileData.primaryPositionId);
+      if (supervisorPositionId) {
+        console.log("✅ supervisorPositionId set:", supervisorPositionId);
+      }
+    }
+
     // Create employee profile
     const fullName = `${profileData.firstName}${profileData.middleName ? ' ' + profileData.middleName : ''} ${profileData.lastName}`;
     const newEmployee = await this.employeeProfileModel.create({
       ...profileData,
       ...(hashedPassword && { password: hashedPassword }),
+      ...(supervisorPositionId && { supervisorPositionId }),
       fullName,
     });
 
@@ -70,6 +112,8 @@ export class EmployeeCrudService {
       personalEmail: newEmployee.personalEmail,
       mobilePhone: newEmployee.mobilePhone,
       homePhone: newEmployee.homePhone,
+      primaryPositionId: newEmployee.primaryPositionId,
+      supervisorPositionId: newEmployee.supervisorPositionId,
     });
 
     // Always create role assignment (default to department employee if no roles provided)
@@ -173,14 +217,39 @@ export class EmployeeCrudService {
 
   // Update an employee profile by ID
   async update(id: string, updateData: Partial<EmployeeProfile>): Promise<EmployeeProfileDocument> {
+    console.log('🔍 Updating employee:', id);
+    console.log('📦 Update data received:', updateData);
+
+    // 🔍 CRITICAL: Auto-resolve supervisorPositionId if primaryPositionId is being updated
+    let supervisorPositionId: Types.ObjectId | undefined = undefined;
+    if (updateData.primaryPositionId) {
+      console.log("👤 Updating employee primaryPositionId:", updateData.primaryPositionId);
+      console.log("📌 Employee primaryPositionId:", updateData.primaryPositionId);
+      supervisorPositionId = await this.resolveSupervisorPositionId(updateData.primaryPositionId);
+      if (supervisorPositionId) {
+        console.log("✅ supervisorPositionId set:", supervisorPositionId);
+      }
+    }
+
     const updatedEmployee = await this.employeeProfileModel.findByIdAndUpdate(
       id,
-      updateData,
+      {
+        ...updateData,
+        ...(supervisorPositionId && { supervisorPositionId }),
+      },
       { new: true }
     );
     if (!updatedEmployee) {
       throw new NotFoundException('Employee profile not found');
     }
+
+    console.log('✅ Employee updated:', {
+      _id: updatedEmployee._id,
+      fullName: updatedEmployee.fullName,
+      primaryPositionId: updatedEmployee.primaryPositionId,
+      supervisorPositionId: updatedEmployee.supervisorPositionId,
+    });
+
     return updatedEmployee;
   }
 

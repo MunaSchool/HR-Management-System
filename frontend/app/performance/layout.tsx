@@ -31,20 +31,7 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
   const { user, logout, loading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Redirect if not authenticated
-  if (!loading && !user) {
-    router.push("/auth/login");
-    return null;
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
-      </div>
-    );
-  }
-
+  // Move useMemo BEFORE early returns to maintain hook order
   const navItems: NavItem[] = useMemo(() => {
     if (!user) return [];
 
@@ -91,6 +78,20 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
 
     return [];
   }, [user]);
+
+  // Redirect if not authenticated
+  if (!loading && !user) {
+    router.push("/auth/login");
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
+      </div>
+    );
+  }
 
   const isActive = (path: string) => (pathname ? pathname.startsWith(path) : false);
 

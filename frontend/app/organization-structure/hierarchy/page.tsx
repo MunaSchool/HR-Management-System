@@ -47,9 +47,14 @@ export default function OrganizationHierarchyPage() {
         setDepartments(res.data.departments || []);
         setPositions(res.data.positions || []);
 
-        // Also fetch their team
-        const teamRes = await axiosInstance.get("/employee-profile/team");
-        setEmployees(teamRes.data || []);
+        // Fetch employees to populate the org chart
+        try {
+          const empRes = await axiosInstance.get("/employee-profile");
+          setEmployees(empRes.data || []);
+        } catch (empErr: any) {
+          console.warn("Could not fetch all employees, org chart may show vacant positions:", empErr.message);
+          // Continue without employees - positions will show as vacant
+        }
       } else {
         // Regular employee: only see their own structure (BR 41)
         const res = await axiosInstance.get("/organization-structure/hierarchy/my-structure");
@@ -71,6 +76,21 @@ export default function OrganizationHierarchyPage() {
     } catch (err) {
       console.error(err);
       setError("Failed to load organization hierarchy");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // New function to fetch only team members
+  const fetchMyTeam = async () => {
+    try {
+      setLoading(true);
+      const teamRes = await axiosInstance.get("/employee-profile/team");
+      setEmployees(teamRes.data || []);
+      console.log("Fetched team members:", teamRes.data?.length);
+    } catch (err: any) {
+      console.error("Error fetching team:", err);
+      setError("Failed to load team members");
     } finally {
       setLoading(false);
     }
@@ -291,7 +311,10 @@ export default function OrganizationHierarchyPage() {
           {isManagerUser && (
             <div className="flex gap-4 mt-4">
               <button
-                onClick={() => setViewMode("full")}
+                onClick={() => {
+                  setViewMode("full");
+                  fetchHierarchy();
+                }}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   viewMode === "full"
                     ? "bg-blue-600 text-white"
@@ -301,7 +324,10 @@ export default function OrganizationHierarchyPage() {
                 Full Organization
               </button>
               <button
-                onClick={() => setViewMode("my-team")}
+                onClick={() => {
+                  setViewMode("my-team");
+                  fetchMyTeam();
+                }}
                 className={`px-4 py-2 rounded-lg font-medium transition ${
                   viewMode === "my-team"
                     ? "bg-blue-600 text-white"

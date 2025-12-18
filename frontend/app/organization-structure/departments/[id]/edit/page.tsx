@@ -12,37 +12,72 @@ export default function EditDepartmentPage() {
     name: "",
     code: "",
     status: "Active",
+    headPositionId: "",
   });
 
+  const [positions, setPositions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   // ===============================
-  // 🔥 FETCH department
+  // 🔥 FETCH department and positions
   // ===============================
   useEffect(() => {
-    async function fetchDepartment() {
+    async function fetchData() {
       try {
-        const res = await fetch(
+        // Fetch department details
+        const deptRes = await fetch(
           `http://localhost:4000/organization-structure/departments/${id}`,
           { credentials: "include" }
         );
 
-        if (!res.ok) throw new Error("Failed to load department");
+        if (!deptRes.ok) throw new Error("Failed to load department");
 
-        const data = await res.json();
+        const dept = await deptRes.json();
+        console.log("📊 Department data:", dept);
+
+        // Handle headPositionId - could be ObjectId object or string
+        let headPosId = "";
+        if (dept.headPositionId) {
+          headPosId = typeof dept.headPositionId === 'string'
+            ? dept.headPositionId
+            : dept.headPositionId._id || dept.headPositionId.toString();
+        }
+        console.log("🎯 Head Position ID:", headPosId);
 
         setForm({
-          name: data.name,
-          code: data.code,
-          status: data.status,
+          name: dept.name,
+          code: dept.code,
+          status: dept.isActive ? "Active" : "Inactive",
+          headPositionId: headPosId,
         });
+
+        // Fetch all positions to filter by this department
+        const posRes = await fetch(
+          `http://localhost:4000/organization-structure/positions`,
+          { credentials: "include" }
+        );
+
+        if (posRes.ok) {
+          const allPositions = await posRes.json();
+          console.log("📋 All positions:", allPositions);
+
+          // Filter positions that belong to this department
+          const deptPositions = allPositions.filter(
+            (pos: any) => {
+              const deptId = pos.departmentId?._id || pos.departmentId;
+              return deptId === id || deptId?.toString() === id;
+            }
+          );
+          console.log("🏢 Department positions:", deptPositions);
+          setPositions(deptPositions);
+        }
       } catch (err: any) {
         setError(err.message);
       }
     }
 
-    if (id) fetchDepartment();
+    if (id) fetchData();
   }, [id]);
 
   // ===============================
@@ -54,13 +89,20 @@ export default function EditDepartmentPage() {
     setError("");
 
     try {
+      const payload = {
+        name: form.name,
+        code: form.code,
+        isActive: form.status === "Active",
+        headPositionId: form.headPositionId || undefined,
+      };
+
       const res = await fetch(
         `http://localhost:4000/organization-structure/departments/${id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -149,6 +191,30 @@ export default function EditDepartmentPage() {
                 <option>Active</option>
                 <option>Inactive</option>
               </select>
+            </div>
+
+            {/* Head Position */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Department Head Position
+              </label>
+              <select
+                value={form.headPositionId}
+                onChange={(e) =>
+                  setForm({ ...form, headPositionId: e.target.value })
+                }
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+              >
+                <option value="">-- No Head Position --</option>
+                {positions.map((pos) => (
+                  <option key={pos._id} value={pos._id}>
+                    {pos.title} ({pos.code})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Select which position is the head of this department. Only positions in this department are shown.
+              </p>
             </div>
 
             {/* Actions */}
