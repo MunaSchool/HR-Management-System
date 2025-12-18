@@ -91,8 +91,11 @@ export class PerformanceController {
 
   @Get('managers/:managerProfileId/assignments')
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
-  async getManagerAppraisalAssignments(@Param('managerProfileId') managerProfileId: string) {
-    return this.performanceService.getManagerAppraisalAssignments(managerProfileId);
+  async getManagerAppraisalAssignments(
+    @Param('managerProfileId') managerProfileId: string,
+    @CurrentUser() user: CurrentUserData
+  ) {
+    return this.performanceService.getManagerAppraisalAssignments(managerProfileId, user);
   }
 
   // APPRAISAL RECORD ENDPOINTS

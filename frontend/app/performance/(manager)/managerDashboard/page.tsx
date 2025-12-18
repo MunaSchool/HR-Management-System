@@ -18,7 +18,6 @@ import {
   AlertCircle,
   FileText,
   TrendingUp,
-  BarChart,
   ArrowRight,
   User,
   Bell,
@@ -51,38 +50,49 @@ export default function ManagerDashboardPage() {
   const fetchManagerData = async () => {
     try {
       setLoading(true);
-     
+
       // Fetch manager assignments
       let managerId = user?.userid || user?.employeeNumber || user?.email;
+      console.log('🔍 Manager Dashboard - Fetching assignments');
+      console.log('   User object:', user);
+      console.log('   User roles:', user?.roles);
+      console.log('   Manager ID:', managerId);
+
       if (managerId) {
         const assignmentsData = await performanceApi.getManagerAppraisalAssignments(managerId);
+        console.log('📊 Assignments fetched:', assignmentsData.length);
+        console.log('   Assignments:', assignmentsData);
         setAssignments(assignmentsData);
-       
+
         // Get active cycles from assignments
         const cycleIds = [...new Set(assignmentsData.map(a =>
           typeof a.cycleId === 'string' ? a.cycleId : a.cycleId?._id
         ).filter(Boolean))];
-       
+
         if (cycleIds.length > 0) {
           // Get cycle details
           const cyclesData = await performanceApi.getAllAppraisalCycles();
           setCycles(cyclesData);
-         
+
           // Find active cycle (first active cycle in assignments)
           const active = cyclesData.find(c =>
             c.status === 'ACTIVE' && cycleIds.includes(c._id)
           ) || cyclesData[0];
           setActiveCycle(active || null);
-         
+
           // Get analytics for active cycle
           if (active) {
             const analyticsData = await performanceApi.getPerformanceAnalytics(active._id);
             setAnalytics(analyticsData);
           }
+        } else {
+          console.log('⚠️ No assignments found for this manager');
         }
+      } else {
+        console.log('❌ No manager ID found in user object');
       }
     } catch (error) {
-      console.error('Error fetching manager data:', error);
+      console.error('❌ Error fetching manager data:', error);
     } finally {
       setLoading(false);
     }
@@ -160,7 +170,6 @@ export default function ManagerDashboardPage() {
   const navigation = [
     { name: 'Dashboard', href: '/performance', icon: Home },
     { name: 'Team Evaluations', href: '/performance/assignments', icon: Users },
-    { name: 'Team Analytics', href: '/performance/team', icon: BarChart },
   ];
 
   if (loading) {

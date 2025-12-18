@@ -284,21 +284,18 @@ export class PerformanceService {
                     console.warn("⚠️ WARNING: No active employee holds supervisorPositionId:", emp.supervisorPositionId);
                     console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
                     console.warn("   This position may be vacant or the employee may not be ACTIVE");
+                    console.warn("   Creating assignment without manager - can be assigned later");
                 }
             } else {
                 console.warn("⚠️ WARNING: Employee has NO supervisorPositionId set");
                 console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
                 console.warn("   Department:", emp.primaryDepartmentId);
                 console.warn("   Position:", emp.primaryPositionId);
-                console.warn("   ACTION REQUIRED: Set supervisorPositionId in org structure or employee profile");
+                console.warn("   Creating assignment without manager - can be assigned later");
             }
 
-            if (!managerProfileId) {
-                console.warn("⚠️ SKIPPING: Employee", emp.employeeNumber, "- no manager assigned");
-                console.warn("   Employee will NOT receive appraisal assignment for this cycle");
-                console.warn("   Fix: Ensure employee has supervisorPositionId and that position is filled");
-                continue;
-            }
+            // Continue creating assignment even if no manager is assigned
+            // Manager can be assigned later by HR
 
             console.log("📝 Creating appraisal assignment:", {
                 employeeProfileId: emp._id,
@@ -359,19 +356,71 @@ export class PerformanceService {
         .exec();
     }
 
-    async getManagerAppraisalAssignments(managerProfileId: string) {
+    async getManagerAppraisalAssignments(managerProfileId: string, user?: any) {
         if (!Types.ObjectId.isValid(managerProfileId)) {
             throw new NotFoundException('Invalid manager profile ID');
         }
 
-        return await this.appraisalAssignmentModel
-        .find({ managerProfileId })
+        // Get the manager's employee profile to check their department and role
+        const managerProfile = await this.employeeProfileModel
+            .findById(managerProfileId)
+            .populate('accessProfileId')
+            .exec();
+
+        if (!managerProfile) {
+            throw new NotFoundException('Manager profile not found');
+        }
+
+        console.log('👔 Fetching assignments for manager:', managerProfileId);
+        console.log('   Manager department:', managerProfile.primaryDepartmentId);
+        console.log('   User roles from JWT:', user?.roles);
+        console.log('   Access profile:', managerProfile.accessProfileId);
+
+        // Build query based on role
+        let query: any;
+
+        // Check if user is Department Head from multiple sources
+        const userRoles = user?.roles || [];
+        const accessProfileRoles = (managerProfile.accessProfileId as any)?.roles || [];
+        const allRoles = [...userRoles, ...accessProfileRoles];
+
+        console.log('   All roles combined:', allRoles);
+
+        // Case-insensitive check for Department Head role
+        const isDepartmentHead = allRoles.some(role =>
+            role && role.toLowerCase().includes('department') && role.toLowerCase().includes('head')
+        );
+
+        if (isDepartmentHead && managerProfile.primaryDepartmentId) {
+            console.log('✅ Department Head access - showing all department assignments');
+            console.log('   Querying departmentId:', managerProfile.primaryDepartmentId);
+
+            // Show all assignments in the manager's department
+            query = { departmentId: managerProfile.primaryDepartmentId };
+        } else {
+            console.log('👤 Manager access - showing only direct reports');
+            console.log('   Querying managerProfileId:', managerProfileId);
+
+            // Show only assignments where this person is the manager
+            query = { managerProfileId };
+        }
+
+        const assignments = await this.appraisalAssignmentModel
+        .find(query)
         .populate('employeeProfileId', 'firstName lastName position')
+        .populate('managerProfileId', 'firstName lastName')
         .populate('cycleId', 'name cycleType startDate endDate status')
         .populate('templateId', 'name templateType')
         .populate('departmentId', 'name')
         .sort({ dueDate: 1 })
         .exec();
+
+        console.log('📊 Found assignments:', assignments.length);
+        if (assignments.length > 0) {
+            console.log('   Sample assignment departmentId:', assignments[0].departmentId);
+        }
+
+        return assignments;
     }
 
     async getAppraisalAssignmentById(assignmentId: string) {

@@ -20,8 +20,8 @@ export class AppraisalAssignment {
   @Prop({ type: Types.ObjectId, ref: 'EmployeeProfile', required: true })
   employeeProfileId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'EmployeeProfile', required: true })
-  managerProfileId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'EmployeeProfile', required: false })
+  managerProfileId?: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Department', required: true })
   departmentId: Types.ObjectId;

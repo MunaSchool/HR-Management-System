@@ -136,13 +136,21 @@ export default function ViewCyclePage() {
   const handleCreateAssignments = async () => {
     if (!cycle) return;
 
+    if (!window.confirm('Are you sure you want to create appraisal assignments for all employees in this cycle? This will generate individual appraisal forms based on the template assignments.')) {
+      return;
+    }
+
     try {
-      await performanceApi.createAppraisalAssignments(cycle._id);
-      alert('Assignments created successfully');
+      setAssignmentsLoading(true);
+      const createdAssignments = await performanceApi.createAppraisalAssignments(cycle._id);
+      alert(`Success! Created ${createdAssignments.length} appraisal assignments for employees.`);
       fetchAssignments();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating assignments:', error);
-      alert('Failed to create assignments');
+      const errorMessage = error?.response?.data?.message || 'Failed to create assignments';
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setAssignmentsLoading(false);
     }
   };
 
@@ -424,10 +432,11 @@ export default function ViewCyclePage() {
                 <>
                   <button
                     onClick={handleCreateAssignments}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center justify-center gap-2"
+                    disabled={assignmentsLoading}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     <Users size={14} />
-                    Create Assignments
+                    {assignmentsLoading ? 'Creating Assignments...' : 'Create Assignments'}
                   </button>
                   <button
                     onClick={() => handleUpdateStatus(AppraisalCycleStatus.CLOSED)}
