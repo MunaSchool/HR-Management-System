@@ -83,7 +83,6 @@ export default function CompanySettingsPage() {
             className="mt-1 w-full rounded border px-3 py-2"
             value={form.payDate || ""}
             onChange={(e) => setForm({ ...form, payDate: e.target.value })}
-            placeholder=\"2025-12-01\"
             placeholder="2025-12-01"
           />
         </label>
@@ -93,7 +92,7 @@ export default function CompanySettingsPage() {
             className="mt-1 w-full rounded border px-3 py-2"
             value={form.timeZone || ""}
             onChange={(e) => setForm({ ...form, timeZone: e.target.value })}
-            placeholder=\"Africa/Cairo\"
+            placeholder="Africa/Cairo"
           />
         </label>
         <label className="text-sm text-gray-700">
@@ -102,7 +101,7 @@ export default function CompanySettingsPage() {
             className="mt-1 w-full rounded border px-3 py-2"
             value={form.currency || ""}
             onChange={(e) => setForm({ ...form, currency: e.target.value })}
-            placeholder=\"EGP\"
+            placeholder="EGP"
           />
         </label>
         <label className="text-sm text-gray-700">
@@ -111,7 +110,7 @@ export default function CompanySettingsPage() {
             className="mt-1 w-full rounded border px-3 py-2"
             value={form.payCycle || ""}
             onChange={(e) => setForm({ ...form, payCycle: e.target.value })}
-            placeholder=\"monthly\"
+            placeholder="monthly"
           />
         </label>
         <button
