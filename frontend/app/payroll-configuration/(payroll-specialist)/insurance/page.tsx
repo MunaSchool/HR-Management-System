@@ -103,6 +103,11 @@ export default function InsurancePage() {
         (e?.response?.status === 404
           ? "Backend endpoint not reachable. Please ensure backend at 4000 is running."
           : "Save failed");
+      if (form.status === 'approved' || form.status === 'rejected') {
+        setError('You are not authorized to edit this insurance bracket');
+      } else {
+      setError(msg);
+      }
       setError(msg);
     } finally {
       setLoading(false);

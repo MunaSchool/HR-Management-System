@@ -83,7 +83,11 @@ export default function ConfigPayTypesPage() {
       fetchPayTypes();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
+      if (editForm.status === 'approved' || editForm.status === 'rejected') {
+        setError('You are not authorized to edit this pay type');
+      } else {
       setError(err?.response?.data?.message || "Failed to update pay type");
+      }
     } finally {
       setLoading(false);
     }

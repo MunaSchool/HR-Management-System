@@ -60,10 +60,13 @@ export default function EditPolicyPage() {
         status: form.status || 'draft',
       };
       await updatePolicy(id, payload);
-      //alert('Policy updated successfully');
-      router.push("/payroll-configuration");
+      router.push("/payroll-configuration/config-policies");
     } catch (err: any) {
+      if (form.status === 'approved' || form.status === 'rejected') {
+        setError('You are not authorized to edit this policy');
+      } else {
       setError(err?.response?.data?.message || err?.message || "Failed to save policy");
+      }
     } finally {
       setSaving(false);
     }

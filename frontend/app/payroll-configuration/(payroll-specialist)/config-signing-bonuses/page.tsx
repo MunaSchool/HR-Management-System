@@ -82,7 +82,11 @@ export default function ConfigSigningBonusesPage() {
       fetchBonuses();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
+      if (editForm.status === 'approved' || editForm.status === 'rejected') {
+        setError('You are not authorized to edit this signing bonus');
+      } else {
       setError(err?.response?.data?.message || "Failed to update signing bonus");
+      }
     } finally {
       setLoading(false);
     }

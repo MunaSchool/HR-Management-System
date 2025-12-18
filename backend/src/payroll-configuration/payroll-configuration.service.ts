@@ -639,25 +639,7 @@ export class PayrollConfigurationService
     return this.taxDocumentModel.find({ employeeId }).exec();
   }
 
-  // -------------------
-  // PAYROLL DISPUTES
-  // -------------------
-  async createPayrollDispute(dto: CreatePayrollDisputeDto): Promise<PayrollDisputeDocument> {
-    const dispute = new this.payrollDisputeModel({ ...dto, status: 'open' });
-    return dispute.save();
-  }
 
-  async resolvePayrollDispute(id: string): Promise<PayrollDisputeDocument | null> {
-    return this.payrollDisputeModel.findByIdAndUpdate(id, { status: 'resolved' }, { new: true });
-  }
-
-  async listDisputesByEmployee(employeeId: string): Promise<PayrollDisputeDocument[]> {
-    return this.payrollDisputeModel.find({ employeeId }).exec();
-  }
-
-  async listAllDisputes(): Promise<PayrollDisputeDocument[]> {
-    return this.payrollDisputeModel.find().exec();
-  }
 }
 
 

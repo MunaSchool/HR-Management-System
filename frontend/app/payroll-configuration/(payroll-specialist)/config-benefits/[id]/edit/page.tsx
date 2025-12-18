@@ -76,7 +76,11 @@ export default function EditBenefitPage() {
       );
       router.push("../../config-benefits");
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to save benefit");
+      if (formData.status === 'approved' || formData.status === 'rejected') {
+        setError('You are not authorized to edit this benefit');
+      } else {
+        setError(err?.response?.data?.message || "Failed to save benefit");
+      }
     } finally {
       setSubmitting(false);
     }

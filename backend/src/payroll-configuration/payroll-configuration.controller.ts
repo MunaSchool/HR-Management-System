@@ -475,7 +475,7 @@ export class PayrollConfigurationController {
   // -------------------
   @Post('tax-documents')
   @UseGuards(AuthGuard, RolesGuard)
-@Roles(SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
+@Roles(SystemRole.LEGAL_POLICY_ADMIN)
   createTaxDocument(@Body() dto: CreateTaxDocumentDto) {
     return this.payrollConfigurationService.createTaxDocument(dto);
   }
@@ -493,36 +493,6 @@ export class PayrollConfigurationController {
     return this.payrollConfigurationService.listTaxDocumentsForEmployee(employeeId);
   }
 
-  // -------------------
-  // PAYROLL DISPUTES
-  // -------------------
-  @Post('disputes')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
-  createDispute(@Body() dto: CreatePayrollDisputeDto) {
-    return this.payrollConfigurationService.createPayrollDispute(dto);
-  }
-
-  @Get('disputes/my/:employeeId')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
-  listMyDisputes(@Param('employeeId') employeeId: string) {
-    return this.payrollConfigurationService.listDisputesByEmployee(employeeId);
-  }
-
-  @Get('disputes')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
-  listAllDisputes() {
-    return this.payrollConfigurationService.listAllDisputes();
-  }
-
-  @Put('disputes/:id/resolve')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
-  resolveDispute(@Param('id') id: string) {
-    return this.payrollConfigurationService.resolvePayrollDispute(id);
-  }
 
   // -------------------
   // BACKUP

@@ -85,7 +85,11 @@ export default function ConfigPayGradesPage() {
       fetchPayGrades();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
+      if (editForm.status === 'approved' || editForm.status === 'rejected') {
+        setError('You are not authorized to edit this pay grade');
+      } else {
       setError(err?.response?.data?.message || "Failed to update pay grade");
+      }
     } finally {
       setLoading(false);
     }

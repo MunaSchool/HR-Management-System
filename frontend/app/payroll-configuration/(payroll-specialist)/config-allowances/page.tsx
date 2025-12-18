@@ -82,7 +82,11 @@ export default function ConfigAllowancesPage() {
       fetchAllowances();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
+      if (editForm.status === 'approved' || editForm.status === 'rejected') {
+        setError('You are not authorized to edit this allowance');
+      } else {
       setError(err?.response?.data?.message || "Failed to update allowance");
+      }
     } finally {
       setLoading(false);
     }

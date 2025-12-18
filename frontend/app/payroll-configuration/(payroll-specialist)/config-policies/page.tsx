@@ -224,11 +224,13 @@ export default function ConfigPoliciesPage() {
                       >
                         👁️
                       </button>
-                      {/* Payroll Specialist: view only, no delete */}
-                      {policy.status === "draft" && (
-                        <>
-                        </>
-                      )}
+                      <button
+                        onClick={() => router.push(`./config-policies/${policy._id}/edit`)}
+                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition"
+                        title="Edit"
+                      >
+                        ✏️
+                      </button>
                     </div>
                   </td>
                 </tr>

@@ -120,11 +120,7 @@ export default function PayrollConfigLayout({ children }: Props) {
                             Review Payroll Policies
                           </Link>
                         </li>
-                        <li>
-                          <Link href="/payroll-configuration/disputes" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                            Payroll Disputes
-                          </Link>
-                        </li>
+
                       </ul>
                     </div>
                   )}
