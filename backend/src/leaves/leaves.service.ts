@@ -711,6 +711,32 @@ export class LeavesService {
         unpaidDays = durationDays;
       }
     }
+// ===============================
+// IRREGULAR PATTERN DETECTION
+// ===============================
+
+// Define current month range (based on leave start date)
+const startOfMonth = new Date(from.getFullYear(), from.getMonth(), 1);
+const endOfMonth = new Date(from.getFullYear(), from.getMonth() + 1, 0);
+
+// Count how many leave requests this employee submitted this month
+const monthlyRequestCount = await this.requestModel.countDocuments({
+  employeeId: employeeObjectId,
+  createdAt: {
+    $gte: startOfMonth,
+    $lte: endOfMonth,
+  },
+});
+
+// Rule: more than 3 leave requests in the same month
+const FREQUENT_REQUEST_THRESHOLD = 3;
+const frequentLeaveFlag = monthlyRequestCount >= FREQUENT_REQUEST_THRESHOLD;
+
+// Final irregular flag:
+// - unpaid days
+// - OR too many requests in same month
+const irregularPatternFlag =
+  unpaidDays > 0 || frequentLeaveFlag;
 
     const departmentId = employeeProfile.primaryDepartmentId;
     if (departmentId) {
@@ -763,7 +789,7 @@ export class LeavesService {
         : undefined,
       approvalFlow,
       status: LeaveStatus.PENDING,
-      irregularPatternFlag: false,
+      irregularPatternFlag,
     });
 
     // REQ-030, REQ-042: Send notifications
