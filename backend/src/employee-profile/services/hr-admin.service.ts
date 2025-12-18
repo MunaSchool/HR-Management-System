@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { EmployeeProfile, EmployeeProfileDocument } from '../models/employee-profile.schema';
 import { UpdateEmployeeMasterDto } from '../dto/update-employee-master.dto';
 import { SystemRole, EmployeeStatus } from '../enums/employee-profile.enums';
@@ -11,6 +11,36 @@ export class HrAdminService {
     @InjectModel(EmployeeProfile.name)
     private employeeProfileModel: Model<EmployeeProfileDocument>,
   ) {}
+
+  // Helper to resolve supervisorPositionId from organizational structure
+  private async resolveSupervisorPositionId(primaryPositionId: any): Promise<Types.ObjectId | undefined> {
+    if (!primaryPositionId) {
+      console.warn("⚠️ No primaryPositionId provided — cannot resolve supervisor");
+      return undefined;
+    }
+
+    console.log("🔍 Resolving supervisor for position:", primaryPositionId);
+
+    const PositionModel = this.employeeProfileModel.db.model('Position');
+    const position = await PositionModel.findById(primaryPositionId).exec();
+
+    if (!position) {
+      console.error("❌ Position not found:", primaryPositionId);
+      return undefined;
+    }
+
+    console.log("🏷️ Loaded position:", position._id);
+    console.log("📋 Position title:", position.title);
+    console.log("⬆️ Position reportsToPositionId:", position.reportsToPositionId);
+
+    if (!position.reportsToPositionId) {
+      console.warn("⚠️ Position has no reportsToPositionId (department head or top-level position)");
+      return undefined;
+    }
+
+    console.log("✅ supervisorPositionId resolved:", position.reportsToPositionId);
+    return position.reportsToPositionId;
+  }
 
   // ===============================================
   // Search employees (US-E6-03)
@@ -77,10 +107,22 @@ export class HrAdminService {
     console.log('🔍 Updating employee:', employeeId);
     console.log('📦 Update data received:', JSON.stringify(updateDto, null, 2));
 
+    // 🔍 CRITICAL: Auto-resolve supervisorPositionId if primaryPositionId is being updated
+    let supervisorPositionId: Types.ObjectId | undefined = undefined;
+    if (updateDto.primaryPositionId) {
+      console.log("👤 Updating employee primaryPositionId:", updateDto.primaryPositionId);
+      console.log("📌 Employee primaryPositionId:", updateDto.primaryPositionId);
+      supervisorPositionId = await this.resolveSupervisorPositionId(updateDto.primaryPositionId);
+      if (supervisorPositionId) {
+        console.log("✅ supervisorPositionId set:", supervisorPositionId);
+      }
+    }
+
     const updated = await this.employeeProfileModel.findByIdAndUpdate(
       employeeId,
       {
         ...updateDto,
+        ...(supervisorPositionId && { supervisorPositionId }),
         lastModifiedBy: userId,
         lastModifiedAt: new Date(),
       },
