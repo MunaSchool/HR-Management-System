@@ -42,14 +42,14 @@ export class OrganizationStructureController {
   }
 
   @Get('departments')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
   getAllDepartments(@Query('includeInactive') includeInactive?: string) {
     const showInactive = includeInactive === 'true';
     return this.organizationStructureService.getAllDepartments(showInactive);
   }
 
   @Get('departments/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
   getDepartmentById(@Param('id') id: string) {
     return this.organizationStructureService.getDepartmentById(id);
   }
@@ -135,7 +135,7 @@ activatePosition(@Param('id') id: string) {
   // ======================
 
   @Post('change-requests')
-  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // hradmon added by engy
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // hradmon added by engy
   submitChangeRequest(@Body() dto: any, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.submitChangeRequest(dto, user.employeeId);
   }
@@ -223,6 +223,13 @@ activatePosition(@Param('id') id: string) {
   }
 
   @Get('hierarchy/my-structure')
+  @Roles(
+  SystemRole.DEPARTMENT_EMPLOYEE,
+  SystemRole.DEPARTMENT_HEAD,
+  SystemRole.HR_MANAGER,
+  SystemRole.HR_ADMIN,
+  SystemRole.SYSTEM_ADMIN
+)
   getMyStructure(@CurrentUser() user: CurrentUserData) {
     console.log("➡️ Endpoint called: hierarchy/my-structure");
     console.log("👤 Current user:", user.employeeId);
