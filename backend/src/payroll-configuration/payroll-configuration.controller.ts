@@ -475,7 +475,7 @@ export class PayrollConfigurationController {
   // -------------------
   @Post('tax-documents')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_MANAGER, SystemRole.HR_MANAGER)
+  @Roles(SystemRole.LEGAL_POLICY_ADMIN, SystemRole.SYSTEM_ADMIN)
   createTaxDocument(@Body() dto: CreateTaxDocumentDto) {
     return this.payrollConfigurationService.createTaxDocument(dto);
   }
@@ -487,6 +487,7 @@ export class PayrollConfigurationController {
     SystemRole.PAYROLL_MANAGER,
     SystemRole.PAYROLL_SPECIALIST,
     SystemRole.HR_MANAGER,
+    SystemRole.LEGAL_POLICY_ADMIN,
     SystemRole.SYSTEM_ADMIN,
   )
   listTaxDocuments(@Param('employeeId') employeeId: string) {
