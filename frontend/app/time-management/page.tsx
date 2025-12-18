@@ -18,7 +18,7 @@ export default function TimeManagementPage() {
 
   // A simple check for manager/admin roles for demonstration
   const isManagerOrAdmin = user?.roles?.some(role =>
-    ['hr admin', 'system admin', 'manager'].includes(role.toLowerCase())
+    [ 'system admin', 'manager'].includes(role.toLowerCase())
   );
 
   const isManagerOrAdminOrPayroll = user?.roles?.some(role =>
