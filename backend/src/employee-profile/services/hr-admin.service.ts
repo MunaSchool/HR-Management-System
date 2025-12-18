@@ -4,12 +4,14 @@ import { Model, Types } from 'mongoose';
 import { EmployeeProfile, EmployeeProfileDocument } from '../models/employee-profile.schema';
 import { UpdateEmployeeMasterDto } from '../dto/update-employee-master.dto';
 import { SystemRole, EmployeeStatus } from '../enums/employee-profile.enums';
+import { NotificationLogService } from '../../time-management/services/notification-log.service';
 
 @Injectable()
 export class HrAdminService {
   constructor(
     @InjectModel(EmployeeProfile.name)
     private employeeProfileModel: Model<EmployeeProfileDocument>,
+    private notificationLogService: NotificationLogService,
   ) {}
 
   // Helper to resolve supervisorPositionId from organizational structure
@@ -141,6 +143,43 @@ export class HrAdminService {
       supervisorPositionId: updated.supervisorPositionId,
     });
 
+    // BR D4: Notify Payroll module if pay grade, contract type, or status changed
+    if (updateDto.payGradeId || updateDto.contractType || updateDto.status) {
+      console.log('📢 Pay grade/contract change detected - notifying Payroll module');
+      // TODO: Implement payroll notification integration when Payroll module is ready
+      // await this.payrollIntegrationService.notifyEmployeeDataChange(employeeId, updateDto);
+    }
+
+    // Send detailed notification to employee about the update (N-037)
+    try {
+      // Build detailed message about what changed
+      const changedFields: string[] = [];
+
+      if (updateDto.payGradeId) changedFields.push('Pay Grade');
+      if (updateDto.contractType) changedFields.push('Contract Type');
+      if (updateDto.workType) changedFields.push('Work Type');
+      if (updateDto.primaryDepartmentId) changedFields.push('Department');
+      if (updateDto.primaryPositionId) changedFields.push('Position');
+      if (updateDto.status) changedFields.push('Employment Status');
+      if (updateDto.contractStartDate) changedFields.push('Contract Start Date');
+      if (updateDto.contractEndDate) changedFields.push('Contract End Date');
+      if (updateDto.bankName || updateDto.bankAccountNumber) changedFields.push('Banking Information');
+
+      const changesMessage = changedFields.length > 0
+        ? `The following information has been updated: ${changedFields.join(', ')}.`
+        : 'Your employment information has been updated.';
+
+      await this.notificationLogService.sendNotification({
+        to: new Types.ObjectId(employeeId),
+        type: 'N-037',
+        message: `${changesMessage} Please review your profile for details.`,
+      });
+
+      console.log(`✅ Notification N-037 sent to employee ${employeeId}`);
+    } catch (error) {
+      console.error('Failed to send notification:', error);
+    }
+
     return updated;
   }
 
@@ -177,6 +216,32 @@ export class HrAdminService {
 
     if (!updated) {
       throw new NotFoundException('Employee profile not found');
+    }
+
+    // BR D4: Notify Time Management and Payroll modules about status change
+    console.log(`📢 Status change to ${status} - notifying Time Management and Payroll modules`);
+
+    // Notify Time Management module for attendance tracking
+    // Status changes (ON_LEAVE, SUSPENDED, TERMINATED) must sync to time tracking
+    try {
+      await this.notificationLogService.sendNotification({
+        to: new Types.ObjectId(employeeId),
+        type: 'N-037',
+        message: `Your employment status has been changed to ${status}.`,
+      });
+
+      // TODO: Implement Time Management integration when module is ready
+      // if (status === EmployeeStatus.ON_LEAVE || status === EmployeeStatus.SUSPENDED || status === EmployeeStatus.TERMINATED) {
+      //   await this.timeManagementIntegrationService.notifyStatusChange(employeeId, status, effectiveDate);
+      // }
+
+      // TODO: Implement Payroll integration when module is ready
+      // Blocked payments for SUSPENDED and TERMINATED employees
+      // if (status === EmployeeStatus.SUSPENDED || status === EmployeeStatus.TERMINATED) {
+      //   await this.payrollIntegrationService.blockPayments(employeeId, status, effectiveDate);
+      // }
+    } catch (error) {
+      console.error('Failed to send status change notifications:', error);
     }
 
     return updated;

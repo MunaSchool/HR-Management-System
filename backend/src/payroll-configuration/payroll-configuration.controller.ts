@@ -284,6 +284,45 @@ export class PayrollConfigurationController {
   }
 
   // -------------------
+  // PAY GRADES (HR Admin can view for employee assignment)
+  // -------------------
+
+  @Get('pay-grades')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
+  async getAllPayGrades() {
+    return this.payrollConfigurationService.getAllPayGrades();
+  }
+
+  @Get('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.PAYROLL_SPECIALIST)
+  async getPayGrade(@Param('id') id: string) {
+    return this.payrollConfigurationService.getPayGrade(id);
+  }
+
+  @Post('pay-grades')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async addPayGrade(@Body() payGradeData: addPayGradeDTO) {
+    return this.payrollConfigurationService.AddPayGrade(payGradeData);
+  }
+
+  @Put('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async editPayGrade(@Param('id') id: string, @Body() updateData: editPayGradeDTO) {
+    return this.payrollConfigurationService.editPayGrade(id, updateData);
+  }
+
+  @Delete('pay-grades/:id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(SystemRole.PAYROLL_SPECIALIST)
+  async removePayGrade(@Param('id') id: string) {
+    return this.payrollConfigurationService.remove(id);
+  }
+
+  // -------------------
   // SYSTEM ADMIN - BACKUP
   // -------------------
 

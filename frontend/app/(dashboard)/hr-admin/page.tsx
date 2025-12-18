@@ -104,7 +104,7 @@ export default function HRAdminPage() {
         </div>
         <div className="flex space-x-3">
           <Link
-            href="/logs"
+            href="/hr-admin/workflow-config"
             className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700 transition"
           >
             View Logs

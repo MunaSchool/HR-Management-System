@@ -74,6 +74,10 @@ export class PayrollConfigurationService
 
 
     //////2- config pay grades
+    async getAllPayGrades(): Promise<payGradeDocument[]> {
+        return await this.payGradeModel.find().exec();
+    }
+
     async getPayGrade(id: string): Promise<payGradeDocument|null> {
         return await this.payGradeModel.findById({ id });
     }
@@ -84,11 +88,11 @@ export class PayrollConfigurationService
     }
 
     async editPayGrade(pg: string, updateData: editPayGradeDTO): Promise<payGradeDocument|null> {
-        return await this.payGradeModel.findByIdAndUpdate(pg, updateData, { new: true });  
+        return await this.payGradeModel.findByIdAndUpdate(pg, updateData, { new: true });
     }
 
     async remove(pg: string): Promise<payGradeDocument | null> {
-        return await this.payGradeModel.findByIdAndDelete(pg); 
+        return await this.payGradeModel.findByIdAndDelete(pg);
     }
 
         //plsss go back to this!!!!!

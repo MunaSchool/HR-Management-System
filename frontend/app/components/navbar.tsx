@@ -1,16 +1,24 @@
 "use client"
 import { useAuth } from "../(system)/context/authContext"
+import { useRouter } from "next/navigation"
 
 export default function Navbar(){
     const {user,logout} = useAuth()
-      const handleLogout = async () => {
-    await logout();
-  };
-  if(!user){
-    return(
-        <> Loading ...</>
-    )
-  }
+    const router = useRouter()
+
+    const handleLogout = async () => {
+      await logout();
+    };
+
+    const goToProfile = () => {
+      router.push('/profile');
+    };
+
+    if(!user){
+      return(
+          <> Loading ...</>
+      )
+    }
 
     return(
       <nav className="bg-white dark:bg-gray-800 shadow">
@@ -25,6 +33,12 @@ export default function Navbar(){
               <span className="text-gray-700 dark:text-gray-300">
                 Welcome, {user.name || user.email}
               </span>
+              <button
+                onClick={goToProfile}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                My Profile
+              </button>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"

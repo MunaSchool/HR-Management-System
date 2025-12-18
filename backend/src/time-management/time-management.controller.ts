@@ -123,8 +123,8 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.HR_ADMIN)
-    @Get('notification-log/employee/:id') 
+    @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.DEPARTMENT_HEAD, SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
+    @Get('notification-log/employee/:id')
     async getEmployeeNotifications(@Param('id') employeeId:string){
         return this.notificationLogService.getEmployeeNotifications(employeeId)
     }

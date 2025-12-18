@@ -40,6 +40,12 @@ interface EmployeeProfile {
   lastAppraisalDate?: string;
   lastAppraisalScore?: number;
   lastAppraisalRatingLabel?: string;
+  contractType?: string;
+  workType?: string;
+  contractStartDate?: string;
+  contractEndDate?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
 }
 
 export default function ProfilePage() {
@@ -100,7 +106,7 @@ export default function ProfilePage() {
 
   const handleUpdateBiography = async () => {
     try {
-      await axiosInstance.patch("/employee-profile/me", { biography });
+      await axiosInstance.patch("/employee-profile/me/profile", { biography });
       alert("Biography updated successfully");
       setEditBioMode(false);
       fetchProfile();
@@ -499,16 +505,55 @@ export default function ProfilePage() {
             <p className="text-white">{profile.status}</p>
           </div>
           <div>
+            <label className="text-sm text-neutral-400">Contract Type</label>
+            <p className="text-white">{profile.contractType || "N/A"}</p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Work Type</label>
+            <p className="text-white">{profile.workType || "N/A"}</p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Contract Start Date</label>
+            <p className="text-white">
+              {profile.contractStartDate
+                ? new Date(profile.contractStartDate).toLocaleDateString()
+                : "N/A"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Contract End Date</label>
+            <p className="text-white">
+              {profile.contractEndDate
+                ? new Date(profile.contractEndDate).toLocaleDateString()
+                : "N/A"}
+            </p>
+          </div>
+          <div>
             <label className="text-sm text-neutral-400">Pay Grade</label>
             <p className="text-white">{profile.payGradeId?.name || profile.payGradeId || "N/A"}</p>
           </div>
           <div>
-            <label className="text-sm text-neutral-400"> Roles</label>
+            <label className="text-sm text-neutral-400">System Roles</label>
             <p className="text-white">
               {profile.roles && profile.roles.length > 0
                 ? profile.roles.map((r: any) => r.roleName || r).join(", ")
                 : "N/A"}
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Banking Information */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Banking Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-neutral-400">Bank Name</label>
+            <p className="text-white">{profile.bankName || "N/A"}</p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Bank Account Number</label>
+            <p className="text-white">{profile.bankAccountNumber || "N/A"}</p>
           </div>
         </div>
       </div>

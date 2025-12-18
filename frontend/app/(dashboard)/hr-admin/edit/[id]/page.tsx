@@ -182,6 +182,9 @@ export default function EditEmployeePage() {
       if (!cleanedData.supervisorPositionId || cleanedData.supervisorPositionId === "") {
         delete cleanedData.supervisorPositionId;
       }
+      if (!cleanedData.payGradeId || cleanedData.payGradeId === "") {
+        delete cleanedData.payGradeId;
+      }
 
       await axiosInstance.put(`/employee-profile/${params.id}`, cleanedData);
       alert("Employee profile updated successfully");

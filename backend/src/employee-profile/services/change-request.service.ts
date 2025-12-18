@@ -147,6 +147,8 @@ export class ChangeRequestService {
 
     // If approved, apply changes to employee profile
     if (processDto.approved) {
+      console.log('✅ Change request approved - updating employee profile');
+
       // Note: HR Admin must manually apply the changes described in the request
       // This just updates the last modified timestamp
       await this.employeeProfileModel.findByIdAndUpdate(
@@ -157,19 +159,33 @@ export class ChangeRequestService {
         },
       );
 
-      // Notify employee that request was approved
+      // N-037: Notify employee that request was approved
+      const approvalMessage = processDto.comments
+        ? `Your profile change request (${request.requestId}) has been APPROVED by HR. Comments: ${processDto.comments}. Your profile has been updated accordingly.`
+        : `Your profile change request (${request.requestId}) has been APPROVED. Your profile has been updated.`;
+
       await this.notificationLogService.sendNotification({
         to: new Types.ObjectId(request.employeeProfileId.toString()),
-        type: 'Profile Change Request Approved',
-        message: `Your profile change request has been approved. ${processDto.comments || ''}`,
+        type: 'N-037',
+        message: approvalMessage,
       });
+
+      console.log(`✅ Notification N-037 sent: Change request ${request.requestId} approved`);
     } else {
-      // Notify employee that request was rejected
+      console.log('❌ Change request rejected');
+
+      // N-037: Notify employee that request was rejected
+      const rejectionMessage = processDto.comments
+        ? `Your profile change request (${request.requestId}) has been REJECTED by HR. Reason: ${processDto.comments}`
+        : `Your profile change request (${request.requestId}) has been REJECTED. Please contact HR for more information.`;
+
       await this.notificationLogService.sendNotification({
         to: new Types.ObjectId(request.employeeProfileId.toString()),
-        type: 'Profile Change Request Rejected',
-        message: `Your profile change request has been rejected. ${processDto.comments || ''}`,
+        type: 'N-037',
+        message: rejectionMessage,
       });
+
+      console.log(`✅ Notification N-037 sent: Change request ${request.requestId} rejected`);
     }
 
     return await request.save();

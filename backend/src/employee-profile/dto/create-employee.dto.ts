@@ -133,4 +133,8 @@ export class CreateEmployeeDto {
   @IsOptional()
   @IsString()
   bankAccountNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  payGradeId?: string;
 }
