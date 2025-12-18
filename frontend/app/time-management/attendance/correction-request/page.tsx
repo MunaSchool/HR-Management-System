@@ -40,16 +40,15 @@ export default function AttendanceCorrectionRequestPage() {
   );
 
   const isDepartmentHead = normalizedRoles.includes("department head");
-  const isHrManager = normalizedRoles.includes("hr manager");
   const isHrAdmin = normalizedRoles.includes("hr admin");
-  const isSystemAdmin = normalizedRoles.includes("system admin");
   const isPayrollOfficer = normalizedRoles.includes("payroll officer");
   const isPayrollSpecialist = normalizedRoles.includes("payroll specialist");
 
 
-  const isAdmin = isHrAdmin || isSystemAdmin;
-  const isPayroll = isPayrollOfficer || isPayrollSpecialist;
+  const canWrite= isHrAdmin || isDepartmentHead;
+  const canRead = isPayrollOfficer || isPayrollSpecialist;
 
+ 
 
   // Fetch correction requests
   const fetchRequests = async () => {
@@ -60,13 +59,13 @@ export default function AttendanceCorrectionRequestPage() {
       let url;
       
       // Determine which endpoint to call based on role
-      if (isDepartmentHead || isHrManager || isAdmin || isPayroll) {
+      if (canWrite||canRead) {
         url = `http://localhost:4000/time-management/attendance-correction-request/`;
       } else {
         url = `http://localhost:4000/time-management/attendance-correction-request/employee/${user.userid}`;      
       }
 
-      if (isDepartmentHead || isHrManager || isAdmin || isPayroll) {
+      if (canWrite||canRead) {
         const res = await axios.get(url, { withCredentials: true });
         
         let data = res.data.data || res.data || [];
@@ -80,10 +79,20 @@ export default function AttendanceCorrectionRequestPage() {
 
         setRequests(processedRequests);
       } else {
-        // Fetch user's attendance record for employees
-        const res2 = await axios.get(`${url}`, { withCredentials: true });
-        setRecord(res2.data.data);
+        const res = await axios.get(url, { withCredentials: true });
+      
+        let data = res.data.data || [];
+        if (!Array.isArray(data) && data.data) data = data.data;
+      
+        const processedRequests = data.map((req: any) => ({
+          ...req,
+          createdAt: new Date(req.createdAt),
+          updatedAt: new Date(req.updatedAt),
+        }));
+      
+        setRequests(processedRequests);
       }
+      
     } catch (err) {
       console.error("Error fetching requests:", err);
     } finally {
@@ -98,19 +107,26 @@ export default function AttendanceCorrectionRequestPage() {
 
   // Filter requests based on role
   const getVisibleRequests = () => {
-    if (isDepartmentHead || isPayroll) {
-      // Department heads only see APPROVED requests
-      return requests.filter((r) => r.status === "APPROVED");
-    } else if (isAdmin) {
-      // Admins only see ESCALATED requests
-      return requests.filter((r) => r.status === "ESCALATED");
-    } else if (isHrManager) {
-      // HR Managers see all EXCEPT escalated
-      return requests.filter((r) => r.status !== "ESCALATED");
+    // Employee: their own requests (already filtered by backend)
+    if (isEmployee && !canRead && !canWrite) {
+      return requests;
     }
-    // Employees see all their requests
-    return requests;
+  
+    // Payroll: read-only approved + rejected
+    if (canRead && !canWrite) {
+      return requests.filter(r =>
+        r.status === "APPROVED" || r.status === "REJECTED"
+      );
+    }
+  
+    // HR Admin & Department Head: see everything
+    if (canWrite && !canRead) {
+      return requests;
+    }
+  
+    return [];
   };
+  
 
   const visibleRequests = getVisibleRequests();
 
@@ -313,10 +329,10 @@ export default function AttendanceCorrectionRequestPage() {
                 Attendance Correction Requests
               </h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {isDepartmentHead || isPayroll && "Review approved attendance correction requests"}
-                {isHrManager && "Review and manage attendance correction requests"}
-                {isAdmin && "Review and manage escalated correction requests"}
-                {isEmployee && !isDepartmentHead && !isHrManager && !isAdmin && "Submit and track your attendance correction requests"}
+                {canRead&& "Review approved attendance correction requests"}
+                {canWrite && "Review and manage attendance correction requests"}
+               
+                {isEmployee && !canRead&& !canWrite &&"Submit and track your attendance correction requests"}
               </p>
             </div>
 
@@ -330,7 +346,7 @@ export default function AttendanceCorrectionRequestPage() {
                 </button>
               )}
               
-              {(isDepartmentHead || isPayroll) && (
+              {(canRead) && (
                 <button
                   onClick={exportToCSV}
                   disabled={visibleRequests.length === 0}
@@ -341,7 +357,7 @@ export default function AttendanceCorrectionRequestPage() {
                 </button>
               )}
               
-              {isHrManager && (
+              {canWrite && (
                 <button
                   onClick={handleAutoEscalate}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-md"
@@ -455,7 +471,7 @@ export default function AttendanceCorrectionRequestPage() {
 
                   <div className="flex space-x-2 ml-4">
                     {/* HR Manager buttons - can approve, reject, and escalate non-escalated requests */}
-                    {isHrManager && (
+                    {canWrite && (
                       <>
                         <button
                           onClick={() => handleApprove(request._id)}
@@ -479,25 +495,10 @@ export default function AttendanceCorrectionRequestPage() {
                     )}
 
                     {/* Admin buttons - can only approve or reject escalated requests */}
-                    {isAdmin && request.status === "ESCALATED" && (
-                      <>
-                        <button
-                          onClick={() => handleApprove(request._id)}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md text-sm font-medium"
-                        >
-                          ✅ Approve
-                        </button>
-                        <button
-                          onClick={() => handleReject(request._id)}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-md text-sm font-medium"
-                        >
-                          ❌ Reject
-                        </button>
-                      </>
-                    )}
+                    
                     
                     {/* Employees can edit their own requests if not approved/rejected */}
-                    {isEmployee && !isDepartmentHead && !isHrManager && !isPayroll && !isAdmin && ["SUBMITTED", "IN_REVIEW", "ESCALATED"].includes(request.status) && (
+                    {isEmployee && ["SUBMITTED", "IN_REVIEW", "ESCALATED"].includes(request.status) && (
                       <button
                         onClick={() => setSelectedRequest(request)}
                         className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition shadow-md text-sm font-medium"
