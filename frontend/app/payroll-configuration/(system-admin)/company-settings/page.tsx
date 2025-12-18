@@ -150,7 +150,7 @@ export default function CompanySettingsPage() {
                 <td>{item.currency}</td>
                 <td>{item.payCycle}</td>
                 <td>
-                  <span className=\"rounded bg-gray-100 px-2 py-1 text-xs capitalize\">{item.status}</span>
+                  <span className="rounded bg-gray-100 px-2 py-1 text-xs capitalize">{item.status}</span>
                 </td>
               </tr>
             ))}
