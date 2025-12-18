@@ -16,17 +16,12 @@ export default function PayrollConfigLayout({ children }: Props) {
 
   const isSystemAdmin = hasRole("System Admin");
 
-  const canSeePayrollSpecialistSection =
-    hasRole("Payroll Specialist") || isSystemAdmin;
-
-  const canSeePayrollManagerSection =
-    hasRole("Payroll Manager") || isSystemAdmin;
-
-  const canSeeHrManagerSection = hasRole("HR Manager") || isSystemAdmin;
-
-  const canSeeLegalPolicySection =
-    hasRole("Legal & Policy Admin") || isSystemAdmin;
-
+  // Each section is now strictly visible only to its own role.
+  // System Admin will see only the System Admin section, not others.
+  const canSeePayrollSpecialistSection = hasRole("Payroll Specialist");
+  const canSeePayrollManagerSection = hasRole("Payroll Manager");
+  const canSeeHrManagerSection = hasRole("HR Manager");
+  const canSeeLegalPolicySection = hasRole("Legal & Policy Admin");
   const canSeeSystemAdminSection = isSystemAdmin;
 
   const canSeeAnyPayrollSection =
