@@ -44,6 +44,7 @@ export default function AttendanceCorrectionRequestPage() {
   const isSystemAdmin = normalizedRoles.includes("system admin");
   const isPayrollOfficer = normalizedRoles.includes("payroll manager");
   const isPayrollSpecialist = normalizedRoles.includes("payroll specialist");
+  const isHRManager = normalizedRoles.includes("hr manager");
 
 
   const canWrite= isHrAdmin || isDepartmentHead  ;
@@ -127,6 +128,9 @@ export default function AttendanceCorrectionRequestPage() {
   
     // HR Admin & Department Head: see everything
     if (canWrite && !canRead) {
+      return requests;
+    }
+      if (isHRManager) {
       return requests;
     }
 
@@ -503,6 +507,22 @@ export default function AttendanceCorrectionRequestPage() {
 
                     {/* Admin buttons - can only approve or reject escalated requests */}
                     {isSystemAdmin && (
+                      <>
+                        <button
+                          onClick={() => handleApprove(request._id)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md text-sm font-medium"
+                        >
+                          ✅ Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(request._id)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-md text-sm font-medium"
+                        >
+                          ❌ Reject
+                        </button>
+                      </>
+                    )}
+                        {isHRManager && (
                       <>
                         <button
                           onClick={() => handleApprove(request._id)}
