@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/app/utils/ApiClient";
 import { isHRAdmin } from "@/app/utils/roleCheck";
+import toast from "react-hot-toast";
 
 interface Department {
   _id: string;
@@ -79,7 +80,10 @@ export default function CreateEmployeePage() {
 
       // Use flexible role checking
       if (!isHRAdmin(response.data)) {
-        alert("Access Denied: You don't have permission to access this page");
+        toast.error("Access Denied: You don't have permission to access this page", {
+          duration: 4000,
+          icon: '🚫',
+        });
         router.push("/profile");
         return;
       }
@@ -150,10 +154,28 @@ export default function CreateEmployeePage() {
       }
 
       await axiosInstance.post("/employee-profile", payload);
-      alert("Employee created successfully");
-      router.push("/hr-admin");
+
+      toast.success("Employee created successfully! 🎉", {
+        duration: 4000,
+        icon: '✅',
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
+
+      setTimeout(() => {
+        router.push("/hr-admin");
+      }, 1000);
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to create employee");
+      toast.error(error?.response?.data?.message || "Failed to create employee", {
+        duration: 5000,
+        icon: '❌',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+        },
+      });
     } finally {
       setSaving(false);
     }

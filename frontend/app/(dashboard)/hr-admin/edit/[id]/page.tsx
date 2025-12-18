@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axiosInstance from "@/app/utils/ApiClient";
 import { isHRAdmin } from "@/app/utils/roleCheck";
+import toast from "react-hot-toast";
 
 interface EmployeeProfile {
   _id: string;
@@ -160,7 +161,10 @@ export default function EditEmployeePage() {
       });
     } catch (error) {
       console.error("Error fetching employee:", error);
-      alert("Failed to load employee data");
+      toast.error("Failed to load employee data", {
+        duration: 4000,
+        icon: '❌',
+      });
     } finally {
       setLoading(false);
     }
@@ -187,17 +191,36 @@ export default function EditEmployeePage() {
       }
 
       await axiosInstance.put(`/employee-profile/${params.id}`, cleanedData);
-      alert("Employee profile updated successfully");
-      router.push("/hr-admin");
+
+      toast.success("Employee profile updated successfully! 🎉", {
+        duration: 3000,
+        icon: '✅',
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
+
+      setTimeout(() => {
+        router.push("/hr-admin");
+      }, 1000);
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to update employee");
+      toast.error(error?.response?.data?.message || "Failed to update employee", {
+        duration: 5000,
+        icon: '❌',
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+        },
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleStatusChange = async (newStatus: string) => {
-    if (!confirm(`Are you sure you want to change status to ${newStatus}?`)) {
+    const confirmed = window.confirm(`Are you sure you want to change status to ${newStatus}?`);
+    if (!confirmed) {
       return;
     }
 
@@ -206,10 +229,21 @@ export default function EditEmployeePage() {
         status: newStatus,
         effectiveDate: new Date(),
       });
-      alert("Status updated successfully");
+
+      toast.success(`Status updated to ${newStatus} successfully! ✅`, {
+        duration: 3000,
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
+
       fetchEmployee();
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to update status");
+      toast.error(error?.response?.data?.message || "Failed to update status", {
+        duration: 4000,
+        icon: '❌',
+      });
     }
   };
 

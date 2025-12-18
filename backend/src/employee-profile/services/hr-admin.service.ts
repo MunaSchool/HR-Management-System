@@ -152,6 +152,9 @@ export class HrAdminService {
 
     // Send detailed notification to employee about the update (N-037)
     try {
+      console.log(`📧 Preparing to send notification to employee ${employeeId}`);
+      console.log(`📝 Update DTO:`, updateDto);
+
       // Build detailed message about what changed
       const changedFields: string[] = [];
 
@@ -160,14 +163,21 @@ export class HrAdminService {
       if (updateDto.workType) changedFields.push('Work Type');
       if (updateDto.primaryDepartmentId) changedFields.push('Department');
       if (updateDto.primaryPositionId) changedFields.push('Position');
+      if (updateDto.supervisorPositionId !== undefined) changedFields.push('Supervisor');
       if (updateDto.status) changedFields.push('Employment Status');
       if (updateDto.contractStartDate) changedFields.push('Contract Start Date');
       if (updateDto.contractEndDate) changedFields.push('Contract End Date');
+      if (updateDto.dateOfHire) changedFields.push('Hire Date');
       if (updateDto.bankName || updateDto.bankAccountNumber) changedFields.push('Banking Information');
+      if (updateDto.firstName || updateDto.lastName || updateDto.middleName) changedFields.push('Name');
+      if (updateDto.workEmail || updateDto.personalEmail) changedFields.push('Email');
+      if (updateDto.mobilePhone || updateDto.homePhone) changedFields.push('Phone Number');
+
+      console.log(`🔍 Changed fields detected:`, changedFields);
 
       const changesMessage = changedFields.length > 0
-        ? `The following information has been updated: ${changedFields.join(', ')}.`
-        : 'Your employment information has been updated.';
+        ? `The following information has been updated by HR: ${changedFields.join(', ')}.`
+        : 'Your employment information has been updated by HR.';
 
       await this.notificationLogService.sendNotification({
         to: new Types.ObjectId(employeeId),
@@ -175,9 +185,10 @@ export class HrAdminService {
         message: `${changesMessage} Please review your profile for details.`,
       });
 
-      console.log(`✅ Notification N-037 sent to employee ${employeeId}`);
+      console.log(`✅ Notification N-037 sent successfully to employee ${employeeId}`);
     } catch (error) {
-      console.error('Failed to send notification:', error);
+      console.error('❌ Failed to send notification:', error);
+      console.error('Error details:', error?.message || error);
     }
 
     return updated;

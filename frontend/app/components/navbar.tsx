@@ -24,10 +24,16 @@ export default function Navbar(){
       <nav className="bg-white dark:bg-gray-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center">
+            <div className="flex items-center gap-6">
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                 HR Management System
               </h1>
+              <button
+                onClick={() => router.push('/profile')}
+                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition"
+              >
+                🏠 Home
+              </button>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-gray-700 dark:text-gray-300">

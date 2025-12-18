@@ -21,13 +21,16 @@ export default function Notifications() {
 
     async function getUserNotifs() {
       try {
+        console.log('🔍 Fetching notifications for user ID:', user?.userid);
         const res = await axios.get<{ message: string; data: Notification[] }>(
           `http://localhost:4000/time-management/notification-log/employee/${user?.userid}`,
           { withCredentials: true }
         );
-        setNotifications(res.data.data);
+        console.log('📧 Notifications response:', res.data);
+        console.log('📊 Number of notifications:', res.data.data?.length || 0);
+        setNotifications(res.data.data || []);
       } catch (err) {
-        console.error(err);
+        console.error('❌ Error fetching notifications:', err);
       } finally {
         setLoading(false);
       }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axiosInstance from "@/app/utils/ApiClient";
+import toast from "react-hot-toast";
 
 interface EmployeeProfile {
   _id: string;
@@ -96,22 +97,40 @@ export default function ProfilePage() {
   const handleUpdateContactInfo = async () => {
     try {
       await axiosInstance.patch("/employee-profile/me/contact-info", contactInfo);
-      alert("Contact information updated successfully");
+      toast.success("Contact information updated successfully! ✅", {
+        duration: 3000,
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
       setEditMode(false);
       fetchProfile();
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to update contact information");
+      toast.error(error?.response?.data?.message || "Failed to update contact information", {
+        duration: 4000,
+        icon: '❌',
+      });
     }
   };
 
   const handleUpdateBiography = async () => {
     try {
       await axiosInstance.patch("/employee-profile/me/profile", { biography });
-      alert("Biography updated successfully");
+      toast.success("Biography updated successfully! 📝", {
+        duration: 3000,
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
       setEditBioMode(false);
       fetchProfile();
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to update biography");
+      toast.error(error?.response?.data?.message || "Failed to update biography", {
+        duration: 4000,
+        icon: '❌',
+      });
     }
   };
 
@@ -129,11 +148,20 @@ export default function ProfilePage() {
         },
       });
 
-      alert("Profile picture uploaded successfully");
+      toast.success("Profile picture uploaded successfully! 📸", {
+        duration: 3000,
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
       setProfilePic(null);
       fetchProfile();
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to upload profile picture");
+      toast.error(error?.response?.data?.message || "Failed to upload profile picture", {
+        duration: 4000,
+        icon: '❌',
+      });
     } finally {
       setUploadingPic(false);
     }
