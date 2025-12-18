@@ -22,30 +22,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Navigation Bar */}
-      <nav className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                HR Management System
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700 dark:text-gray-300">
-                Welcome, {user.firstName || user.email}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
@@ -71,11 +47,14 @@ export default function HomePage() {
             />
 
             {/* Time Management */}
+            <Link href='/time-management'>
             <DashboardCard
               title="Time Management"
               description="Track attendance and work hours"
               icon="⏰"
-            />
+            />            
+            </Link>
+
 
             {/* Leave Management */}
             <DashboardCard
@@ -128,7 +107,7 @@ export default function HomePage() {
   );
 }
 
-function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string }) {
+function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string; }) {
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
       <div className="text-4xl mb-4">{icon}</div>
