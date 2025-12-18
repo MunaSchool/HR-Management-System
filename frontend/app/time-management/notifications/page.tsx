@@ -26,6 +26,7 @@ export default function Notifications() {
           { withCredentials: true }
         );
         setNotifications(res.data.data);
+        console.log(res.data.data)
       } catch (err) {
         console.error(err);
       } finally {
@@ -77,18 +78,6 @@ export default function Notifications() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link
-  href="/time-management/clock-in-out"
-  className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer block"
->
-  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-    Clock In / Clock Out
-  </h3>
-  <p className="text-gray-600 dark:text-gray-400">
-    Record your daily working hours
-  </p>
-</Link>
-
             {notifications.map((notif) => (
               <DashboardCard
                 key={notif._id}
@@ -96,8 +85,6 @@ export default function Notifications() {
                 description={notif.message}
                 link={`./notifications/${notif._id}`}
               />
-
-              
             ))}
           </div>
         </div>
