@@ -48,11 +48,18 @@ export default function PayslipsPage() {
     setMsg(null);
     try {
       const runRes = await payrollExecutionService.getRunById(runId as string);
-      setRun(runRes.data);
+      setRun(runRes.data || runRes);
       const psRes = await payrollExecutionService.getPayslipsByRunId(runId as string);
-      setRows(psRes.data || []);
+      // Handle both direct array and wrapped response
+      const payslipsData = Array.isArray(psRes) ? psRes : (psRes.data || []);
+      setRows(payslipsData);
+      console.log("Payslips loaded:", payslipsData);
     } catch (e: any) {
-      setMsg(e?.response?.data?.message || "Failed to load payslips");
+      const errorMsg = e?.response?.status === 404 
+        ? `Payroll run "${runId}" not found. Please check the run ID exists.`
+        : (e?.response?.data?.message || e?.message || "Failed to load payslips");
+      setMsg(errorMsg);
+      console.error("Fetch error:", e);
     } finally {
       setLoading(false);
     }
@@ -73,6 +80,7 @@ export default function PayslipsPage() {
   }
 
   if (loading) return <div style={{ padding: 20 }}>Loading payslips...</div>;
+  if (msg && !run) return <div style={{ padding: 20, color: "#dc2626" }}>{msg}</div>;
   if (!run) return <div style={{ padding: 20 }}>Run not found</div>;
 
   return (
@@ -81,6 +89,7 @@ export default function PayslipsPage() {
         <div>
           <div style={{ fontSize: 18, fontWeight: 700 }}>Payslips — {run.runId}</div>
           <div style={{ fontSize: 13, color: "#666" }}>Period: {new Date(run.payrollPeriod).toLocaleDateString()}</div>
+          <div style={{ fontSize: 12, color: "#999" }}>Found {rows.length} payslips</div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <RoleGate allow={[ "Payroll Specialist"]}>
@@ -97,24 +106,33 @@ export default function PayslipsPage() {
         </div>
       </div>
 
-      <DataTable
-        rows={rows}
-        columns={[
-          { key: "employee", title: "EMPLOYEE", render: (r) => `${r.employeeId?.firstName || ""} ${r.employeeId?.lastName || ""}` },
-          { key: "baseSalary", title: "BASE", render: (r) => `$${(r.baseSalary ?? r.earningsDetails?.baseSalary ?? 0).toLocaleString()}` },
-          { key: "allowances", title: "ALLOWANCES", render: (r) => {
-              const a = r.allowances ?? (Array.isArray(r.earningsDetails?.allowances) ? r.earningsDetails.allowances.reduce((s: number, x: any) => s + (x?.amount || 0), 0) : 0);
-              return `$${(a || 0).toLocaleString()}`;
-            }
-          },
-          { key: "deductions", title: "DEDUCTIONS", render: (r) => {
-              const d = r.deductions ?? r.totaDeductions ?? 0;
-              return `$${(d || 0).toLocaleString()}`;
-            }
-          },
-          { key: "netPay", title: "NET PAY", render: (r) => `$${(r.netPay ?? 0).toLocaleString()}` },
-        ]}
-      />
+      {rows.length === 0 ? (
+        <div style={{ padding: 20, background: "#fef3c7", borderRadius: 8, marginBottom: 12 }}>
+          <div style={{ fontSize: 13, color: "#92400e" }}>No payslips found for this run. Generate them first.</div>
+        </div>
+      ) : (
+        <DataTable
+          rows={rows}
+          columns={[
+            { key: "employee", title: "EMPLOYEE", render: (r) => `${r.employeeId?.firstName || ""} ${r.employeeId?.lastName || ""}` },
+            { key: "baseSalary", title: "BASE", render: (r) => `$${(r.baseSalary ?? r.earningsDetails?.baseSalary ?? 0).toLocaleString()}` },
+            { key: "allowances", title: "ALLOWANCES", render: (r) => {
+                // Calculate allowances from totalGrossSalary - baseSalary
+                const baseSalary = r.baseSalary ?? r.earningsDetails?.baseSalary ?? 0;
+                const totalGross = r.totalGrossSalary ?? 0;
+                const allowances = totalGross - baseSalary;
+                return `$${(allowances || 0).toLocaleString()}`;
+              }
+            },
+            { key: "deductions", title: "DEDUCTIONS", render: (r) => {
+                const d = r.deductions ?? r.totaDeductions ?? 0;
+                return `$${(d || 0).toLocaleString()}`;
+              }
+            },
+            { key: "netPay", title: "NET PAY", render: (r) => `$${(r.netPay ?? 0).toLocaleString()}` },
+          ]}
+        />
+      )}
 
       {msg && <div style={{ marginTop: 12, fontSize: 13, padding: 12, background: "#f0f9ff", borderRadius: 8 }}>{msg}</div>}
     </div>
