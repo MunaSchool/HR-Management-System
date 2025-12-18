@@ -430,7 +430,7 @@ export class PerformanceService {
 
         const assignment = await this.appraisalAssignmentModel
             .findById(assignmentId)
-            .populate('employeeProfileId', 'firstName lastName position departmentId')
+            .populate('employeeProfileId', 'firstName lastName employeeNumber position departmentId')
             .populate('managerProfileId', 'firstName lastName')
             .populate('templateId', 'name templateType evaluationCriteria')
             .populate('cycleId', 'name startDate endDate status')
@@ -463,7 +463,7 @@ export class PerformanceService {
     }
 
     // Appraisal Record Methods
-    async createOrUpdateAppraisalRecord(assignmentId: string, createRecordDto: any) {
+    async createOrUpdateAppraisalRecord(assignmentId: string, createRecordDto: any, user?: any) {
         if (!Types.ObjectId.isValid(assignmentId)) {
             throw new NotFoundException('Invalid assignment ID');
         }
@@ -481,13 +481,35 @@ export class PerformanceService {
             }, 0);
         }
 
-        const recordData = {
+        // Determine managerProfileId: use assignment's manager, or current user if no manager assigned
+        let managerProfileId = assignment.managerProfileId;
+        if (!managerProfileId && user) {
+            console.log('🔍 Assignment has no manager, using current user as manager');
+            console.log('   User object:', user);
+            console.log('   Looking for employee profile with userid:', user.userid || user.employeeNumber || user.email);
+
+            // Find the employee profile for the current user
+            const userId = user.userid || user.employeeNumber || user.email;
+            const managerProfile = await this.employeeProfileModel
+                .findById(userId)
+                .exec();
+
+            console.log('   Found manager profile:', managerProfile ? managerProfile._id : 'NOT FOUND');
+
+            if (managerProfile) {
+                managerProfileId = managerProfile._id;
+            } else {
+                throw new Error('Cannot create appraisal record: Manager profile not found for current user');
+            }
+        }
+
+        const recordData: any = {
         ...createRecordDto,
         assignmentId,
         cycleId: assignment.cycleId,
         templateId: assignment.templateId,
         employeeProfileId: assignment.employeeProfileId,
-        managerProfileId: assignment.managerProfileId,
+        managerProfileId,
         totalScore,
         status: AppraisalRecordStatus.DRAFT,
         };

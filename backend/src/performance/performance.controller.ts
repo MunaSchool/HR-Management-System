@@ -104,8 +104,9 @@ export class PerformanceController {
   async createOrUpdateAppraisalRecord(
     @Param('assignmentId') assignmentId: string,
     @Body() createRecordDto: CreateAppraisalRecordDto,
+    @CurrentUser() user: CurrentUserData,
   ) {
-    return this.performanceService.createOrUpdateAppraisalRecord(assignmentId, createRecordDto);
+    return this.performanceService.createOrUpdateAppraisalRecord(assignmentId, createRecordDto, user);
   }
 
   @Put('assignments/:assignmentId/submit')
