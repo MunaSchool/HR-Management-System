@@ -10,18 +10,17 @@ import {
 import axiosInstance, { registerUnauthenticatedHandler } from "@/app/utils/ApiClient";
 import { usePathname, useRouter } from "next/navigation";
 
-export type User = {
-  userid: string;         // employeeId or userId
+type User = {
+  userid?: string;
+  role?: string;
+  roles?: string[];
+  name?: string;
   email: string;
+  age?:number;
+  userType?:string;
   status?: string;
-
-  // candidate fields
-  userType?: "candidate";
   candidateNumber?: string;
-
-  // employee fields
   employeeNumber?: string;
-  roles?: string[];       // SystemRole[]
 };
 
 
