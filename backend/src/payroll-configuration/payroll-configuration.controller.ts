@@ -489,6 +489,7 @@ export class PayrollConfigurationController {
     SystemRole.PAYROLL_MANAGER,
     SystemRole.PAYROLL_SPECIALIST,
     SystemRole.HR_MANAGER,
+    SystemRole.LEGAL_POLICY_ADMIN,
     SystemRole.SYSTEM_ADMIN,
     SystemRole.LEGAL_POLICY_ADMIN,
   )
