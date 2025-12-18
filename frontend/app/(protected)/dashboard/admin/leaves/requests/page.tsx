@@ -259,6 +259,7 @@ export default function LeaveRequestsAdminPage() {
                     <TableHead>From → To</TableHead>
                     <TableHead>Days</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Irregular</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -312,6 +313,14 @@ export default function LeaveRequestsAdminPage() {
                             </Badge>
                           </div>
                         </TableCell>
+<TableCell>
+  {r.irregularPatternFlag ? (
+    <Badge className="bg-orange-100 text-orange-700">Yes</Badge>
+  ) : (
+    <Badge variant="outline">No</Badge>
+  )}
+</TableCell>
+
 
                         <TableCell className="flex gap-2">
                           <Button variant="outline" size="sm" onClick={() => setSelected(r)}>
@@ -378,7 +387,11 @@ export default function LeaveRequestsAdminPage() {
                       ? new Date(selected.dates.to).toLocaleDateString()
                       : '—'}
                   </p>
-                  <p>
+                  
+                          <p>
+                    <b>Irregular Pattern:</b> {selected.irregularPatternFlag ? 'Yes' : 'No'}
+                   </p>
+                   <p>
                     <b>Justification:</b> {selected.justification || 'N/A'}
                   </p>
 
