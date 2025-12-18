@@ -486,7 +486,7 @@ export class TimeManagementController {
   
 
    @UseGuards(AuthGuard, RolesGuard)
-   @Roles( SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+   @Roles( SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
    @Patch('time-exception/:id/approve') // line manager, hr admin
     async approveTimeException(@Param('id') id: string, @Req() req) {
         const approverId = req.user.id;
@@ -494,14 +494,14 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles( SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+    @Roles( SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
     @Patch('time-exception/:id/reject') // line manager, hr admin
     async rejectTimeException(@Param('id') id: string, @Body('reason') reason: string, @Req() req) {
         const approverId = req.user.id;
         return this.timeExceptionService.reject(id, approverId, reason);
     }
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN, SystemRole.HR_MANAGER)
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN)
     @Patch('time-exception/:id/open') // line manager, hr admin
     async openTimeException(@Param('id') id: string, @Req() req) {
         const approverId = req.user.id;
@@ -509,7 +509,7 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.HR_MANAGER) // hr manager
+    @Roles(SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD) // hr manager
     @Patch('time-exception/:id/escalate')
     async escalateTimeException(@Param('id') id: string) {
         return this.timeExceptionService.escalate(id);
@@ -524,14 +524,14 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN, SystemRole.HR_MANAGER, SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
+    @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.PAYROLL_MANAGER, SystemRole.PAYROLL_SPECIALIST)
     @Get('time-exception')
     async getAllTimeExceptions() {
         return this.timeExceptionService.getAllTimeExceptions();
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.SYSTEM_ADMIN)
+    @Roles(SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
     @Post('time-exception/auto-escalate') // line manager, hr admin
     async autoEscalateTimeExceptions() {
         return this.timeExceptionService.autoEscalatePending();
