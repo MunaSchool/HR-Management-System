@@ -75,7 +75,7 @@ export default function PayrollConfigLayout({ children }: Props) {
                       </Link>
                     </li>
                     <li>
-                      <Link href="/payroll-configuration/company-settings" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <Link href="/payroll-configuration/(system-admin)/company-settings" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
                         Company Settings
                       </Link>
                     </li>
@@ -100,11 +100,6 @@ export default function PayrollConfigLayout({ children }: Props) {
                     <li>
                       <Link href="/payroll-configuration/review-policies" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
                         Review Payroll Policies
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/payroll-configuration/disputes" className="block px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                        Payroll Disputes
                       </Link>
                     </li>
                   </ul>
