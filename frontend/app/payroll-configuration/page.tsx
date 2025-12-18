@@ -9,26 +9,44 @@ const sampleConfigs = [
 
 export default function PayrollConfigurationPage() {
 	return (
-		<main className="px-6 py-8 max-w-4xl mx-auto">
-			<h1 className="text-2xl font-semibold mb-6">Payroll Configurations</h1>
+    <main className="min-h-screen bg-gray-900 text-gray-100 px-6 py-10">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-semibold">Payroll Configurations</h1>
+          <p className="mt-2 text-sm text-gray-300">
+            Manage payroll settings used during payroll execution.
+          </p>
+			</div>
 
-			<p className="mb-4 text-sm text-gray-600">Manage payroll settings used during payroll execution.</p>
-
-			<ul className="space-y-4">
+        <ul className="space-y-3">
 				{sampleConfigs.map((c) => (
-					<li key={c.id} className="p-4 border rounded-md flex items-center justify-between">
+            <li
+              key={c.id}
+              className="p-4 rounded-lg border border-gray-800 bg-gray-800/80 flex items-center justify-between"
+            >
 						<div>
-							<div className="font-medium">{c.name}</div>
-							<div className="text-sm text-gray-600">{c.description}</div>
+                <div className="font-medium text-lg">{c.name}</div>
+                <div className="text-sm text-gray-300">{c.description}</div>
 						</div>
-						<div className="flex items-center gap-3">
-							<Link href={`/payroll-configuration/${c.id}`} className="text-indigo-600 text-sm">View</Link>
-							<Link href={`/payroll-configuration/${c.id}/edit`} className="text-gray-600 text-sm">Edit</Link>
+              <div className="flex items-center gap-4">
+                <Link
+                  href={`/payroll-configuration/${c.id}`}
+                  className="text-blue-300 hover:text-blue-200 text-sm font-medium"
+                >
+                  View
+                </Link>
+                <Link
+                  href={`/payroll-configuration/${c.id}/edit`}
+                  className="text-gray-300 hover:text-gray-100 text-sm font-medium"
+                >
+                  Edit
+                </Link>
 						</div>
 					</li>
 				))}
 			</ul>
+      </div>
 		</main>
-	)
+  );
 }
 

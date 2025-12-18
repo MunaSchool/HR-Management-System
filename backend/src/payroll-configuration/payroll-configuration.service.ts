@@ -143,11 +143,15 @@ export class PayrollConfigurationService
     }
     //only if draft
     async editPayGrade(pg: string, updateData: editPayGradeDTO): Promise<payGradeDocument|null> {
-      const paygrade = await this.payGradeModel.findById(pg) as payGradeDocument;
-      if (paygrade.status !== 'draft') {
-        throw new Error('Only draft pay grades can be edited');
-      } else
-      return await this.payGradeModel.findByIdAndUpdate(pg, updateData, { new: true });  
+      const paygrade = await this.payGradeModel.findById(pg) as payGradeDocument | null;
+      if (!paygrade) {
+        throw new BadRequestException('Pay grade not found');
+      }
+      if (paygrade.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft pay grades can be edited');
+      }
+      const { status, ...safeUpdate } = updateData as any;
+      return await this.payGradeModel.findByIdAndUpdate(pg, safeUpdate, { new: true });
     }
 
     async removePayGrade(pg: string): Promise<payGradeDocument | null> {
@@ -156,6 +160,32 @@ export class PayrollConfigurationService
 
     async getAllPayGrades(): Promise<payGradeDocument[]> {
         return await this.payGradeModel.find().exec();
+    }
+
+    async approvePayGrade(id: string): Promise<payGradeDocument | null> {
+      const paygrade = await this.payGradeModel.findById(id).exec();
+      if (!paygrade) {
+        return null;
+      }
+      if (paygrade.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft pay grades can be approved');
+      }
+      paygrade.status = ConfigStatus.APPROVED;
+      paygrade.approvedAt = new Date();
+      return paygrade.save();
+    }
+
+    async rejectPayGrade(id: string): Promise<payGradeDocument | null> {
+      const paygrade = await this.payGradeModel.findById(id).exec();
+      if (!paygrade) {
+        return null;
+      }
+      if (paygrade.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft pay grades can be rejected');
+      }
+      paygrade.status = ConfigStatus.REJECTED;
+      paygrade.approvedAt = new Date();
+      return paygrade.save();
     }
 
 /*
@@ -189,11 +219,45 @@ export class PayrollConfigurationService
 
     //only if draft
     async editPayTypes (pt: string, updateData: editPayTypeDTO): Promise <payTypeDocument | null>{
-      const paytype = await this.payTypeModel.findById(pt) as payTypeDocument;
-      if (paytype.status !== 'draft') {
-        throw new Error('Only draft pay types can be edited');
-      } else
-      return await this.payTypeModel.findByIdAndUpdate(pt, updateData, { new: true });  
+      const paytype = await this.payTypeModel.findById(pt) as payTypeDocument | null;
+      if (!paytype) {
+        throw new BadRequestException('Pay type not found');
+      }
+      if (paytype.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft pay types can be edited');
+      }
+      const { status, ...safeUpdate } = updateData as any;
+      try {
+        return await this.payTypeModel.findByIdAndUpdate(pt, safeUpdate, { new: true });
+      } catch (err: any) {
+        if (err?.code === 11000) {
+          const dup = err.keyValue?.type ?? JSON.stringify(err.keyValue) ?? 'unknown';
+          throw new ConflictException(`Pay type with this name already exists: ${dup}`);
+        }
+        throw err;
+      }
+    }
+
+    async approvePayType(id: string): Promise<payTypeDocument | null> {
+      const paytype = await this.payTypeModel.findById(id).exec();
+      if (!paytype) return null;
+      if (paytype.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft pay types can be approved');
+      }
+      paytype.status = ConfigStatus.APPROVED;
+      paytype.approvedAt = new Date();
+      return paytype.save();
+    }
+
+    async rejectPayType(id: string): Promise<payTypeDocument | null> {
+      const paytype = await this.payTypeModel.findById(id).exec();
+      if (!paytype) return null;
+      if (paytype.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft pay types can be rejected');
+      }
+      paytype.status = ConfigStatus.REJECTED;
+      paytype.approvedAt = new Date();
+      return paytype.save();
     }
 
     async createPayTypes (pt: createPayTypeDTO): Promise<payTypeDocument>{
@@ -234,6 +298,28 @@ export class PayrollConfigurationService
       return await this.allowanceModel.findByIdAndUpdate(id, updateData, { new: true });  
     }
 
+    async approveAllowance(id: string): Promise<allowanceDocument | null> {
+      const allowance = await this.allowanceModel.findById(id).exec();
+      if (!allowance) return null;
+      if (allowance.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft allowances can be approved');
+      }
+      allowance.status = ConfigStatus.APPROVED;
+      allowance.approvedAt = new Date();
+      return allowance.save();
+    }
+
+    async rejectAllowance(id: string): Promise<allowanceDocument | null> {
+      const allowance = await this.allowanceModel.findById(id).exec();
+      if (!allowance) return null;
+      if (allowance.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft allowances can be rejected');
+      }
+      allowance.status = ConfigStatus.REJECTED;
+      allowance.approvedAt = new Date();
+      return allowance.save();
+    }
+
 
 
     //////19- config policies for signing bonuses
@@ -257,6 +343,28 @@ export class PayrollConfigurationService
 
     async removeSigningBonuses(id: string): Promise<signingBonusDocument|null>{
         return this.signingBonusModel.findByIdAndDelete(id);
+    }
+
+    async approveSigningBonus(id: string): Promise<signingBonusDocument | null> {
+      const bonus = await this.signingBonusModel.findById(id).exec();
+      if (!bonus) return null;
+      if (bonus.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft signing bonuses can be approved');
+      }
+      bonus.status = ConfigStatus.APPROVED;
+      bonus.approvedAt = new Date();
+      return bonus.save();
+    }
+
+    async rejectSigningBonus(id: string): Promise<signingBonusDocument | null> {
+      const bonus = await this.signingBonusModel.findById(id).exec();
+      if (!bonus) return null;
+      if (bonus.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft signing bonuses can be rejected');
+      }
+      bonus.status = ConfigStatus.REJECTED;
+      bonus.approvedAt = new Date();
+      return bonus.save();
     }
 
     async findAllSigningBonuses(): Promise<signingBonusDocument[]> {
@@ -291,6 +399,28 @@ export class PayrollConfigurationService
         throw new Error('Only draft termination and resignation benefits can be edited');
       }  
       return await this.terminationAndResignationBenefitsModel.findByIdAndUpdate(id, updateData, { new: true });
+    }
+
+    async approveTerminationAndResignationBenefit(id: string): Promise<terminationAndResignationBenefitsDocument | null> {
+      const benefit = await this.terminationAndResignationBenefitsModel.findById(id).exec();
+      if (!benefit) return null;
+      if (benefit.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft termination/resignation benefits can be approved');
+      }
+      benefit.status = ConfigStatus.APPROVED;
+      benefit.approvedAt = new Date();
+      return benefit.save();
+    }
+
+    async rejectTerminationAndResignationBenefit(id: string): Promise<terminationAndResignationBenefitsDocument | null> {
+      const benefit = await this.terminationAndResignationBenefitsModel.findById(id).exec();
+      if (!benefit) return null;
+      if (benefit.status !== ConfigStatus.DRAFT) {
+        throw new BadRequestException('Only draft termination/resignation benefits can be rejected');
+      }
+      benefit.status = ConfigStatus.REJECTED;
+      benefit.approvedAt = new Date();
+      return benefit.save();
     }
 
 

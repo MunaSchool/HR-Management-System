@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import axiosInstance from "@/app/utils/ApiClient";
+import { useAuth } from "@/app/(system)/context/authContext";
 import { useRouter } from "next/navigation";
 
 interface PayGradeData {
@@ -16,7 +17,9 @@ interface PayGradeData {
   updatedAt?: string;
 }
 
-export default function ConfigPayGradesPage() {
+export default function ReviewPayGradesPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [payGrades, setPayGrades] = useState<PayGradeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,9 +29,14 @@ export default function ConfigPayGradesPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState<Partial<PayGradeData>>({});
-  const router = useRouter();
 
-  // Fetch all pay grades
+  // Role protection: Only Payroll Manager can access
+  useEffect(() => {
+    if (user && !user.roles?.includes("Payroll Manager")) {
+      router.push("/unauthorized");
+    }
+  }, [user, router]);
+
   useEffect(() => {
     fetchPayGrades();
   }, []);
@@ -46,7 +54,6 @@ export default function ConfigPayGradesPage() {
     }
   };
 
-  // View pay grade details
   const handleView = async (id: string) => {
     try {
       const response = await axiosInstance.get(`/payroll-configuration/pay-grades/${id}`);
@@ -57,17 +64,23 @@ export default function ConfigPayGradesPage() {
     }
   };
 
-  // Open edit modal
   const handleEditOpen = (payGrade: PayGradeData) => {
+    if (payGrade.status !== "draft") {
+      setError("Only draft pay grades can be edited");
+      return;
+    }
     setEditForm({ ...payGrade });
     setSelectedPayGrade(payGrade);
     setShowEditModal(true);
   };
 
-  // Update pay grade (draft only)
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPayGrade?._id) return;
+    if (selectedPayGrade.status !== "draft") {
+      setError("Only draft pay grades can be edited");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -116,6 +129,7 @@ export default function ConfigPayGradesPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this pay grade?")) return;
     try {
       setLoading(true);
       await axiosInstance.delete(`/payroll-configuration/pay-grades/${id}`);
@@ -129,68 +143,48 @@ export default function ConfigPayGradesPage() {
     }
   };
 
-  // Filter pay grades
   const filteredPayGrades = statusFilter === "all" 
     ? payGrades 
     : payGrades.filter(p => p.status === statusFilter);
 
-  // Get status badge color
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "approved":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
       case "draft":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
       case "rejected":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
     }
   };
 
   if (loading && payGrades.length === 0) {
     return (
       <div className="flex items-center justify-center h-96 bg-[#0b1220] text-gray-100">
-        <div className="text-lg text-gray-300">Loading...</div>
+        <div className="text-lg text-gray-300">Loading pay grades...</div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#0b1220] text-gray-100 space-y-6 p-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">Pay Grades Configuration</h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">Define salary grades and compensation levels for different job positions</p>
+          <h1 className="text-3xl font-bold text-white">Review & Approve Pay Grades</h1>
+          <p className="mt-1 text-gray-300">Review, edit, approve, reject, or delete pay grades</p>
         </div>
-        <button
-          onClick={() => router.push("./config-paygrade/create")}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-        >
-          + Create Pay Grade
-        </button>
       </div>
 
-      {/* Alerts */}
-      {error && (
-        <div className="p-4 bg-red-900/40 text-red-100 rounded-lg border border-red-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="p-4 bg-red-900/60 text-red-100 rounded-lg">{error}</div>}
+      {success && <div className="p-4 bg-green-900/60 text-green-100 rounded-lg">{success}</div>}
 
-      {success && (
-        <div className="p-4 bg-green-900/30 text-green-100 rounded-lg border border-green-700">
-          {success}
-        </div>
-      )}
-
-      {/* Filter */}
       <div className="flex gap-4">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="px-4 py-2 border border-gray-700 rounded-lg bg-[#0f172a] text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+          className="px-4 py-2 border border-gray-700 rounded-lg bg-[#0f172a] text-gray-100"
         >
           <option value="all">All Statuses</option>
           <option value="draft">Draft</option>
@@ -199,10 +193,9 @@ export default function ConfigPayGradesPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-        <table className="w-full text-sm text-gray-900 dark:text-gray-100">
-          <thead className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="overflow-x-auto border border-gray-800 rounded-lg">
+        <table className="w-full text-sm text-gray-100">
+          <thead className="bg-[#111827] border-b border-gray-800 text-gray-200">
             <tr>
               <th className="px-6 py-3 text-left font-semibold">Grade Name</th>
               <th className="px-6 py-3 text-left font-semibold">Base Salary</th>
@@ -212,10 +205,10 @@ export default function ConfigPayGradesPage() {
               <th className="px-6 py-3 text-center font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="divide-y divide-gray-800">
             {filteredPayGrades.length > 0 ? (
               filteredPayGrades.map((payGrade) => (
-                <tr key={payGrade._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                <tr key={payGrade._id} className="hover:bg-[#111827] transition">
                   <td className="px-6 py-4 font-medium">{payGrade.grade}</td>
                   <td className="px-6 py-4">${payGrade.baseSalary.toLocaleString()}</td>
                   <td className="px-6 py-4">${payGrade.grossSalary.toLocaleString()}</td>
@@ -231,27 +224,62 @@ export default function ConfigPayGradesPage() {
                     <div className="flex items-center justify-center gap-3">
                       <button
                         onClick={() => handleView(payGrade._id)}
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition text-lg"
+                        className="text-blue-300 hover:text-blue-200 font-medium"
                         title="View"
                       >
                         👁️
                       </button>
                       <button
                         onClick={() => handleEditOpen(payGrade)}
-                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition text-lg"
-                        title="Edit"
+                        disabled={payGrade.status !== "draft"}
+                        className={`font-medium ${
+                          payGrade.status === "draft"
+                            ? "text-yellow-300 hover:text-yellow-200"
+                            : "text-gray-600 cursor-not-allowed"
+                        }`}
+                        title={payGrade.status === "draft" ? "Edit (draft only)" : "Cannot edit approved/rejected"}
                       >
                         ✏️
                       </button>
-                      {/* Payroll Specialist: view/edit only, no delete */}
+                      <button
+                        onClick={() => handleApprove(payGrade._id)}
+                        disabled={payGrade.status !== "draft"}
+                        className={`font-medium ${
+                          payGrade.status === "draft"
+                            ? "text-green-300 hover:text-green-200"
+                            : "text-gray-600 cursor-not-allowed"
+                        }`}
+                        title={payGrade.status === "draft" ? "Approve" : "Only draft can be approved"}
+                      >
+                        ✅
+                      </button>
+                      <button
+                        onClick={() => handleReject(payGrade._id)}
+                        disabled={payGrade.status !== "draft"}
+                        className={`font-medium ${
+                          payGrade.status === "draft"
+                            ? "text-red-300 hover:text-red-200"
+                            : "text-gray-600 cursor-not-allowed"
+                        }`}
+                        title={payGrade.status === "draft" ? "Reject" : "Only draft can be rejected"}
+                      >
+                        🚫
+                      </button>
+                      <button
+                        onClick={() => handleDelete(payGrade._id)}
+                        className="text-red-400 hover:text-red-200 font-medium"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No pay grades found. <button onClick={() => router.push("./config-paygrade/create")} className="text-blue-600 hover:underline">Create one now</button>
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  No pay grades found
                 </td>
               </tr>
             )}
@@ -261,13 +289,13 @@ export default function ConfigPayGradesPage() {
 
       {/* View Modal */}
       {showViewModal && selectedPayGrade && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">{selectedPayGrade.grade}</h2>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#0f172a] text-gray-100 rounded-lg shadow-lg max-w-md w-full border border-gray-800">
+            <div className="flex items-center justify-between p-6 border-b border-gray-800">
+              <h2 className="text-xl font-bold text-white">{selectedPayGrade.grade}</h2>
               <button
                 onClick={() => setShowViewModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl"
+                className="text-gray-300 hover:text-gray-100 text-xl"
               >
                 ✕
               </button>
@@ -275,33 +303,67 @@ export default function ConfigPayGradesPage() {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Base Salary</label>
-                <p className="mt-1 text-lg font-medium text-gray-900 dark:text-gray-100">${selectedPayGrade.baseSalary.toLocaleString()}</p>
+                <label className="text-sm font-semibold text-gray-300">Base Salary</label>
+                <p className="mt-1 text-lg font-medium text-gray-100">${selectedPayGrade.baseSalary.toLocaleString()}</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Gross Salary</label>
-                <p className="mt-1 text-lg font-medium text-gray-900 dark:text-gray-100">${selectedPayGrade.grossSalary.toLocaleString()}</p>
+                <label className="text-sm font-semibold text-gray-300">Gross Salary</label>
+                <p className="mt-1 text-lg font-medium text-gray-100">${selectedPayGrade.grossSalary.toLocaleString()}</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Status</label>
+                <label className="text-sm font-semibold text-gray-300">Status</label>
                 <div className="mt-1">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(selectedPayGrade.status)}`}>
                     {selectedPayGrade.status.charAt(0).toUpperCase() + selectedPayGrade.status.slice(1)}
                   </span>
                 </div>
               </div>
-              {selectedPayGrade.approvedAt && (
-                <div>
-                  <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Approved At</label>
-                  <p className="mt-1 text-gray-900 dark:text-gray-100">{new Date(selectedPayGrade.approvedAt).toLocaleDateString()}</p>
-                </div>
-              )}
             </div>
 
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-800">
+              {selectedPayGrade.status === "draft" && (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      handleEditOpen(selectedPayGrade);
+                    }}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      handleApprove(selectedPayGrade._id);
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      handleReject(selectedPayGrade._id);
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                  >
+                    Reject
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  handleDelete(selectedPayGrade._id);
+                }}
+                className="px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-900 transition"
+              >
+                Delete
+              </button>
               <button
                 onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+                className="px-4 py-2 bg-gray-700 text-gray-100 rounded-lg hover:bg-gray-600 transition"
               >
                 Close
               </button>
@@ -311,14 +373,14 @@ export default function ConfigPayGradesPage() {
       )}
 
       {/* Edit Modal */}
-      {showEditModal && selectedPayGrade && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-50">Edit Pay Grade</h2>
+      {showEditModal && selectedPayGrade && selectedPayGrade.status === "draft" && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#0f172a] text-gray-100 rounded-lg shadow-lg max-w-md w-full border border-gray-800">
+            <div className="flex items-center justify-between p-6 border-b border-gray-800">
+              <h2 className="text-xl font-bold text-white">Edit Pay Grade</h2>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl"
+                className="text-gray-300 hover:text-gray-100 text-xl"
               >
                 ✕
               </button>
@@ -326,59 +388,45 @@ export default function ConfigPayGradesPage() {
 
             <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grade Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Grade Name</label>
                 <input
                   type="text"
                   value={editForm.grade || ""}
                   onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3 py-2 border border-gray-700 rounded-lg bg-[#111827] text-gray-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Base Salary</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Base Salary</label>
                 <input
                   type="number"
                   value={editForm.baseSalary || ""}
                   onChange={(e) => setEditForm({ ...editForm, baseSalary: Number(e.target.value) })}
-                  min="6000"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-700 rounded-lg bg-[#111827] text-gray-100"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gross Salary</label>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Gross Salary</label>
                 <input
                   type="number"
                   value={editForm.grossSalary || ""}
                   onChange={(e) => setEditForm({ ...editForm, grossSalary: Number(e.target.value) })}
-                  min="6000"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-700 rounded-lg bg-[#111827] text-gray-100"
                   required
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                <select
-                  value={editForm.status || ""}
-                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
-                  required
-                >
-                  <option value="draft">Draft</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+                  className="px-4 py-2 bg-gray-700 text-gray-100 rounded-lg hover:bg-gray-600 transition"
                 >
                   Cancel
                 </button>
@@ -387,7 +435,7 @@ export default function ConfigPayGradesPage() {
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition"
                 >
-                  {loading ? "Saving..." : "Save"}
+                  {loading ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>
@@ -397,3 +445,4 @@ export default function ConfigPayGradesPage() {
     </div>
   );
 }
+
