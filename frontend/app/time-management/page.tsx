@@ -91,11 +91,11 @@ export default function TimeManagementPage() {
             </Link>
 
             {/* Rules - only for managers/admins */}
-            {isManagerOrAdmin || isHRManager && (
+            {isManagerOrAdmin || isHRManager || isEmployee && (
               <Link href={'/time-management/rules'}>
                 <DashboardCard
                   title="Rules"
-                  description="Manage lateness, overtime, schedule & exceptions"
+                  description="View lateness, overtime, schedule & exceptions"
                   icon="⚙️"
                 />
               </Link>

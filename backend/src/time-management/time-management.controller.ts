@@ -132,7 +132,7 @@ export class TimeManagementController {
 
     // Schedule Rule Functions
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.HR_MANAGER)
+    @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
     @Post('schedule-rule') // hr manager
     async createScheduleRule(@Body() dto: ScheduleRuleCreateDto) {
         const createdRule = await this.scheduleRuleService.createScheduleRule(dto);
@@ -546,7 +546,7 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.HR_MANAGER)
+    @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
     @Post('overtime-rule') // hr manager
     async createOvertimeRule(@Body() dto: OvertimeRuleCreateDto) {
         return this.overtimeRuleService.createOvertimeRule(dto);
@@ -568,7 +568,7 @@ export class TimeManagementController {
 
     // Lateness Rule Functions
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.HR_MANAGER)
+    @Roles(SystemRole.HR_MANAGER, SystemRole.HR_MANAGER)
     @Post('lateness-rule') // hr manager
     async createLatenessRule(@Body() dto: LatenessRuleCreateDto) {
         return this.latenessRuleService.createLatenessRule(dto);
