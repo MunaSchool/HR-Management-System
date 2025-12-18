@@ -98,6 +98,12 @@ export class PerformanceController {
     return this.performanceService.getManagerAppraisalAssignments(managerProfileId, user);
   }
 
+  @Get('assignments/submitted')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async getSubmittedAssignments() {
+    return this.performanceService.getSubmittedAssignments();
+  }
+
   // APPRAISAL RECORD ENDPOINTS
   @Post('assignments/:assignmentId/record')
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)

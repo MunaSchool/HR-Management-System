@@ -17,20 +17,31 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      console.log('⚠️ No user found, skipping notification fetch');
+      return;
+    }
 
     async function getUserNotifs() {
       try {
-        console.log('🔍 Fetching notifications for user ID:', user?.userid);
+        console.log('🔍 Fetching notifications for user:', user);
+        console.log('🔍 User ID being used:', user?.userid);
         const res = await axios.get<{ message: string; data: Notification[] }>(
           `http://localhost:4000/time-management/notification-log/employee/${user?.userid}`,
           { withCredentials: true }
         );
         console.log('📧 Notifications response:', res.data);
         console.log('📊 Number of notifications:', res.data.data?.length || 0);
+        if (res.data.data && res.data.data.length > 0) {
+          console.log('📋 First notification:', res.data.data[0]);
+        }
         setNotifications(res.data.data || []);
       } catch (err) {
         console.error('❌ Error fetching notifications:', err);
+        if (axios.isAxiosError(err)) {
+          console.error('❌ Response data:', err.response?.data);
+          console.error('❌ Response status:', err.response?.status);
+        }
       } finally {
         setLoading(false);
       }
@@ -80,18 +91,6 @@ export default function Notifications() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link
-  href="/time-management/clock-in-out"
-  className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer block"
->
-  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-    Clock In / Clock Out
-  </h3>
-  <p className="text-gray-600 dark:text-gray-400">
-    Record your daily working hours
-  </p>
-</Link>
-
             {notifications.map((notif) => (
               <DashboardCard
                 key={notif._id}
@@ -99,8 +98,6 @@ export default function Notifications() {
                 description={notif.message}
                 link={`./notifications/${notif._id}`}
               />
-
-              
             ))}
           </div>
         </div>

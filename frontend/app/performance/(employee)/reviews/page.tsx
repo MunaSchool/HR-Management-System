@@ -42,8 +42,12 @@ export default function EmployeeReviewsPage() {
     try {
       setLoading(true);
 
+      console.log('🔍 Fetching appraisals for user:', user);
+
       // Try different possible ID fields
       let employeeId = user?.userid || user?.employeeNumber || user?.email;
+
+      console.log('   Using employeeId:', employeeId);
 
       if (!employeeId) {
         console.error('No employee ID found in user data');
@@ -51,10 +55,12 @@ export default function EmployeeReviewsPage() {
       }
 
       const data = await performanceApi.getEmployeeAppraisals(employeeId);
+      console.log('📊 Fetched appraisals:', data);
       setAppraisals(data);
       setFilteredAppraisals(data);
     } catch (error: any) {
-      console.error('Error fetching appraisals:', error);
+      console.error('❌ Error fetching appraisals:', error);
+      console.error('   Error response:', error?.response?.data);
     } finally {
       setLoading(false);
     }
@@ -216,12 +222,12 @@ export default function EmployeeReviewsPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="font-semibold text-lg text-gray-900">
-                        {typeof appraisal.cycleId === 'object' && 'name' in appraisal.cycleId
+                        {typeof appraisal.cycleId === 'object' && appraisal.cycleId && 'name' in appraisal.cycleId
                           ? appraisal.cycleId.name
                           : 'Performance Review'}
                       </h3>
                       <p className="text-sm text-gray-500 mt-1">
-                        {typeof appraisal.templateId === 'object' && 'name' in appraisal.templateId
+                        {typeof appraisal.templateId === 'object' && appraisal.templateId && 'name' in appraisal.templateId
                           ? appraisal.templateId.name
                           : 'Appraisal Template'}
                       </p>
@@ -247,6 +253,7 @@ export default function EmployeeReviewsPage() {
                       <span>
                         Manager:{' '}
                         {typeof appraisal.managerProfileId === 'object' &&
+                        appraisal.managerProfileId &&
                         'firstName' in appraisal.managerProfileId
                           ? `${appraisal.managerProfileId.firstName} ${appraisal.managerProfileId.lastName}`
                           : 'N/A'}
@@ -274,10 +281,22 @@ export default function EmployeeReviewsPage() {
                         </Link>
                       </>
                     )}
+                  {appraisal.status === AppraisalAssignmentStatus.SUBMITTED && (
+                    <div className="text-sm text-gray-500 flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100">
+                      <CheckCircle className="h-4 w-4 text-blue-500" />
+                      <span>Awaiting HR review & publication</span>
+                    </div>
+                  )}
                   {appraisal.status === AppraisalAssignmentStatus.IN_PROGRESS && (
                     <div className="text-sm text-gray-500 flex items-center gap-2 px-3 py-2 rounded-lg bg-yellow-50 border border-yellow-100">
                       <Clock className="h-4 w-4 text-yellow-500" />
                       <span>Awaiting manager evaluation</span>
+                    </div>
+                  )}
+                  {appraisal.status === AppraisalAssignmentStatus.NOT_STARTED && (
+                    <div className="text-sm text-gray-500 flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 border border-gray-100">
+                      <AlertCircle className="h-4 w-4 text-gray-400" />
+                      <span>Not yet started</span>
                     </div>
                   )}
                 </div>

@@ -167,6 +167,11 @@ class PerformanceApi {
     return response.data;
   }
 
+  async getSubmittedAssignments(): Promise<AppraisalAssignment[]> {
+    const response = await axiosInstance.get(`/performance/assignments/submitted`);
+    return response.data;
+  }
+
   async updateAssignmentStatus(assignmentId: string, status: string): Promise<AppraisalAssignment> {
     const response = await axiosInstance.put(`/performance/assignments/${assignmentId}/status`, { status });
     return response.data;
@@ -183,15 +188,15 @@ class PerformanceApi {
     return response.data;
   }
 
+  async getAppraisalRecordById(recordId: string): Promise<AppraisalRecord> {
+    const response = await axiosInstance.get(`/performance/records/${recordId}`);
+    return response.data;
+  }
+
   async publishAppraisalRecord(assignmentId: string, publishedByEmployeeId: string): Promise<AppraisalRecord> {
     const response = await axiosInstance.put(`/performance/assignments/${assignmentId}/publish`, {
       publishedByEmployeeId,
     });
-    return response.data;
-  }
-
-  async getAppraisalRecordById(recordId: string): Promise<AppraisalRecord> {
-    const response = await axiosInstance.get(`/performance/records/${recordId}`);
     return response.data;
   }
 

@@ -78,6 +78,51 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/performance/cycles">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow hover:shadow-lg hover:border-blue-300 transition cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 dark:bg-blue-950 p-3 rounded-full">
+                  <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Manage Cycles</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">View and create cycles</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/performance/review">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow hover:shadow-lg hover:border-green-300 transition cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-100 dark:bg-green-950 p-3 rounded-full">
+                  <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Review & Publish</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Publish appraisals</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/performance/templates">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow hover:shadow-lg hover:border-purple-300 transition cursor-pointer">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-100 dark:bg-purple-950 p-3 rounded-full">
+                  <FileText className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Templates</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Manage templates</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Total Assignments */}

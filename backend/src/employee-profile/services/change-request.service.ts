@@ -145,6 +145,20 @@ export class ChangeRequestService {
       : ProfileChangeStatus.REJECTED;
     request.processedAt = new Date();
 
+    // Extract employee ID (handle both populated and non-populated cases)
+    const employeeId = typeof request.employeeProfileId === 'object' && request.employeeProfileId?._id
+      ? request.employeeProfileId._id
+      : request.employeeProfileId;
+
+    // Extract changed fields from the request description
+    let changedFieldsText = '';
+    if (request.requestDescription) {
+      const changesMatch = request.requestDescription.match(/Requested Changes: (.+)/);
+      if (changesMatch && changesMatch[1]) {
+        changedFieldsText = changesMatch[1];
+      }
+    }
+
     // If approved, apply changes to employee profile
     if (processDto.approved) {
       console.log('✅ Change request approved - updating employee profile');
@@ -152,7 +166,7 @@ export class ChangeRequestService {
       // Note: HR Admin must manually apply the changes described in the request
       // This just updates the last modified timestamp
       await this.employeeProfileModel.findByIdAndUpdate(
-        request.employeeProfileId,
+        employeeId,
         {
           lastModifiedBy: userId,
           lastModifiedAt: new Date(),
@@ -160,13 +174,21 @@ export class ChangeRequestService {
       );
 
       // N-037: Notify employee that request was approved
-      const approvalMessage = processDto.comments
-        ? `Your profile change request (${request.requestId}) has been APPROVED by HR. Comments: ${processDto.comments}. Your profile has been updated accordingly.`
-        : `Your profile change request (${request.requestId}) has been APPROVED. Your profile has been updated.`;
+      let approvalMessage = `Your profile change request (${request.requestId}) has been APPROVED by HR.`;
+
+      if (changedFieldsText) {
+        approvalMessage += ` The following fields have been updated: ${changedFieldsText}.`;
+      } else {
+        approvalMessage += ' Your profile has been updated.';
+      }
+
+      if (processDto.comments) {
+        approvalMessage += ` HR Comments: ${processDto.comments}`;
+      }
 
       await this.notificationLogService.sendNotification({
-        to: new Types.ObjectId(request.employeeProfileId.toString()),
-        type: 'N-037',
+        to: new Types.ObjectId(employeeId.toString()),
+        type: 'N-037: Profile Change Approved',
         message: approvalMessage,
       });
 
@@ -175,13 +197,21 @@ export class ChangeRequestService {
       console.log('❌ Change request rejected');
 
       // N-037: Notify employee that request was rejected
-      const rejectionMessage = processDto.comments
-        ? `Your profile change request (${request.requestId}) has been REJECTED by HR. Reason: ${processDto.comments}`
-        : `Your profile change request (${request.requestId}) has been REJECTED. Please contact HR for more information.`;
+      let rejectionMessage = `Your profile change request (${request.requestId}) has been REJECTED by HR.`;
+
+      if (changedFieldsText) {
+        rejectionMessage += ` Requested changes were: ${changedFieldsText}.`;
+      }
+
+      if (processDto.comments) {
+        rejectionMessage += ` Reason: ${processDto.comments}`;
+      } else {
+        rejectionMessage += ' Please contact HR for more information.';
+      }
 
       await this.notificationLogService.sendNotification({
-        to: new Types.ObjectId(request.employeeProfileId.toString()),
-        type: 'N-037',
+        to: new Types.ObjectId(employeeId.toString()),
+        type: 'N-037: Profile Change Rejected',
         message: rejectionMessage,
       });
 

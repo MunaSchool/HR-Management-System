@@ -34,7 +34,9 @@ export class NotificationLogService{
         };
     }
     async getEmployeeNotifications(recepientId:string){ //Working!
-        const notifications =  await this.notificationLogModel.find({to: recepientId})
+        // Convert string to ObjectId for querying
+        const recipientObjectId = new Types.ObjectId(recepientId);
+        const notifications =  await this.notificationLogModel.find({to: recipientObjectId})
         if(!notifications) throw new NotFoundException('No employee notifications found!')
         return{
             success:true,
