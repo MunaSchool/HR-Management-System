@@ -181,18 +181,33 @@ export class PerformanceService {
             throw new NotFoundException('Invalid cycle ID');
         }
 
-        return await this.appraisalAssignmentModel
-            .find({ cycleId })
-            .populate('employeeProfileId', 'firstName lastName position')
-            .populate('managerProfileId', 'firstName lastName')
+        // Filter out invalid templateIds before populating
+        const assignments = await this.appraisalAssignmentModel
+            .find({
+                cycleId,
+                templateId: { $ne: '<templateId>' } // Exclude placeholder values
+            })
+            .populate('employeeProfileId', 'firstName lastName employeeNumber primaryPositionId')
+            .populate('managerProfileId', 'firstName lastName employeeNumber')
             .populate('templateId', 'name templateType')
             .populate('departmentId', 'name')
             .exec();
+
+        // Manually populate nested primaryPositionId for employees
+        for (const assignment of assignments) {
+            if (assignment.employeeProfileId && (assignment.employeeProfileId as any).primaryPositionId) {
+                await (assignment.employeeProfileId as any).populate('primaryPositionId');
+            }
+        }
+
+        return assignments;
     }
     
 
     // Appraisal Assignment Methods
     async createAppraisalAssignments(cycleId: string) {
+        console.log("📆 Appraisal cycle assignment started:", cycleId);
+
         if (!Types.ObjectId.isValid(cycleId)) {
             throw new NotFoundException('Invalid cycle ID');
         }
@@ -202,48 +217,112 @@ export class PerformanceService {
             .exec();
 
         if (!cycle) {
+            console.error("❌ ERROR: Appraisal cycle not found");
             throw new NotFoundException('Appraisal cycle not found');
         }
 
+        console.log("📋 Cycle:", cycle.name);
+
         if (!cycle.templateAssignments || cycle.templateAssignments.length === 0) {
+            console.error("❌ ERROR: Cycle has no template assignments");
             throw new BadRequestException('Cycle has no template assignments');
         }
 
         // ⭐ Pull required fields from cycle so we satisfy schema
         const templateId = cycle.templateAssignments[0].templateId;
-        const departmentId = cycle.templateAssignments[0].departmentIds[0];
+        const departmentIds = cycle.templateAssignments[0].departmentIds;
+
+        console.log("📁 Cycle departments:", departmentIds);
+        console.log("📋 Template ID:", templateId);
 
         const createdAssignments: AppraisalAssignmentDocument[] = [];
 
-        // Fetch ALL employees
+        // Fetch employees in the specified departments
         const EmployeeProfileModel = this.appraisalAssignmentModel.db.model('EmployeeProfile');
-        const employees = await EmployeeProfileModel.find({});
+        const PositionModel = this.appraisalAssignmentModel.db.model('Position');
+
+        // Filter employees by departments in the cycle
+        const employees = await EmployeeProfileModel.find({
+            primaryDepartmentId: { $in: departmentIds },
+            status: 'ACTIVE'
+        }).exec();
+
+        console.log("👥 Employees in specified departments:", employees.length);
 
         for (const emp of employees) {
+            console.log("👤 Employee:", emp._id);
+            console.log("📌 Employee supervisorPositionId:", emp.supervisorPositionId);
+            console.log("📌 Employee departmentId:", emp.primaryDepartmentId);
+            console.log("📌 Employee positionId:", emp.primaryPositionId);
+
             const existing = await this.appraisalAssignmentModel.findOne({
-            cycleId,
-            employeeProfileId: emp._id,
+                cycleId,
+                employeeProfileId: emp._id,
             });
 
-            if (existing) continue;
+            if (existing) {
+                console.log("⏭️ Skipping - assignment already exists");
+                continue;
+            }
+
+            // 👔 Resolve manager for this employee
+            console.log("👔 Resolving manager for employee");
+            let managerProfileId = null;
+
+            if (emp.supervisorPositionId) {
+                // Find manager who holds the supervisor position
+                const manager = await EmployeeProfileModel.findOne({
+                    primaryPositionId: emp.supervisorPositionId,
+                    status: 'ACTIVE'
+                }).exec();
+
+                if (manager) {
+                    managerProfileId = manager._id;
+                    console.log("👔 Manager found:", manager._id);
+                    console.log("👔 Manager primaryPositionId:", manager.primaryPositionId);
+                } else {
+                    console.warn("⚠️ WARNING: No active employee holds supervisorPositionId:", emp.supervisorPositionId);
+                    console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
+                    console.warn("   This position may be vacant or the employee may not be ACTIVE");
+                }
+            } else {
+                console.warn("⚠️ WARNING: Employee has NO supervisorPositionId set");
+                console.warn("   Employee:", emp.employeeNumber, "-", emp.firstName, emp.lastName);
+                console.warn("   Department:", emp.primaryDepartmentId);
+                console.warn("   Position:", emp.primaryPositionId);
+                console.warn("   ACTION REQUIRED: Set supervisorPositionId in org structure or employee profile");
+            }
+
+            if (!managerProfileId) {
+                console.warn("⚠️ SKIPPING: Employee", emp.employeeNumber, "- no manager assigned");
+                console.warn("   Employee will NOT receive appraisal assignment for this cycle");
+                console.warn("   Fix: Ensure employee has supervisorPositionId and that position is filled");
+                continue;
+            }
+
+            console.log("📝 Creating appraisal assignment:", {
+                employeeProfileId: emp._id,
+                managerProfileId,
+                departmentId: emp.primaryDepartmentId,
+                positionId: emp.primaryPositionId,
+                cycleId,
+                templateId,
+            });
 
             const newAssignment = new this.appraisalAssignmentModel({
-            cycleId,
-            templateId,       // ⭐ REQUIRED
-            employeeProfileId: emp._id,
-            
-            // ⭐ Your DB has no supervisor hierarchy → use employee as own manager
-            managerProfileId: emp._id,
-
-            // ⭐ REQUIRED and must match cycle's department
-            departmentId,
-
-            status: AppraisalAssignmentStatus.NOT_STARTED,
-            assignedAt: new Date(),
+                cycleId,
+                templateId,
+                employeeProfileId: emp._id,
+                managerProfileId,
+                departmentId: emp.primaryDepartmentId,
+                positionId: emp.primaryPositionId,
+                status: AppraisalAssignmentStatus.NOT_STARTED,
+                assignedAt: new Date(),
             });
 
             const saved = await newAssignment.save();
             createdAssignments.push(saved);
+            console.log("✅ Assignment created:", saved._id);
 
             // Send notification to employee about new assignment
             await this.notificationLogService.sendNotification({
@@ -251,6 +330,11 @@ export class PerformanceService {
                 type: 'Performance Appraisal Assignment',
                 message: `You have been assigned a new performance appraisal for cycle: ${cycle.name}. Your manager will evaluate your performance.`,
             });
+        }
+
+        console.log("📊 Total assignments created:", createdAssignments.length);
+        if (createdAssignments.length === 0) {
+            console.warn("⚠️ No assignments created — check departments list and employee filtering rules");
         }
 
         return createdAssignments;
