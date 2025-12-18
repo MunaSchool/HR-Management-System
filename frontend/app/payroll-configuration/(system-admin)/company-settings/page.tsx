@@ -84,6 +84,7 @@ export default function CompanySettingsPage() {
             value={form.payDate || ""}
             onChange={(e) => setForm({ ...form, payDate: e.target.value })}
             placeholder=\"2025-12-01\"
+            placeholder="2025-12-01"
           />
         </label>
         <label className="text-sm text-gray-700">
