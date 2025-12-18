@@ -412,7 +412,7 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD,SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
+    @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD,SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
     @Get('shift-type') //sys admin, hr manager, employees (read-only)
     async getAllShiftTypes(){
         return this.shiftTypeService.getAllShiftTypes();
@@ -547,7 +547,7 @@ export class TimeManagementController {
     }
 
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(SystemRole.HR_MANAGER, SystemRole.HR_ADMIN)
+    @Roles(SystemRole.HR_MANAGER)
     @Post('overtime-rule') // hr manager
     async createOvertimeRule(@Body() dto: OvertimeRuleCreateDto) {
         return this.overtimeRuleService.createOvertimeRule(dto);

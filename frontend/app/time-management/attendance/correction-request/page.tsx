@@ -41,12 +41,13 @@ export default function AttendanceCorrectionRequestPage() {
 
   const isDepartmentHead = normalizedRoles.includes("department head");
   const isHrAdmin = normalizedRoles.includes("hr admin");
+  const isSystemAdmin = normalizedRoles.includes("system admin");
   const isPayrollOfficer = normalizedRoles.includes("payroll manager");
   const isPayrollSpecialist = normalizedRoles.includes("payroll specialist");
 
 
-  const canWrite= isHrAdmin || isDepartmentHead;
-  const canRead = isPayrollOfficer || isPayrollSpecialist;
+  const canWrite= isHrAdmin || isDepartmentHead  ;
+  const canRead = isPayrollOfficer || isPayrollSpecialist || isSystemAdmin ;
 
  
 
@@ -59,7 +60,7 @@ export default function AttendanceCorrectionRequestPage() {
       let url;
       
       // Determine which endpoint to call based on role
-      if (canWrite||canRead) {
+      if (canWrite||canRead || isSystemAdmin) {
         url = `http://localhost:4000/time-management/attendance-correction-request/`;
       } else {
         url = `http://localhost:4000/time-management/attendance-correction-request/employee/${user.userid}`;      
@@ -107,6 +108,11 @@ export default function AttendanceCorrectionRequestPage() {
 
   // Filter requests based on role
   const getVisibleRequests = () => {
+        if(isSystemAdmin){
+            return requests.filter(r =>
+        r.status === "ESCALATED" 
+      );
+    }
     // Employee: their own requests (already filtered by backend)
     if (isEmployee && !canRead && !canWrite) {
       return requests;
@@ -123,6 +129,7 @@ export default function AttendanceCorrectionRequestPage() {
     if (canWrite && !canRead) {
       return requests;
     }
+
   
     return [];
   };
@@ -495,6 +502,22 @@ export default function AttendanceCorrectionRequestPage() {
                     )}
 
                     {/* Admin buttons - can only approve or reject escalated requests */}
+                    {isSystemAdmin && (
+                      <>
+                        <button
+                          onClick={() => handleApprove(request._id)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-md text-sm font-medium"
+                        >
+                          ✅ Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(request._id)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-md text-sm font-medium"
+                        >
+                          ❌ Reject
+                        </button>
+                      </>
+                    )}
                     
                     
                     {/* Employees can edit their own requests if not approved/rejected */}

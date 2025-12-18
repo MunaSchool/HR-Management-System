@@ -28,6 +28,9 @@ export default function TimeManagementPage() {
   const isHRManager = user?.roles?.some(role =>
     ['hr manager'].includes(role.toLowerCase())
   );
+    const isSystemAdmin = user?.roles?.some(role =>
+    ['system admin'].includes(role.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -91,7 +94,7 @@ export default function TimeManagementPage() {
             </Link>
 
             {/* Rules - only for managers/admins */}
-            {isManagerOrAdmin || isHRManager || isEmployee && (
+            {(isManagerOrAdmin || isHRManager || isEmployee) && (
               <Link href={'/time-management/rules'}>
                 <DashboardCard
                   title="Rules"
