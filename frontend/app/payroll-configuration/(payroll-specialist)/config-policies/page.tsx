@@ -63,7 +63,7 @@ export default function ConfigPoliciesPage() {
   const filteredPolicies = statusFilter === "all" 
     ? policies 
     : policies.filter(p => p.status === statusFilter);
-
+/*
   const handleApprove = async (id: string) => {
     try {
       await axiosInstance.put(`/payroll-configuration/${id}/approve`);
@@ -85,7 +85,7 @@ export default function ConfigPoliciesPage() {
       alert(err?.response?.data?.message || "Reject failed");
     }
   };
-
+*/
 
   //colours
   const getStatusBadgeColor = (status: string) => {
@@ -138,7 +138,7 @@ export default function ConfigPoliciesPage() {
           <p className="mt-1 text-gray-600 dark:text-gray-400">Manage misconduct penalties, leave policies, and allowances</p>
         </div>
         <button
-          onClick={() => router.push("./create")}
+          onClick={() => router.push("./config-policies/create")}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
           + Create Policy
@@ -227,20 +227,6 @@ export default function ConfigPoliciesPage() {
                       {/* Payroll Specialist: view only, no delete */}
                       {policy.status === "draft" && (
                         <>
-                          <button
-                            onClick={() => handleApprove(policy._id)}
-                            className="text-green-700 hover:text-green-900 transition"
-                            title="Approve"
-                          >
-                            ✅
-                          </button>
-                          <button
-                            onClick={() => handleReject(policy._id)}
-                            className="text-orange-700 hover:text-orange-900 transition"
-                            title="Reject"
-                          >
-                            ❌
-                          </button>
                         </>
                       )}
                     </div>

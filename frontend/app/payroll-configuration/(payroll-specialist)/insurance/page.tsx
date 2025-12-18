@@ -148,40 +148,40 @@ export default function InsurancePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] text-gray-900">
-      <div className="max-w-6xl mx-auto py-10 px-4">
+    <div className="text-gray-900 dark:text-gray-100">
+      <div className="max-w-6xl mx-auto py-10 px-4 space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-sm text-gray-500">Insurance Brackets</p>
-            <h1 className="text-2xl font-bold">Configure Insurance Brackets</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Insurance Brackets</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Configure Insurance Brackets</h1>
           </div>
-          <div className="text-sm text-gray-500 flex flex-col items-end">
+          <div className="text-sm text-gray-500 dark:text-gray-400 flex flex-col items-end">
             <span>Role: {user?.roles?.join(", ")}</span>
-            {apiBase && <span className="text-xs text-gray-400">API: {apiBase}</span>}
+            {apiBase && <span className="text-xs text-gray-400 dark:text-gray-500">API: {apiBase}</span>}
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-700">
+          <div className="mb-4 rounded border border-red-300 bg-red-50 px-4 py-3 text-red-700 dark:border-red-700 dark:bg-red-900/40 dark:text-red-200">
             {error}
           </div>
         )}
         {statusMsg && (
-          <div className="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-700">
+          <div className="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-200">
             {statusMsg}
           </div>
         )}
 
         {canManageDrafts && (
-          <div className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="mb-8 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">
               {editingId ? "Edit Draft" : "Create Draft"}
             </h2>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-700">Name</label>
+                <label className="text-sm text-gray-700 dark:text-gray-300">Name</label>
                 <input
-                  className="rounded border px-3 py-2"
+                  className="rounded border px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                   placeholder="Health Insurance"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -189,9 +189,9 @@ export default function InsurancePage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-700">Amount</label>
+                <label className="text-sm text-gray-700 dark:text-gray-300">Amount</label>
                 <input
-                  className="rounded border px-3 py-2"
+                  className="rounded border px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                   placeholder="750"
                   type="number"
                   value={form.amount}
@@ -199,9 +199,9 @@ export default function InsurancePage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-700">Minimum Salary</label>
+                <label className="text-sm text-gray-700 dark:text-gray-300">Minimum Salary</label>
                 <input
-                  className="rounded border px-3 py-2"
+                  className="rounded border px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                   placeholder="3000"
                   type="number"
                   value={form.minSalary}
@@ -209,9 +209,9 @@ export default function InsurancePage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-700">Maximum Salary</label>
+                <label className="text-sm text-gray-700 dark:text-gray-300">Maximum Salary</label>
                 <input
-                  className="rounded border px-3 py-2"
+                  className="rounded border px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                   placeholder="7000"
                   type="number"
                   value={form.maxSalary}
@@ -219,9 +219,9 @@ export default function InsurancePage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-700">Employee Rate (%)</label>
+                <label className="text-sm text-gray-700 dark:text-gray-300">Employee Rate (%)</label>
                 <input
-                  className="rounded border px-3 py-2"
+                  className="rounded border px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                   placeholder="4"
                   type="number"
                   value={form.employeeRate}
@@ -231,9 +231,9 @@ export default function InsurancePage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-700">Employer Rate (%)</label>
+                <label className="text-sm text-gray-700 dark:text-gray-300">Employer Rate (%)</label>
                 <input
-                  className="rounded border px-3 py-2"
+                  className="rounded border px-3 py-2 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                   placeholder="14"
                   type="number"
                   value={form.employerRate}
@@ -246,7 +246,7 @@ export default function InsurancePage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded bg-blue-600 px-5 py-2 text-white disabled:opacity-50"
+                  className="rounded bg-blue-600 px-5 py-2 text-white disabled:opacity-50 hover:bg-blue-700 transition"
                 >
                   {loading ? "Saving..." : editingId ? "Update" : "Create"}
                 </button>
@@ -254,7 +254,7 @@ export default function InsurancePage() {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="rounded border px-5 py-2"
+                    className="rounded border px-5 py-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                   >
                     Cancel
                   </button>
@@ -264,14 +264,14 @@ export default function InsurancePage() {
           </div>
         )}
 
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Insurance Brackets</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Insurance Brackets</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left">
+                <tr className="border-b text-left border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
                   <th className="py-2">Name</th>
                   <th>Range</th>
                   <th>Emp %</th>
@@ -282,7 +282,7 @@ export default function InsurancePage() {
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item._id} className="border-b">
+                  <tr key={item._id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900/40 transition">
                     <td className="py-2 font-medium">{item.name}</td>
                     <td>
                       ${item.minSalary.toLocaleString()} - ${item.maxSalary.toLocaleString()}
@@ -290,7 +290,7 @@ export default function InsurancePage() {
                     <td>{item.employeeRate}%</td>
                     <td>{item.employerRate}%</td>
                     <td>
-                      <span className="rounded bg-gray-100 px-2 py-1 text-xs capitalize">
+                      <span className="rounded bg-gray-100 dark:bg-gray-700 px-2 py-1 text-xs capitalize">
                         {item.status}
                       </span>
                     </td>
@@ -299,7 +299,7 @@ export default function InsurancePage() {
                         <>
                           <button
                             onClick={() => handleEdit(item)}
-                            className="text-blue-600 hover:underline"
+                            className="text-blue-600 dark:text-blue-400 hover:underline"
                           >
                             Edit
                           </button>
@@ -309,13 +309,13 @@ export default function InsurancePage() {
                         <>
                           <button
                             onClick={() => approve(item._id)}
-                            className="text-green-600 hover:underline"
+                            className="text-green-600 dark:text-green-400 hover:underline"
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => reject(item._id)}
-                            className="text-orange-600 hover:underline"
+                            className="text-orange-600 dark:text-orange-400 hover:underline"
                           >
                             Reject
                           </button>
