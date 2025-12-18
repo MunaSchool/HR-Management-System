@@ -49,7 +49,7 @@ export default function TimeExceptionsPage() {
   /* ===================== ROLES ===================== */
   const isAdmin = useMemo(() =>
     !!user?.roles?.some(role =>
-      ["department head", "hr manager", "system admin"].includes(role.toLowerCase())
+      ["department head", "hr manager", "system admin", "payroll manager"].includes(role.toLowerCase())
     ), [user?.roles]);
 
   const isSystemAdmin = useMemo(() =>

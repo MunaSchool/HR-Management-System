@@ -100,17 +100,6 @@ export default function TimeManagementPage() {
                 />
               </Link>
             )}
-
-            {/* Reports - only for payroll and hr */}
-            {isManagerOrAdminOrPayroll && (
-              <Link href={'/time-management/reports'}>
-                <DashboardCard
-                  title="Reports"
-                  description="Generate and view time management reports"
-                  icon="📊"
-                />
-              </Link>
-            )}
           </div>
         </div>
       </main>

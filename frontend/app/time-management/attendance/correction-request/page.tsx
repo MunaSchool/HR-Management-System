@@ -41,7 +41,7 @@ export default function AttendanceCorrectionRequestPage() {
 
   const isDepartmentHead = normalizedRoles.includes("department head");
   const isHrAdmin = normalizedRoles.includes("hr admin");
-  const isPayrollOfficer = normalizedRoles.includes("payroll officer");
+  const isPayrollOfficer = normalizedRoles.includes("payroll manager");
   const isPayrollSpecialist = normalizedRoles.includes("payroll specialist");
 
 

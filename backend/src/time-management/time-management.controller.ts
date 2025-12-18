@@ -539,7 +539,8 @@ export class TimeManagementController {
 
     // Overtime Rule Functions
 
-    @UseGuards(AuthGuard)
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_EMPLOYEE, SystemRole.HR_EMPLOYEE)
     @Get('overtime-rule')
     async listOvertimeRules(){
         return this.overtimeRuleService.listOvertimeRules()
