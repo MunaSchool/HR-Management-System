@@ -26,7 +26,7 @@ export default function Navbar(){
     };
 
     // Don't show navbar on login/register pages or home (home has its own header)
-    if (pathname === "/login" || pathname === "/register") {
+    if (pathname === "/login" || pathname === "/register" || pathname.startsWith("/recruitment/")) {
         return null;
     }
     
@@ -42,10 +42,10 @@ export default function Navbar(){
 
     // Extract user initials for avatar
     const getUserInitials = () => {
-        if (user.name) {
-            return user?.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+        if (user?.name) {
+            return user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
         }
-        return user.email.slice(0, 2).toUpperCase()
+        return user?.email?.slice(0, 2).toUpperCase()
     }
 
     return(
@@ -133,10 +133,10 @@ export default function Navbar(){
                                     {/* User Info */}
                                     <div className="hidden md:block text-left">
                                         <p className="text-sm font-medium text-white">
-                                            {user.name || user.email.split('@')[0]}
+                                            {user?.name || user?.email?.split('@')[0]}
                                         </p>
                                         <p className="text-xs text-slate-400">
-                                            {user.role || 'User'}
+                                            {user?.role || 'User'}
                                         </p>
                                     </div>
                                 </button>
@@ -157,10 +157,10 @@ export default function Navbar(){
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-white">
-                                                            {user.name || 'User'}
+                                                            {user?.name || 'User'}
                                                         </p>
                                                         <p className="text-sm text-slate-300">
-                                                            {user.email}
+                                                            {user?.email}
                                                         </p>
                                                     </div>
                                                 </div>
