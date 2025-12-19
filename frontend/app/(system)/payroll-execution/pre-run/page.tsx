@@ -86,8 +86,11 @@ export default function PreRunPage() {
     try {
       const res = await payrollExecutionService.validatePhase0();
       setMsg(res.data?.message || "Phase 0 validation passed.");
+      // Store Phase 0 validation state in localStorage
+      localStorage.setItem("phase0-validated", "true");
     } catch (e: any) {
       setMsg(e?.response?.data?.message || "Phase 0 validation failed.");
+      localStorage.removeItem("phase0-validated");
     }
   }
 

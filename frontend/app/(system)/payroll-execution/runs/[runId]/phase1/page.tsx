@@ -28,9 +28,24 @@ export default function Phase1Page() {
   const [editingPeriod, setEditingPeriod] = useState(false);
   const [newPeriod, setNewPeriod] = useState("");
   const [hasApproved, setHasApproved] = useState(false);
+  const [isPhase0Validated, setIsPhase0Validated] = useState(false);
 
   useEffect(() => {
     fetchRun();
+  }, []);
+
+  useEffect(() => {
+    // Check if this payroll period was already approved
+    if (run) {
+      const isApproved = localStorage.getItem(`payroll-period-approved-${run.runId}`) === "true";
+      setHasApproved(isApproved);
+    }
+  }, [run]);
+
+  useEffect(() => {
+    // Check if Phase 0 has been validated
+    const phase0Valid = localStorage.getItem("phase0-validated") === "true";
+    setIsPhase0Validated(phase0Valid);
   }, []);
 
   async function fetchRun() {
@@ -65,6 +80,8 @@ export default function Phase1Page() {
       });
       setMsg("✓ Payroll period approved. You can now start payroll initiation.");
       setHasApproved(true);
+      // Store approval state in localStorage for the Run Simulation button
+      localStorage.setItem(`payroll-period-approved-${run.runId}`, "true");
     } catch (e: any) {
       console.error("Approval error:", e?.response?.data);
       setMsg(e?.response?.data?.message || "Approval failed");
@@ -102,7 +119,7 @@ export default function Phase1Page() {
     try {
       await payrollExecutionService.startPayrollInitiation({
         payrollRunId: run.runId,
-        payrollSpecialistId: (user as any)?.userid || user?.id,
+        payrollSpecialistId: (user as any)?.userid,
       });
       setMsg("Payroll initiation started! Proceeding to Phase 1.1 (Draft Generation)...");
       setTimeout(() => {
@@ -133,6 +150,29 @@ export default function Phase1Page() {
           Review the payroll period to ensure it matches the current cycle. Approve to proceed with payroll initiation or reject to edit the period.
         </p>
       </div>
+
+      {/* Phase 0 Warning */}
+      {!isPhase0Validated && (
+        <div
+          style={{
+            marginBottom: 20,
+            fontSize: 14,
+            padding: 12,
+            backgroundColor: "#fef3c7",
+            color: "#92400e",
+            borderRadius: 8,
+            border: "1px solid #fcd34d",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span style={{ fontSize: 18 }}>⚠️</span>
+          <div>
+            <strong>Phase 0 Not Validated:</strong> Please complete and validate Pre-Run HR Events before approving the payroll period.
+          </div>
+        </div>
+      )}
 
       {/* Run Details Card */}
       <div
@@ -215,16 +255,19 @@ export default function Phase1Page() {
             <>
               <button
                 onClick={approvePeriod}
+                disabled={!isPhase0Validated}
                 style={{
                   flex: 1,
                   padding: "12px 16px",
-                  backgroundColor: "#16a34a",
+                  backgroundColor: isPhase0Validated ? "#16a34a" : "#9ca3af",
                   color: "white",
                   border: "none",
                   borderRadius: 8,
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: isPhase0Validated ? "pointer" : "not-allowed",
+                  opacity: isPhase0Validated ? 1 : 0.5,
                 }}
+                title={!isPhase0Validated ? "Please validate Phase 0 (Pre-Run HR Events) first" : ""}
               >
                 ✓ Approve Period
               </button>
