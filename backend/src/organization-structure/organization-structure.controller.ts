@@ -36,7 +36,7 @@ export class OrganizationStructureController {
   // ======================
 
   @Post('departments')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //aded the HRAdmin engy
+  @Roles(SystemRole.SYSTEM_ADMIN) //aded the HRAdmin engy
   createDepartment(@Body() dto: CreateDepartmentDto) {
     return this.organizationStructureService.createDepartment(dto);
   }
@@ -55,7 +55,7 @@ export class OrganizationStructureController {
   }
 
   @Put('departments/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) // added HRaddmin by engy
+  @Roles(SystemRole.SYSTEM_ADMIN) // added HRaddmin by engy
   updateDepartment(
     @Param('id') id: string,
     @Body() dto: UpdateDepartmentDto,
