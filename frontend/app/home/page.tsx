@@ -10,6 +10,14 @@ export default function HomePage() {
     await logout();
   };
 
+  function getNormalizedRoles(user: any): string[] {
+  if (!user) return [];
+  if (Array.isArray(user.roles)) return user.roles.map((r: string) => r.toLowerCase());
+  if (user.role) return [String(user.role).toLowerCase()];
+  return [];
+}
+  const roles = getNormalizedRoles(user);
+
   // Check both roles array AND userType for different user types
   const userRoles = user?.roles || [];
   const userType = user?.userType;
@@ -24,6 +32,15 @@ export default function HomePage() {
   const isCandidate =
     userRoles.includes("candidate") ||
     userType === "candidate";
+
+  const isHRAdmin =
+    userRoles.includes("candidate") ||
+    userType === "candidate";
+      const isManager =
+    roles.includes("department head") ||
+    roles.includes("department_head") ||
+    roles.includes("department manager") ||
+    roles.includes("department_manager");
 
   if (!user) {
     return (
@@ -134,6 +151,40 @@ export default function HomePage() {
                 icon="📈"
               />
             </Link>
+
+            {/* Organization Structure */}
+            <Link href="/organization-structure">
+              <DashboardCard
+                title="Organization Structure"
+                description="Manage departments and positions"
+                icon="🏛️"
+              />
+            </Link>
+                      {/* NORMAL EMPLOYEE DASHBOARD */}
+          {!isHRAdmin && isEmployee && (
+              <Link href={"/dashboard/employee/leaves"}>
+              <DashboardCard
+                title="Leave Requests"
+                description="Submit and track your leave requests"
+                icon="✉️"
+              />
+              </Link>
+          )}
+
+          {/* MANAGER / DEPARTMENT HEAD DASHBOARD */}
+          {!isHRAdmin && !isEmployee && isManager && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link href={"/dashboard/manager"}>
+                            <DashboardCard
+                title="Team Leave Requests"
+                description="Review and approve your team’s leave requests"
+                icon="👥"
+                
+              />
+              </Link>
+            </div>
+          )}
+
           </div>
         </div>
 
