@@ -305,26 +305,17 @@ async activatePosition(id: string) {
       console.log('🛂 Request awaiting SYSTEM_ADMIN approval');
       console.log('⚠️ Managers CANNOT approve — only SYSTEM_ADMIN can approve structure changes');
 
-      // Send notification to System Admin, HR Admin, and HR Manager (REQ-OSM-11)
+      // Send notification to System Admin (REQ-OSM-11)
       try {
-        // Find System Admins
         const systemAdmins = await this.employeeProfileModel.find({
-          systemRoles: { $in: ['System Admin', 'system admin', 'SYSTEM_ADMIN'] }
+          systemRoles: { $in: ['System Admin'] }
         }).exec();
 
-        // Find HR Admins and HR Managers
-        const hrStaff = await this.employeeProfileModel.find({
-          roles: { $in: ['HR Admin', 'HR Manager', 'hr admin', 'hr manager', 'HR_ADMIN', 'HR_MANAGER'] }
-        }).exec();
+        console.log(`📧 Sending notifications to ${systemAdmins.length} System Admins`);
 
-        const allApprovers = [...systemAdmins, ...hrStaff];
-        const uniqueApprovers = Array.from(new Map(allApprovers.map(emp => [emp._id.toString(), emp])).values());
-
-        console.log(`📧 Sending notifications to ${uniqueApprovers.length} approvers (System Admins + HR Staff)`);
-
-        for (const approver of uniqueApprovers) {
+        for (const admin of systemAdmins) {
           await this.notificationLogService.sendNotification({
-            to: new Types.ObjectId(approver._id.toString()),
+            to: new Types.ObjectId(admin._id.toString()),
             type: 'Structure Change Request Submitted',
             message: `A new organizational structure change request has been submitted. Please review and approve.`,
           });
@@ -342,6 +333,7 @@ async activatePosition(id: string) {
       throw error;
     }
   }
+
 
   // ======================
   // 📌 GET ALL CHANGE REQUESTS (Admin only)
