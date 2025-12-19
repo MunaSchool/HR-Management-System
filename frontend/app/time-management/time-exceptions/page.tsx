@@ -403,7 +403,7 @@ export default function TimeExceptionPage() {
                       <div>
                         <div className="flex flex-wrap items-center gap-3 mb-2">
                           <h2 className="font-bold text-xl text-white">
-                            Request #{req._id.slice(-8)}
+                            Request #{req._id}
                           </h2>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(req.status)}`}>
                             {req.status}
@@ -415,11 +415,7 @@ export default function TimeExceptionPage() {
                         <div className="flex items-center gap-4 text-sm text-gray-400">
                           <div className="flex items-center gap-2">
                             <FaUser className="text-xs" />
-                            Employee ID: {req.employeeId.toString().slice(-8)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <FaCalendarAlt className="text-xs" />
-                            {requestDate}
+                            Employee ID: {req.employeeId.toString()}
                           </div>
                         </div>
                       </div>
