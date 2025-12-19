@@ -35,7 +35,7 @@ export default function LeavesLayout({ children }: { children: ReactNode }) {
   // While we don't know yet / or we're redirecting, show a small placeholder
   if (loading || !user || !isAdmin) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-gray-500">
+      <div className="flex min-h-screen items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
         Checking permissions...
       </div>
     );
@@ -43,7 +43,7 @@ export default function LeavesLayout({ children }: { children: ReactNode }) {
 
   // ✅ Only real admins reach this point
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar – stays admin */}
       <DashboardSidebar currentRole="admin" />
 

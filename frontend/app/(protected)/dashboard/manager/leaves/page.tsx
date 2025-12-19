@@ -1,4 +1,3 @@
-// app/(protected)/dashboard/manager/leaves/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,8 +21,8 @@ interface LeaveRequest {
   employeeId: { fullName: string; workEmail?: string };
   leaveTypeId: { name: string };
   dates: { from: string; to: string };
-  status: string;          // e.g. 'PENDING', 'APPROVED', 'REJECTED'
-  createdAt?: string;      // from mongoose timestamps
+  status: string;
+  createdAt?: string;
 }
 
 export default function ManagerLeavesOverview() {
@@ -44,19 +43,14 @@ export default function ManagerLeavesOverview() {
   const fetchManagerData = async () => {
     setLoading(true);
     try {
-      // USE EXISTING ENDPOINT: /leaves/requests
       const res = await axiosInstance.get<LeaveRequest[]>('/leaves/requests');
       const allRequests = res.data;
-
-      // For now: manager sees all non-final requests.
       const pending = allRequests.filter(r => r.status === 'PENDING');
 
-      // ---- derive simple stats on the frontend ----
       const memberSet = new Set(
         allRequests.map(r => r.employeeId?.fullName ?? r.employeeId)
       );
       const totalTeamMembers = memberSet.size;
-
       const pendingApprovals = pending.length;
 
       const now = new Date();
@@ -96,8 +90,8 @@ export default function ManagerLeavesOverview() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-gray-500">Loading manager dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto" />
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Loading manager dashboard...</p>
         </div>
       </div>
     );
@@ -108,13 +102,13 @@ export default function ManagerLeavesOverview() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Team Leave Management</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Leave Management</h1>
+          <p className="text-gray-500 dark:text-gray-400">
             Manage your team&apos;s leave requests and approvals
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
             <Link href="/dashboard/manager/leaves/calendar">
               <Calendar className="mr-2 h-4 w-4" />
               Team Calendar
@@ -125,60 +119,60 @@ export default function ManagerLeavesOverview() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Team Members</p>
-                <p className="text-2xl font-bold">{stats.totalTeamMembers}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Team Members</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalTeamMembers}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pending Approvals</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pending Approvals</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {stats.pendingApprovals}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-yellow-600" />
+              <div className="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Approved This Month</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Approved This Month</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats.approvedThisMonth}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">On Leave Today</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">On Leave Today</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {stats.onLeaveToday}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-red-600" />
+              <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </CardContent>
@@ -188,11 +182,11 @@ export default function ManagerLeavesOverview() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Approvals */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Pending Approvals</CardTitle>
-              <Badge variant="secondary">
+              <CardTitle className="text-gray-900 dark:text-white">Pending Approvals</CardTitle>
+              <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
                 {pendingRequests.length} requests
               </Badge>
             </div>
@@ -200,29 +194,29 @@ export default function ManagerLeavesOverview() {
           <CardContent>
             <div className="space-y-3">
               {pendingRequests.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">
                   No pending approvals
                 </p>
               ) : (
                 pendingRequests.map(request => (
                   <div
                     key={request._id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                    className="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium text-gray-900 dark:text-white">
                         {request.employeeId.fullName}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {request.leaveTypeId.name}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         {new Date(request.dates.from).toLocaleDateString()} -{' '}
                         {new Date(request.dates.to).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" asChild>
+                      <Button size="sm" variant="outline" asChild className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
                         <Link
                           href={`/dashboard/manager/requests/${request._id}`}
                         >
@@ -243,22 +237,22 @@ export default function ManagerLeavesOverview() {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-white">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <Button
                 variant="outline"
-                className="w-full justify-start h-auto py-4"
+                className="w-full justify-start h-auto py-4 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 asChild
               >
                 <Link href="/dashboard/manager/requests">
-                  <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
+                  <CheckCircle className="mr-2 h-5 w-5 text-green-600 dark:text-green-400" />
                   <div className="text-left">
-                    <p className="font-medium">Review Approvals</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-gray-900 dark:text-white">Review Approvals</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Approve / reject leave requests
                     </p>
                   </div>
@@ -267,14 +261,14 @@ export default function ManagerLeavesOverview() {
 
               <Button
                 variant="outline"
-                className="w-full justify-start h-auto py-4"
+                className="w-full justify-start h-auto py-4 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 asChild
               >
                 <Link href="/dashboard/manager/leaves/calendar">
-                  <Calendar className="mr-2 h-5 w-5 text-blue-600" />
+                  <Calendar className="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400" />
                   <div className="text-left">
-                    <p className="font-medium">Team Calendar</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-gray-900 dark:text-white">Team Calendar</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       View team leave schedule
                     </p>
                   </div>
@@ -283,31 +277,30 @@ export default function ManagerLeavesOverview() {
 
               <Button
                 variant="outline"
-                className="w-full justify-start h-auto py-4"
+                className="w-full justify-start h-auto py-4 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 asChild
               >
                 <Link href="/dashboard/manager/leaves/reports">
-                  <FileText className="mr-2 h-5 w-5 text-purple-600" />
+                  <FileText className="mr-2 h-5 w-5 text-purple-600 dark:text-purple-400" />
                   <div className="text-left">
-                    <p className="font-medium">Team Reports</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-gray-900 dark:text-white">Team Reports</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       View leave analytics
                     </p>
                   </div>
                 </Link>
               </Button>
 
-              {/* View Team button */}
               <Button
                 variant="outline"
-                className="w-full justify-start h-auto py-4"
+                className="w-full justify-start h-auto py-4 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 asChild
               >
                 <Link href="/dashboard/manager/team">
-                  <Users className="mr-2 h-5 w-5 text-blue-600" />
+                  <Users className="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400" />
                   <div className="text-left">
-                    <p className="font-medium">View Team</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-gray-900 dark:text-white">View Team</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       See all direct reports &amp; status
                     </p>
                   </div>

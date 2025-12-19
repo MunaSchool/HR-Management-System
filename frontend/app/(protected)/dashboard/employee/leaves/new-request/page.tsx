@@ -73,7 +73,6 @@ export default function NewRequestPage() {
 
   const { user } = useAuth();
 
-  // 🔹 ref for hidden file input
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
@@ -293,8 +292,8 @@ export default function NewRequestPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-gray-500">Loading form...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto" />
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Loading form...</p>
         </div>
       </div>
     );
@@ -311,15 +310,15 @@ export default function NewRequestPage() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="mb-2"
+            className="mb-2 dark:text-gray-400 dark:hover:bg-gray-800"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {editId ? 'Edit Leave Request' : 'New Leave Request'}
           </h1>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             Submit a new leave request for approval
           </p>
         </div>
@@ -329,17 +328,17 @@ export default function NewRequestPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>Request Details</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-gray-900 dark:text-white">Request Details</CardTitle>
+                <CardDescription className="text-gray-500 dark:text-gray-400">
                   Provide all necessary information for your leave request
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Leave Type */}
                 <div className="space-y-2">
-                  <Label htmlFor="leaveType">Leave Type *</Label>
+                  <Label htmlFor="leaveType" className="text-gray-700 dark:text-gray-300">Leave Type *</Label>
                   <Select
                     value={formData.leaveTypeId}
                     onValueChange={(value) =>
@@ -347,16 +346,16 @@ export default function NewRequestPage() {
                     }
                     required
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                       <SelectValue placeholder="Select leave type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
                       {leaveTypes.map((type) => (
-                        <SelectItem key={type._id} value={type._id}>
+                        <SelectItem key={type._id} value={type._id} className="dark:text-gray-300 dark:hover:bg-gray-700">
                           <div className="flex items-center justify-between">
                             <span>{type.name}</span>
                             {type.requiresAttachment && (
-                              <span className="text-xs text-yellow-600 ml-2">
+                              <span className="text-xs text-yellow-600 dark:text-yellow-400 ml-2">
                                 (Requires attachment)
                               </span>
                             )}
@@ -366,9 +365,9 @@ export default function NewRequestPage() {
                     </SelectContent>
                   </Select>
                   {balanceInfo && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       Available balance:{' '}
-                      <span className="font-medium">
+                      <span className="font-medium text-gray-900 dark:text-white">
                         {balanceInfo.remaining}
                       </span>{' '}
                       out of {balanceInfo.yearlyEntitlement} days
@@ -379,14 +378,14 @@ export default function NewRequestPage() {
                 {/* Date Range */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Start Date *</Label>
+                    <Label className="text-gray-700 dark:text-gray-300">Start Date *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !formData.from && 'text-muted-foreground',
+                            'w-full justify-start text-left font-normal dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                            !formData.from && 'text-muted-foreground dark:text-gray-400',
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -395,7 +394,7 @@ export default function NewRequestPage() {
                             : 'Pick a date'}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
+                      <PopoverContent className="w-auto p-0 dark:bg-gray-800 dark:border-gray-700">
                         <Calendar
                           mode="single"
                           selected={formData.from}
@@ -413,14 +412,14 @@ export default function NewRequestPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>End Date *</Label>
+                    <Label className="text-gray-700 dark:text-gray-300">End Date *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           className={cn(
-                            'w-full justify-start text-left font-normal',
-                            !formData.to && 'text-muted-foreground',
+                            'w-full justify-start text-left font-normal dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                            !formData.to && 'text-muted-foreground dark:text-gray-400',
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -429,7 +428,7 @@ export default function NewRequestPage() {
                             : 'Pick a date'}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0">
+                      <PopoverContent className="w-auto p-0 dark:bg-gray-800 dark:border-gray-700">
                         <Calendar
                           mode="single"
                           selected={formData.to}
@@ -449,13 +448,13 @@ export default function NewRequestPage() {
 
                 {/* Duration Display */}
                 {calculatedDays && (
-                  <div className="p-4 bg-blue-50 rounded-md border border-blue-200">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800">
                     <div className="flex justify-between items-center">
                       <div>
-                        <p className="font-medium text-blue-700">
+                        <p className="font-medium text-blue-700 dark:text-blue-300">
                           Leave Duration
                         </p>
-                        <p className="text-sm text-blue-600">
+                        <p className="text-sm text-blue-600 dark:text-blue-400">
                           {formData.from && formData.to && (
                             <>
                               {format(formData.from, 'MMM d, yyyy')} to{' '}
@@ -465,10 +464,10 @@ export default function NewRequestPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-700">
+                        <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                           {calculatedDays}
                         </p>
-                        <p className="text-sm text-blue-600">Total Days</p>
+                        <p className="text-sm text-blue-600 dark:text-blue-400">Total Days</p>
                       </div>
                     </div>
                   </div>
@@ -476,15 +475,15 @@ export default function NewRequestPage() {
 
                 {/* Validation Error */}
                 {validationError && (
-                  <Alert variant="destructive">
+                  <Alert variant="destructive" className="dark:bg-red-900/20 dark:border-red-800">
                     <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{validationError}</AlertDescription>
+                    <AlertDescription className="dark:text-red-300">{validationError}</AlertDescription>
                   </Alert>
                 )}
 
                 {/* Justification */}
                 <div className="space-y-2">
-                  <Label htmlFor="justification">Justification *</Label>
+                  <Label htmlFor="justification" className="text-gray-700 dark:text-gray-300">Justification *</Label>
                   <Textarea
                     id="justification"
                     placeholder="Please provide a reason for your leave request..."
@@ -497,31 +496,31 @@ export default function NewRequestPage() {
                     }
                     rows={4}
                     required
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Provide clear details to help with the approval process
                   </p>
                 </div>
 
                 {/* File Upload */}
                 <div className="space-y-2">
-                  <Label>
+                  <Label className="text-gray-700 dark:text-gray-300">
                     Supporting Document
                     {selectedType?.requiresAttachment && (
                       <span className="text-red-500 ml-1">*</span>
                     )}
                   </Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 dark:bg-gray-700/50">
                     <div className="text-center">
-                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500 mb-2">
+                      <Upload className="h-8 w-8 mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                         Upload supporting document (e.g., medical certificate)
                       </p>
-                      <p className="text-xs text-gray-400 mb-4">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
                         Max file size: 5MB • Supported: PDF, JPEG, PNG
                       </p>
 
-                      {/* 🔹 Hidden input with ref */}
                       <Input
                         ref={fileInputRef}
                         type="file"
@@ -531,25 +530,25 @@ export default function NewRequestPage() {
                         accept=".pdf,.jpg,.jpeg,.png"
                       />
 
-                      {/* 🔹 Button that triggers the file dialog */}
                       <Button
                         variant="outline"
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
+                        className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                       >
                         Choose File
                       </Button>
                     </div>
 
                     {formData.attachment && (
-                      <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
+                      <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
                         <div className="flex items-center">
-                          <FileText className="h-5 w-5 text-green-600 mr-2" />
+                          <FileText className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
                           <div className="flex-1">
-                            <p className="font-medium text-green-700">
+                            <p className="font-medium text-green-700 dark:text-green-300">
                               {formData.attachment.name}
                             </p>
-                            <p className="text-xs text-green-600">
+                            <p className="text-xs text-green-600 dark:text-green-400">
                               {(
                                 formData.attachment.size /
                                 1024 /
@@ -567,6 +566,7 @@ export default function NewRequestPage() {
                                 attachment: null,
                               }))
                             }
+                            className="dark:text-gray-400 dark:hover:bg-gray-700"
                           >
                             Remove
                           </Button>
@@ -582,38 +582,38 @@ export default function NewRequestPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Summary Card */}
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle>Request Summary</CardTitle>
+                <CardTitle className="text-gray-900 dark:text-white">Request Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Leave Type</span>
-                    <span className="font-medium">
+                    <span className="text-gray-500 dark:text-gray-400">Leave Type</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {leaveTypes.find((t) => t._id === formData.leaveTypeId)
                         ?.name || 'Not selected'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Duration</span>
-                    <span className="font-medium">
+                    <span className="text-gray-500 dark:text-gray-400">Duration</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {calculatedDays
                         ? `${calculatedDays} days`
                         : 'Not calculated'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">From Date</span>
-                    <span className="font-medium">
+                    <span className="text-gray-500 dark:text-gray-400">From Date</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {formData.from
                         ? format(formData.from, 'MMM d, yyyy')
                         : 'Not set'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">To Date</span>
-                    <span className="font-medium">
+                    <span className="text-gray-500 dark:text-gray-400">To Date</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                       {formData.to
                         ? format(formData.to, 'MMM d, yyyy')
                         : 'Not set'}
@@ -621,23 +621,23 @@ export default function NewRequestPage() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-gray-500 mb-2">Approval Process</p>
-                  <ul className="text-xs text-gray-600 space-y-1">
+                <div className="pt-4 border-t dark:border-gray-700">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Approval Process</p>
+                  <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                     <li className="flex items-center">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2" />
+                      <div className="w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full mr-2" />
                       Submit request
                     </li>
                     <li className="flex items-center">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
+                      <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full mr-2" />
                       Manager review (48 hours)
                     </li>
                     <li className="flex items-center">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-2" />
+                      <div className="w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full mr-2" />
                       HR compliance check
                     </li>
                     <li className="flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                      <div className="w-2 h-2 bg-green-500 dark:bg-green-400 rounded-full mr-2" />
                       Final approval
                     </li>
                   </ul>
@@ -647,48 +647,48 @@ export default function NewRequestPage() {
 
             {/* Balance Card */}
             {balanceInfo && (
-              <Card>
+              <Card className="dark:bg-gray-800 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle>Balance Check</CardTitle>
+                  <CardTitle className="text-gray-900 dark:text-white">Balance Check</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Yearly Entitlement</span>
-                      <span className="font-medium">
+                      <span className="text-gray-500 dark:text-gray-400">Yearly Entitlement</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
                         {balanceInfo.yearlyEntitlement} days
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Already Taken</span>
-                      <span className="font-medium text-red-600">
+                      <span className="text-gray-500 dark:text-gray-400">Already Taken</span>
+                      <span className="font-medium text-red-600 dark:text-red-400">
                         {balanceInfo.taken} days
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Available Balance</span>
-                      <span className="font-medium text-green-600">
+                      <span className="text-gray-500 dark:text-gray-400">Available Balance</span>
+                      <span className="font-medium text-green-600 dark:text-green-400">
                         {balanceInfo.remaining} days
                       </span>
                     </div>
 
                     {calculatedDays && (
-                      <div className="pt-3 border-t">
+                      <div className="pt-3 border-t dark:border-gray-700">
                         <div className="flex justify-between mb-1">
-                          <span className="text-gray-500">This Request</span>
-                          <span className="font-medium">
+                          <span className="text-gray-500 dark:text-gray-400">This Request</span>
+                          <span className="font-medium text-gray-900 dark:text-white">
                             {calculatedDays} days
                           </span>
                         </div>
                         <div className="flex justify-between font-bold">
-                          <span className="text-gray-700">
+                          <span className="text-gray-700 dark:text-gray-300">
                             Remaining After
                           </span>
                           <span
                             className={
                               calculatedDays > balanceInfo.remaining
-                                ? 'text-red-600'
-                                : 'text-green-600'
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-green-600 dark:text-green-400'
                             }
                           >
                             {balanceInfo.remaining - calculatedDays} days
@@ -702,7 +702,7 @@ export default function NewRequestPage() {
             )}
 
             {/* Submit Card */}
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <Button
@@ -727,7 +727,7 @@ export default function NewRequestPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full"
+                    className="w-full dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     onClick={() => router.back()}
                     disabled={submitting}
                   >

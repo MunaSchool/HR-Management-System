@@ -29,11 +29,9 @@ interface LeaveRequest {
     from: string;
     to: string;
   };
-  status: string; // 'pending' | 'approved' | 'rejected'
+  status: string;
   justification?: string;
   createdAt?: string;
-
-  // auto-escalation / delegation info
   isEscalated?: boolean;
   delegateTo?: { fullName: string } | null;
 }
@@ -41,11 +39,7 @@ interface LeaveRequest {
 export default function ManagerRequestsPage() {
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // per-row loading (existing)
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-
-  // ✅ NEW: bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
 
@@ -57,15 +51,11 @@ export default function ManagerRequestsPage() {
     setLoading(true);
     try {
       const res = await axiosInstance.get<LeaveRequest[]>("/leaves/requests");
-
-      // manager page shows only pending
       const pending = res.data.filter(
         (r) => (r.status || "").toLowerCase() === "pending"
       );
 
       setRequests(pending);
-
-      // ✅ keep selection only for still-visible rows
       setSelectedIds((prev) => {
         const next = new Set<string>();
         const ids = new Set(pending.map((p) => p._id));
@@ -107,9 +97,7 @@ export default function ManagerRequestsPage() {
     }
   };
 
-  // ✅ NEW: selection helpers
   const selectableIds = useMemo(() => {
-    // allow bulk select only for non-escalated
     return requests
       .filter((r) => !r.isEscalated)
       .map((r) => r._id);
@@ -177,8 +165,8 @@ export default function ManagerRequestsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-gray-500">Loading requests...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto" />
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Loading requests...</p>
         </div>
       </div>
     );
@@ -186,11 +174,13 @@ export default function ManagerRequestsPage() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
-            <CardTitle>Pending Leave Requests</CardTitle>
-            <Badge variant="secondary">{requests.length} pending</Badge>
+            <CardTitle className="text-gray-900 dark:text-white">Pending Leave Requests</CardTitle>
+            <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
+              {requests.length} pending
+            </Badge>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -213,13 +203,19 @@ export default function ManagerRequestsPage() {
                   variant="outline"
                   onClick={clearSelection}
                   disabled={bulkLoading || !!actionLoadingId}
+                  className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Clear
                 </Button>
               </>
             )}
 
-            <Button variant="outline" onClick={loadRequests} disabled={loading || bulkLoading}>
+            <Button 
+              variant="outline" 
+              onClick={loadRequests} 
+              disabled={loading || bulkLoading}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
               <RefreshCcw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
@@ -228,84 +224,93 @@ export default function ManagerRequestsPage() {
 
         <CardContent>
           {requests.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
               No pending requests at the moment.
             </p>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  {/* ✅ NEW: select all (non-escalated only) */}
-                  <TableHead className="w-[50px]">
+                <TableRow className="dark:hover:bg-gray-700">
+                  {/* Checkbox header */}
+                  <TableHead className="w-[50px] dark:bg-gray-700/50 dark:text-gray-300">
                     <input
                       type="checkbox"
                       checked={allSelectableSelected}
                       onChange={toggleSelectAll}
                       title="Select all non-escalated requests"
+                      className="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400"
                     />
                   </TableHead>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Leave Type</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Justification</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Employee</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Leave Type</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Dates</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Justification</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Status</TableHead>
+                  <TableHead className="text-right dark:bg-gray-700/50 dark:text-gray-300">Actions</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {requests.map((req) => {
-                  const disabledRow = !!req.isEscalated; // cannot approve/reject escalated
+                  const disabledRow = !!req.isEscalated;
 
                   return (
-                    <TableRow key={req._id}>
-                      {/* ✅ NEW: per-row checkbox (disabled if escalated) */}
-                      <TableCell>
+                    <TableRow key={req._id} className="dark:hover:bg-gray-700/50">
+                      {/* Row checkbox */}
+                      <TableCell className="dark:border-gray-700">
                         <input
                           type="checkbox"
                           checked={selectedIds.has(req._id)}
                           onChange={() => toggleOne(req._id)}
                           disabled={disabledRow}
                           title={disabledRow ? "Escalated requests can't be bulk processed" : ""}
+                          className="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-blue-500 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                       </TableCell>
 
-                      <TableCell>
-                        <div className="font-medium">{req.employeeId.fullName}</div>
+                      <TableCell className="dark:border-gray-700">
+                        <div className="font-medium text-gray-900 dark:text-white">{req.employeeId.fullName}</div>
                         {req.employeeId.workEmail && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {req.employeeId.workEmail}
                           </div>
                         )}
                       </TableCell>
 
-                      <TableCell>{req.leaveTypeId.name}</TableCell>
+                      <TableCell className="dark:border-gray-700 dark:text-gray-300">
+                        {req.leaveTypeId.name}
+                      </TableCell>
 
-                      <TableCell>
+                      <TableCell className="dark:border-gray-700 dark:text-gray-300">
                         <div className="text-sm">
                           {new Date(req.dates.from).toLocaleDateString()} –{" "}
                           {new Date(req.dates.to).toLocaleDateString()}
                         </div>
                       </TableCell>
 
-                      <TableCell className="max-w-xs">
-                        <span className="text-sm text-gray-600 line-clamp-2">
+                      <TableCell className="max-w-xs dark:border-gray-700">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                           {req.justification || "-"}
                         </span>
                       </TableCell>
 
-                      <TableCell>
+                      <TableCell className="dark:border-gray-700">
                         {(req.isEscalated && (
-                          <Badge variant="destructive">Escalated</Badge>
+                          <Badge variant="destructive" className="dark:bg-red-900/30 dark:text-red-300">
+                            Escalated
+                          </Badge>
                         )) ||
                           (req.delegateTo && (
-                            <Badge variant="secondary">
+                            <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
                               Delegated to {req.delegateTo.fullName}
                             </Badge>
-                          )) || <Badge variant="outline">{req.status}</Badge>}
+                          )) || 
+                          <Badge variant="outline" className="dark:border-gray-600 dark:text-gray-300">
+                            {req.status}
+                          </Badge>}
                       </TableCell>
 
-                      <TableCell className="text-right">
+                      <TableCell className="text-right dark:border-gray-700">
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
@@ -314,6 +319,7 @@ export default function ManagerRequestsPage() {
                               actionLoadingId === req._id || disabledRow || bulkLoading
                             }
                             onClick={() => handleDecision(req._id, "rejected")}
+                            className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 disabled:dark:opacity-50"
                           >
                             <XCircle className="mr-1 h-4 w-4" />
                             Reject
@@ -325,6 +331,7 @@ export default function ManagerRequestsPage() {
                               actionLoadingId === req._id || disabledRow || bulkLoading
                             }
                             onClick={() => handleDecision(req._id, "approved")}
+                            className="disabled:dark:opacity-50"
                           >
                             <CheckCircle className="mr-1 h-4 w-4" />
                             Approve

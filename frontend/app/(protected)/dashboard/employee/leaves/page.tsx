@@ -1,4 +1,3 @@
-// app/(protected)/dashboard/employee/leaves/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -43,7 +42,7 @@ export default function EmployeeLeavesOverview() {
         axiosInstance.get('/leaves/my-requests')
       ]);
       setBalances(balanceRes.data);
-      setRequests(requestsRes.data.slice(0, 5)); // Last 5 requests
+      setRequests(requestsRes.data.slice(0, 5));
     } catch (error: any) {
       toast.error('Failed to load dashboard data');
     } finally {
@@ -53,10 +52,10 @@ export default function EmployeeLeavesOverview() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'approved': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case 'pending': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      case 'rejected': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -73,8 +72,8 @@ export default function EmployeeLeavesOverview() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-500">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -89,8 +88,8 @@ export default function EmployeeLeavesOverview() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Leave Dashboard</h1>
-          <p className="text-gray-500">Manage your leaves and track balances</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leave Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400">Manage your leaves and track balances</p>
         </div>
         <Button asChild>
           <Link href="/dashboard/employee/leaves/new-request">
@@ -102,41 +101,41 @@ export default function EmployeeLeavesOverview() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Available Days</p>
-                <p className="text-2xl font-bold text-green-600">{totalAvailable}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Available Days</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalAvailable}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Taken This Year</p>
-                <p className="text-2xl font-bold text-blue-600">{totalTaken}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Taken This Year</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalTaken}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <FileText className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pending Requests</p>
-                <p className="text-2xl font-bold text-yellow-600">{totalPending}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pending Requests</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{totalPending}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-yellow-600" />
+              <div className="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </CardContent>
@@ -146,22 +145,22 @@ export default function EmployeeLeavesOverview() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leave Balances */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle>Leave Balances</CardTitle>
-            <CardDescription>Your current leave entitlements</CardDescription>
+            <CardTitle className="text-gray-900 dark:text-white">Leave Balances</CardTitle>
+            <CardDescription className="text-gray-500 dark:text-gray-400">Your current leave entitlements</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {balances.map((balance) => (
-                <div key={balance.leaveTypeId.code} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={balance.leaveTypeId.code} className="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                   <div>
-                    <p className="font-medium">{balance.leaveTypeId.name}</p>
-                    <p className="text-sm text-gray-500">Code: {balance.leaveTypeId.code}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{balance.leaveTypeId.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Code: {balance.leaveTypeId.code}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-lg">{balance.remaining}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-bold text-lg text-gray-900 dark:text-white">{balance.remaining}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {balance.taken} taken / {balance.yearlyEntitlement} total
                     </p>
                     <Progress 
@@ -171,7 +170,7 @@ export default function EmployeeLeavesOverview() {
                   </div>
                 </div>
               ))}
-              <Button variant="outline" className="w-full" asChild>
+              <Button variant="outline" className="w-full dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" asChild>
                 <Link href="/dashboard/employee/leaves/my-balance">
                   View All Balances
                 </Link>
@@ -181,21 +180,21 @@ export default function EmployeeLeavesOverview() {
         </Card>
 
         {/* Recent Requests */}
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle>Recent Requests</CardTitle>
-            <CardDescription>Your latest leave applications</CardDescription>
+            <CardTitle className="text-gray-900 dark:text-white">Recent Requests</CardTitle>
+            <CardDescription className="text-gray-500 dark:text-gray-400">Your latest leave applications</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {requests.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No leave requests yet</p>
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">No leave requests yet</p>
               ) : (
                 requests.map((request) => (
-                  <div key={request._id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={request._id} className="flex items-center justify-between p-3 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <div>
-                      <p className="font-medium">{request.leaveTypeId.name}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-medium text-gray-900 dark:text-white">{request.leaveTypeId.name}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(request.dates.from).toLocaleDateString()} - {new Date(request.dates.to).toLocaleDateString()}
                       </p>
                     </div>
@@ -208,7 +207,7 @@ export default function EmployeeLeavesOverview() {
                   </div>
                 ))
               )}
-              <Button variant="outline" className="w-full" asChild>
+              <Button variant="outline" className="w-full dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" asChild>
                 <Link href="/dashboard/employee/leaves/my-requests">
                   View All Requests
                 </Link>
@@ -219,32 +218,32 @@ export default function EmployeeLeavesOverview() {
       </div>
 
       {/* Quick Actions */}
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks you can perform</CardDescription>
+          <CardTitle className="text-gray-900 dark:text-white">Quick Actions</CardTitle>
+          <CardDescription className="text-gray-500 dark:text-gray-400">Common tasks you can perform</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-auto py-6 flex flex-col items-center" asChild>
+            <Button variant="outline" className="h-auto py-6 flex flex-col items-center dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" asChild>
               <Link href="/dashboard/employee/leaves/new-request">
-                <PlusCircle className="h-8 w-8 mb-2 text-blue-600" />
-                <span className="font-medium">New Request</span>
-                <span className="text-sm text-gray-500 mt-1">Submit leave application</span>
+                <PlusCircle className="h-8 w-8 mb-2 text-blue-600 dark:text-blue-400" />
+                <span className="font-medium text-gray-900 dark:text-white">New Request</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">Submit leave application</span>
               </Link>
             </Button>
-            <Button variant="outline" className="h-auto py-6 flex flex-col items-center" asChild>
+            <Button variant="outline" className="h-auto py-6 flex flex-col items-center dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" asChild>
               <Link href="/dashboard/employee/leaves/my-balance">
-                <FileText className="h-8 w-8 mb-2 text-green-600" />
-                <span className="font-medium">Check Balance</span>
-                <span className="text-sm text-gray-500 mt-1">View available leaves</span>
+                <FileText className="h-8 w-8 mb-2 text-green-600 dark:text-green-400" />
+                <span className="font-medium text-gray-900 dark:text-white">Check Balance</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">View available leaves</span>
               </Link>
             </Button>
-            <Button variant="outline" className="h-auto py-6 flex flex-col items-center" asChild>
+            <Button variant="outline" className="h-auto py-6 flex flex-col items-center dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700" asChild>
               <Link href="/dashboard/employee/leaves/my-requests">
-                <Calendar className="h-8 w-8 mb-2 text-purple-600" />
-                <span className="font-medium">Track Requests</span>
-                <span className="text-sm text-gray-500 mt-1">Monitor approval status</span>
+                <Calendar className="h-8 w-8 mb-2 text-purple-600 dark:text-purple-400" />
+                <span className="font-medium text-gray-900 dark:text-white">Track Requests</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">Monitor approval status</span>
               </Link>
             </Button>
           </div>

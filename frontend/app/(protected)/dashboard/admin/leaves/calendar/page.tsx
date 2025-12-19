@@ -86,7 +86,6 @@ export default function LeavesCalendarPage() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  // Fetch calendar data
   useEffect(() => {
     fetchCalendarData();
     fetchAllHolidays();
@@ -99,7 +98,6 @@ export default function LeavesCalendarPage() {
       setCalendarData(response.data);
     } catch (error: any) {
       if (error.response?.status === 404) {
-        // Calendar doesn't exist for this year, create it
         createCalendarForYear();
       } else {
         console.error('Error fetching calendar:', error);
@@ -136,7 +134,6 @@ export default function LeavesCalendarPage() {
     }
 
     try {
-      // Create holiday first
       const holidayResponse = await axiosInstance.post('/leaves/holidays', {
         type: holidayForm.type,
         startDate: holidayForm.startDate,
@@ -144,7 +141,6 @@ export default function LeavesCalendarPage() {
         name: holidayForm.name || `${holidayForm.type} Holiday`,
       });
 
-      // Then add it to calendar
       await axiosInstance.patch(`/leaves/calendar/${selectedYear}/add-holiday`, {
         holidayId: holidayResponse.data._id,
       });
@@ -192,12 +188,10 @@ export default function LeavesCalendarPage() {
     if (!selectedItem) return;
 
     try {
-      // First remove from calendar
       await axiosInstance.patch(`/leaves/calendar/${selectedYear}/remove-holiday`, {
         holidayId: selectedItem._id,
       });
 
-      // Then delete the holiday (soft delete)
       await axiosInstance.delete(`/leaves/holidays/${selectedItem._id}`);
 
       toast.success('Holiday removed successfully');
@@ -232,10 +226,10 @@ export default function LeavesCalendarPage() {
 
   const getHolidayBadgeColor = (type: string) => {
     switch (type) {
-      case 'NATIONAL': return 'bg-red-100 text-red-800';
-      case 'ORGANIZATIONAL': return 'bg-blue-100 text-blue-800';
-      case 'WEEKLY_REST': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'NATIONAL': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+      case 'ORGANIZATIONAL': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
+      case 'WEEKLY_REST': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -279,27 +273,29 @@ export default function LeavesCalendarPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Leave Calendar</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leave Calendar</h1>
+          <p className="text-gray-500 dark:text-gray-400">
             Manage holidays and blocked periods for {selectedYear}
           </p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1 rounded-md">
+          <div className="flex items-center space-x-2 bg-gray-50 dark:bg-gray-800 px-3 py-1 rounded-md">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedYear(prev => prev - 1)}
+              className="dark:text-gray-400 dark:hover:bg-gray-700"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="font-semibold text-lg min-w-[80px] text-center">
+            <span className="font-semibold text-lg min-w-[80px] text-center text-gray-900 dark:text-white">
               {selectedYear}
             </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedYear(prev => prev + 1)}
+              className="dark:text-gray-400 dark:hover:bg-gray-700"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -313,47 +309,47 @@ export default function LeavesCalendarPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Holidays</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Holidays</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {calendarData?.holidays?.length || 0}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                <CalendarIcon className="h-5 w-5 text-red-600" />
+              <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <CalendarIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Blocked Periods</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Blocked Periods</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {calendarData?.blockedPeriods?.length || 0}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Filter className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Available Holidays</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Available Holidays</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {availableHolidays.length}
                 </p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <Plus className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Plus className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </CardContent>
@@ -361,20 +357,20 @@ export default function LeavesCalendarPage() {
       </div>
 
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="calendar">
+        <TabsList className="dark:bg-gray-800 dark:border-gray-700">
+          <TabsTrigger value="calendar" className="dark:text-gray-300 dark:data-[state=active]:bg-gray-700">
             <CalendarIcon className="mr-2 h-4 w-4" />
             Calendar View
           </TabsTrigger>
-          <TabsTrigger value="holidays">Holidays</TabsTrigger>
-          <TabsTrigger value="blocked">Blocked Periods</TabsTrigger>
+          <TabsTrigger value="holidays" className="dark:text-gray-300 dark:data-[state=active]:bg-gray-700">Holidays</TabsTrigger>
+          <TabsTrigger value="blocked" className="dark:text-gray-300 dark:data-[state=active]:bg-gray-700">Blocked Periods</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle>Calendar View</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-gray-900 dark:text-white">Calendar View</CardTitle>
+              <CardDescription className="text-gray-500 dark:text-gray-400">
                 Holidays are shown in red, blocked periods in blue
               </CardDescription>
             </CardHeader>
@@ -384,7 +380,7 @@ export default function LeavesCalendarPage() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
-                  className="rounded-md border"
+                  className="rounded-md border dark:border-gray-700 dark:bg-gray-800"
                   modifiers={{
                     holiday: (date) => isDateHoliday(date),
                     blocked: (date) => isDateBlocked(date),
@@ -407,24 +403,24 @@ export default function LeavesCalendarPage() {
               </div>
               <div className="lg:w-1/3 space-y-4">
                 <div className="space-y-3">
-                  <h3 className="font-semibold">Legend</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Legend</h3>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-red-100 border border-red-300"></div>
-                      <span>Holiday</span>
+                      <div className="w-4 h-4 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700"></div>
+                      <span className="text-gray-900 dark:text-gray-300">Holiday</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 bg-blue-100 border border-blue-300"></div>
-                      <span>Blocked Period</span>
+                      <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900 border border-blue-300 dark:border-blue-700"></div>
+                      <span className="text-gray-900 dark:text-gray-300">Blocked Period</span>
                     </div>
                   </div>
                 </div>
                 {selectedDate && (
-                  <div className="space-y-3 pt-4 border-t">
-                    <h3 className="font-semibold">Selected Date: {formatDate(selectedDate.toISOString())}</h3>
+                  <div className="space-y-3 pt-4 border-t dark:border-gray-700">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Selected Date: {formatDate(selectedDate.toISOString())}</h3>
                     {isDateHoliday(selectedDate) && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                        <p className="font-medium text-red-700">Holiday on this date</p>
+                      <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                        <p className="font-medium text-red-700 dark:text-red-300">Holiday on this date</p>
                         {calendarData?.holidays
                           .filter(h => {
                             const start = new Date(h.startDate);
@@ -433,7 +429,7 @@ export default function LeavesCalendarPage() {
                           })
                           .map((holiday, index) => (
                             <div key={index} className="mt-2">
-                              <p className="text-sm">{holiday.name || 'Holiday'}</p>
+                              <p className="text-sm text-gray-900 dark:text-gray-300">{holiday.name || 'Holiday'}</p>
                               <Badge className={getHolidayBadgeColor(holiday.type)}>
                                 {holiday.type}
                               </Badge>
@@ -442,8 +438,8 @@ export default function LeavesCalendarPage() {
                       </div>
                     )}
                     {isDateBlocked(selectedDate) && (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-                        <p className="font-medium text-blue-700">Blocked Period</p>
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                        <p className="font-medium text-blue-700 dark:text-blue-300">Blocked Period</p>
                         {calendarData?.blockedPeriods
                           .filter(bp => {
                             const from = new Date(bp.from);
@@ -452,8 +448,8 @@ export default function LeavesCalendarPage() {
                           })
                           .map((period, index) => (
                             <div key={index} className="mt-2">
-                              <p className="text-sm">{period.reason}</p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-sm text-gray-900 dark:text-gray-300">{period.reason}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {formatDate(period.from)} - {formatDate(period.to)}
                               </p>
                             </div>
@@ -461,7 +457,7 @@ export default function LeavesCalendarPage() {
                       </div>
                     )}
                     {!isDateHoliday(selectedDate) && !isDateBlocked(selectedDate) && (
-                      <p className="text-gray-500">No special events on this date</p>
+                      <p className="text-gray-500 dark:text-gray-400">No special events on this date</p>
                     )}
                   </div>
                 )}
@@ -471,11 +467,11 @@ export default function LeavesCalendarPage() {
         </TabsContent>
 
         <TabsContent value="holidays" className="space-y-4">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex justify-between items-center">
+              <CardTitle className="flex justify-between items-center text-gray-900 dark:text-white">
                 <span>Holidays in {selectedYear}</span>
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
                   {calendarData?.holidays?.length || 0} holidays
                 </Badge>
               </CardTitle>
@@ -483,11 +479,11 @@ export default function LeavesCalendarPage() {
             <CardContent>
               {loading ? (
                 <div className="text-center py-10">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <p className="text-gray-500 mt-2">Loading holidays...</p>
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">Loading holidays...</p>
                 </div>
               ) : !calendarData?.holidays?.length ? (
-                <div className="text-center py-10 text-gray-500">
+                <div className="text-center py-10 text-gray-500 dark:text-gray-400">
                   No holidays configured for {selectedYear}
                 </div>
               ) : (
@@ -495,24 +491,24 @@ export default function LeavesCalendarPage() {
                   {calendarData.holidays.map((holiday) => (
                     <div
                       key={holiday._id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                      className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
                           <Badge className={getHolidayBadgeColor(holiday.type)}>
                             {holiday.type}
                           </Badge>
-                          <span className="font-medium">
+                          <span className="font-medium text-gray-900 dark:text-white">
                             {holiday.name || `${holiday.type} Holiday`}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {formatDate(holiday.startDate)}
                           {holiday.endDate && holiday.endDate !== holiday.startDate && (
                             <> → {formatDate(holiday.endDate)}</>
                           )}
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
                           Status: {holiday.active ? 'Active' : 'Inactive'}
                         </div>
                       </div>
@@ -537,27 +533,28 @@ export default function LeavesCalendarPage() {
         </TabsContent>
 
         <TabsContent value="blocked" className="space-y-4">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="flex justify-between items-center">
+              <CardTitle className="flex justify-between items-center text-gray-900 dark:text-white">
                 <span>Blocked Periods</span>
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"
                     onClick={() => setIsAddBlockedOpen(true)}
+                    className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Add Blocked Period
                   </Button>
                 </div>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-500 dark:text-gray-400">
                 Blocked periods prevent leave requests during specific times
               </CardDescription>
             </CardHeader>
             <CardContent>
               {!calendarData?.blockedPeriods?.length ? (
-                <div className="text-center py-10 text-gray-500">
+                <div className="text-center py-10 text-gray-500 dark:text-gray-400">
                   No blocked periods configured
                 </div>
               ) : (
@@ -565,13 +562,13 @@ export default function LeavesCalendarPage() {
                   {calendarData.blockedPeriods.map((period, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                      className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                     >
                       <div className="space-y-1">
-                        <div className="font-medium">
+                        <div className="font-medium text-gray-900 dark:text-white">
                           {formatDate(period.from)} → {formatDate(period.to)}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {period.reason}
                         </div>
                       </div>
@@ -596,64 +593,67 @@ export default function LeavesCalendarPage() {
 
       {/* Add Holiday Dialog */}
       <Dialog open={isAddHolidayOpen} onOpenChange={setIsAddHolidayOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle>Add New Holiday</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-gray-900 dark:text-white">Add New Holiday</DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-gray-400">
               Create a new holiday. These days will be excluded from leave calculations.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Holiday Type *</Label>
+              <Label className="text-gray-900 dark:text-gray-300">Holiday Type *</Label>
               <Select
                 value={holidayForm.type}
                 onValueChange={(value: any) => setHolidayForm({...holidayForm, type: value})}
               >
-                <SelectTrigger>
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                   <SelectValue placeholder="Select holiday type" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NATIONAL">National Holiday</SelectItem>
-                  <SelectItem value="ORGANIZATIONAL">Organizational Holiday</SelectItem>
-                  <SelectItem value="WEEKLY_REST">Weekly Rest</SelectItem>
+                <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+                  <SelectItem value="NATIONAL" className="dark:text-gray-300 dark:hover:bg-gray-700">National Holiday</SelectItem>
+                  <SelectItem value="ORGANIZATIONAL" className="dark:text-gray-300 dark:hover:bg-gray-700">Organizational Holiday</SelectItem>
+                  <SelectItem value="WEEKLY_REST" className="dark:text-gray-300 dark:hover:bg-gray-700">Weekly Rest</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Holiday Name</Label>
+              <Label className="text-gray-900 dark:text-gray-300">Holiday Name</Label>
               <Input
                 value={holidayForm.name}
                 onChange={(e) => setHolidayForm({...holidayForm, name: e.target.value})}
                 placeholder="e.g., New Year's Day, Eid Al-Fitr"
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Date *</Label>
+                <Label className="text-gray-900 dark:text-gray-300">Start Date *</Label>
                 <Input
                   type="date"
                   value={holidayForm.startDate}
                   onChange={(e) => setHolidayForm({...holidayForm, startDate: e.target.value})}
                   required
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label>End Date</Label>
+                <Label className="text-gray-900 dark:text-gray-300">End Date</Label>
                 <Input
                   type="date"
                   value={holidayForm.endDate}
                   onChange={(e) => setHolidayForm({...holidayForm, endDate: e.target.value})}
                   min={holidayForm.startDate}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Leave empty for single-day holiday
                 </p>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddHolidayOpen(false)}>
+            <Button variant="outline" onClick={() => setIsAddHolidayOpen(false)} className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
               Cancel
             </Button>
             <Button onClick={handleAddHoliday} disabled={!holidayForm.startDate}>
@@ -665,48 +665,51 @@ export default function LeavesCalendarPage() {
 
       {/* Add Blocked Period Dialog */}
       <Dialog open={isAddBlockedOpen} onOpenChange={setIsAddBlockedOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle>Add Blocked Period</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-gray-900 dark:text-white">Add Blocked Period</DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-gray-400">
               Block specific periods where leave requests are not allowed.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>From Date *</Label>
+                <Label className="text-gray-900 dark:text-gray-300">From Date *</Label>
                 <Input
                   type="date"
                   value={blockedForm.from}
                   onChange={(e) => setBlockedForm({...blockedForm, from: e.target.value})}
                   required
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
               <div className="space-y-2">
-                <Label>To Date *</Label>
+                <Label className="text-gray-900 dark:text-gray-300">To Date *</Label>
                 <Input
                   type="date"
                   value={blockedForm.to}
                   onChange={(e) => setBlockedForm({...blockedForm, to: e.target.value})}
                   min={blockedForm.from}
                   required
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Reason *</Label>
+              <Label className="text-gray-900 dark:text-gray-300">Reason *</Label>
               <Textarea
                 value={blockedForm.reason}
                 onChange={(e) => setBlockedForm({...blockedForm, reason: e.target.value})}
                 placeholder="e.g., Year-end closing, Peak season, Company shutdown"
                 rows={3}
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddBlockedOpen(false)}>
+            <Button variant="outline" onClick={() => setIsAddBlockedOpen(false)} className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
               Cancel
             </Button>
             <Button 
@@ -721,17 +724,17 @@ export default function LeavesCalendarPage() {
 
       {/* Delete Holiday Confirmation */}
       <AlertDialog open={isDeleteHolidayOpen} onOpenChange={setIsDeleteHolidayOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-gray-800 dark:border-gray-700">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Holiday</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-gray-900 dark:text-white">Remove Holiday</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-500 dark:text-gray-400">
               Are you sure you want to remove this holiday? This action cannot be undone.
               <br /><br />
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900 dark:text-white">
                 {selectedItem?.name || selectedItem?.type + ' Holiday'}
               </span>
               <br />
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {formatDate(selectedItem?.startDate)}
                 {selectedItem?.endDate && selectedItem.endDate !== selectedItem.startDate && (
                   <> - {formatDate(selectedItem.endDate)}</>
@@ -740,12 +743,12 @@ export default function LeavesCalendarPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSelectedItem(null)}>
+            <AlertDialogCancel onClick={() => setSelectedItem(null)} className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveHoliday}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 dark:bg-red-800 dark:hover:bg-red-900"
             >
               Remove Holiday
             </AlertDialogAction>
@@ -755,26 +758,26 @@ export default function LeavesCalendarPage() {
 
       {/* Delete Blocked Period Confirmation */}
       <AlertDialog open={isDeleteBlockedOpen} onOpenChange={setIsDeleteBlockedOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-gray-800 dark:border-gray-700">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Blocked Period</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-gray-900 dark:text-white">Remove Blocked Period</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-500 dark:text-gray-400">
               Are you sure you want to remove this blocked period?
               <br /><br />
-              <span className="font-semibold">{selectedItem?.reason}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{selectedItem?.reason}</span>
               <br />
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {formatDate(selectedItem?.from)} - {formatDate(selectedItem?.to)}
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSelectedItem(null)}>
+            <AlertDialogCancel onClick={() => setSelectedItem(null)} className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveBlockedPeriod}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 dark:bg-red-800 dark:hover:bg-red-900"
             >
               Remove Blocked Period
             </AlertDialogAction>

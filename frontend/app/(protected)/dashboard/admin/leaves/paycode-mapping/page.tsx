@@ -188,8 +188,8 @@ export default function PaycodeMappingAdminPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Leave Paycode Mapping</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Leave Paycode Mapping</h1>
+          <p className="text-gray-500 dark:text-gray-400">
             Map each leave type to its payroll code for downstream payroll
             processing.
           </p>
@@ -199,6 +199,7 @@ export default function PaycodeMappingAdminPage() {
             variant="outline"
             onClick={loadData}
             disabled={loading}
+            className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             <RefreshCcw className="h-4 w-4 mr-2" />
             Refresh
@@ -211,14 +212,14 @@ export default function PaycodeMappingAdminPage() {
       </div>
 
       {/* Search */}
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardContent className="pt-6">
           <div className="flex gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
               <Input
                 placeholder="Search by leave type, payroll code, or description..."
-                className="pl-10"
+                className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -228,59 +229,63 @@ export default function PaycodeMappingAdminPage() {
       </Card>
 
       {/* Table */}
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>All Paycode Mappings</CardTitle>
+          <CardTitle className="text-gray-900 dark:text-white">All Paycode Mappings</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="py-6 text-center text-gray-500">
+            <div className="py-6 text-center text-gray-500 dark:text-gray-400">
               Loading...
             </div>
           ) : filteredMappings.length === 0 ? (
-            <div className="py-6 text-center text-gray-400">
+            <div className="py-6 text-center text-gray-400 dark:text-gray-500">
               No mappings found
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Leave Type</TableHead>
-                    <TableHead>Payroll Code</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="w-[150px]">Actions</TableHead>
+                  <TableRow className="dark:hover:bg-gray-700">
+                    <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Leave Type</TableHead>
+                    <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Payroll Code</TableHead>
+                    <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Description</TableHead>
+                    <TableHead className="w-[150px] dark:bg-gray-700/50 dark:text-gray-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredMappings.map((m) => (
-                    <TableRow key={m._id}>
-                      <TableCell>{getLeaveTypeName(m)}</TableCell>
-                      <TableCell>
+                    <TableRow key={m._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <TableCell className="text-gray-900 dark:text-white dark:border-gray-700">
+                        {getLeaveTypeName(m)}
+                      </TableCell>
+                      <TableCell className="dark:border-gray-700">
                         {editingId === m._id ? (
                           <Input
                             value={editPayrollCode}
                             onChange={(e) =>
                               setEditPayrollCode(e.target.value)
                             }
+                            className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                           />
                         ) : (
-                          m.payrollCode
+                          <span className="text-gray-900 dark:text-white">{m.payrollCode}</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="dark:border-gray-700">
                         {editingId === m._id ? (
                           <Input
                             value={editDescription}
                             onChange={(e) =>
                               setEditDescription(e.target.value)
                             }
+                            className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                           />
                         ) : (
-                          m.description || '—'
+                          <span className="text-gray-500 dark:text-gray-400">{m.description || '—'}</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="dark:border-gray-700">
                         {editingId === m._id ? (
                           <div className="flex gap-2">
                             <Button
@@ -296,6 +301,7 @@ export default function PaycodeMappingAdminPage() {
                               variant="outline"
                               onClick={cancelEdit}
                               disabled={loading}
+                              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                             >
                               <XIcon className="h-4 w-4" />
                             </Button>
@@ -306,6 +312,7 @@ export default function PaycodeMappingAdminPage() {
                               size="sm"
                               variant="outline"
                               onClick={() => startEdit(m)}
+                              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                             >
                               <Edit3 className="h-4 w-4" />
                             </Button>
@@ -331,45 +338,51 @@ export default function PaycodeMappingAdminPage() {
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] dark:bg-gray-800 dark:border-gray-700">
           <DialogHeader>
-            <DialogTitle>New Paycode Mapping</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-gray-900 dark:text-white">New Paycode Mapping</DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-gray-400">
               Link a leave type to its payroll code.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="space-y-1">
-              <label className="text-sm font-medium">Leave Type</label>
+              <label className="text-sm font-medium text-gray-900 dark:text-gray-300">Leave Type</label>
               <select
-                className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                className="w-full border rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 value={newLeaveTypeId}
                 onChange={(e) => setNewLeaveTypeId(e.target.value)}
               >
-                <option value="">Select leave type...</option>
+                <option value="" className="dark:bg-gray-800 dark:text-gray-300">Select leave type...</option>
                 {leaveTypes.map((lt) => (
-                  <option key={lt._id} value={lt._id}>
+                  <option 
+                    key={lt._id} 
+                    value={lt._id}
+                    className="dark:bg-gray-800 dark:text-gray-300"
+                  >
                     {lt.name} {lt.code ? `(${lt.code})` : ''}
                   </option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">Payroll Code</label>
+              <label className="text-sm font-medium text-gray-900 dark:text-gray-300">Payroll Code</label>
               <Input
                 placeholder="e.g. ANL-PAY"
                 value={newPayrollCode}
                 onChange={(e) => setNewPayrollCode(e.target.value)}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-sm font-medium">
+              <label className="text-sm font-medium text-gray-900 dark:text-gray-300">
                 Description (optional)
               </label>
               <Input
                 placeholder="Short explanation for HR/Payroll"
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               />
             </div>
           </div>
@@ -378,6 +391,7 @@ export default function PaycodeMappingAdminPage() {
               variant="outline"
               onClick={() => setCreateOpen(false)}
               disabled={loading}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Cancel
             </Button>

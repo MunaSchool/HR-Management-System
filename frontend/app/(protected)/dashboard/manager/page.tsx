@@ -12,9 +12,9 @@ export default function ManagerHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Manager Dashboard</h1>
-        <p className="text-gray-600 mb-4">
-          Welcome, {user?.name || user?.email}. Manage your team’s leaves and requests.
+        <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Manager Dashboard</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Welcome, {user?.name || user?.email}. Manage your team&apos;s leaves and requests.
         </p>
 
         {/* Payroll button */}
@@ -42,7 +42,6 @@ export default function ManagerHomePage() {
           description="View your direct reports"
           href="/dashboard/manager/team"
         />
-        {/* ✅ NEW: Delegation Settings */}
         <DashboardCard
           title="Delegation Settings"
           description="Assign a delegate during your absence"
@@ -66,10 +65,10 @@ function DashboardCard({
   return (
     <div
       onClick={() => router.push(href)}
-      className="bg-white shadow rounded-lg p-6 hover:shadow-lg cursor-pointer transition"
+      className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg cursor-pointer transition dark:hover:shadow-gray-900"
     >
-      <h2 className="text-lg font-semibold mb-1">{title}</h2>
-      <p className="text-sm text-gray-600">{description}</p>
+      <h2 className="text-lg font-semibold mb-1 text-gray-900 dark:text-white">{title}</h2>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
     </div>
   );
 }

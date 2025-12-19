@@ -22,6 +22,45 @@ interface Delegation {
   endDate: string;
 }
 
+// Custom styles for react-select in dark mode
+const customSelectStyles = {
+  control: (base: any, state: any) => ({
+    ...base,
+    backgroundColor: 'rgb(55 65 81)', // gray-700
+    borderColor: state.isFocused ? 'rgb(75 85 99)' : 'rgb(75 85 99)', // gray-600
+    color: 'white',
+    boxShadow: state.isFocused ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : 'none',
+    '&:hover': {
+      borderColor: 'rgb(107 114 128)', // gray-500
+    },
+  }),
+  menu: (base: any) => ({
+    ...base,
+    backgroundColor: 'rgb(55 65 81)', // gray-700
+    color: 'white',
+  }),
+  option: (base: any, state: any) => ({
+    ...base,
+    backgroundColor: state.isFocused ? 'rgb(75 85 99)' : 'rgb(55 65 81)', // gray-600 : gray-700
+    color: 'white',
+    '&:active': {
+      backgroundColor: 'rgb(75 85 99)', // gray-600
+    },
+  }),
+  singleValue: (base: any) => ({
+    ...base,
+    color: 'white',
+  }),
+  input: (base: any) => ({
+    ...base,
+    color: 'white',
+  }),
+  placeholder: (base: any) => ({
+    ...base,
+    color: 'rgb(156 163 175)', // gray-400
+  }),
+};
+
 export default function ManagerDelegationPage() {
   const [team, setTeam] = useState<Employee[]>([]);
   const [currentDelegation, setCurrentDelegation] = useState<Delegation | null>(null);
@@ -38,7 +77,6 @@ export default function ManagerDelegationPage() {
   const fetchTeamAndDelegation = async () => {
     setLoading(true);
     try {
-      // Fetch manager's team by extracting unique employees from leave requests
       const res = await axiosInstance.get('/leaves/requests');
       const allRequests = res.data || [];
 
@@ -50,7 +88,6 @@ export default function ManagerDelegationPage() {
       });
       setTeam(Object.values(membersMap));
 
-      // Fetch current delegation
       const delegationRes = await axiosInstance.get<Delegation | null>('/leaves/delegation');
       setCurrentDelegation(delegationRes.data);
     } catch (err) {
@@ -70,7 +107,7 @@ export default function ManagerDelegationPage() {
     setSaving(true);
     try {
       await axiosInstance.post('/leaves/delegation', {
-        delegateManagerId: selectedDelegate._id, // ✅ fixed field name
+        delegateManagerId: selectedDelegate._id,
         startDate,
         endDate,
       });
@@ -98,8 +135,8 @@ export default function ManagerDelegationPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-gray-500">Loading delegation...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto" />
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Loading delegation...</p>
         </div>
       </div>
     );
@@ -108,32 +145,32 @@ export default function ManagerDelegationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Delegation Settings</h1>
-        <p className="text-gray-500">Assign a delegate during your absence</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Delegation Settings</h1>
+        <p className="text-gray-500 dark:text-gray-400">Assign a delegate during your absence</p>
       </div>
 
       {/* Current Delegation */}
       {currentDelegation && (
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle>Current Delegate</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-white">Current Delegate</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p><strong>Name:</strong> {currentDelegation.delegateName}</p>
-            <p><strong>Start:</strong> {new Date(currentDelegation.startDate).toLocaleDateString()}</p>
-            <p><strong>End:</strong> {new Date(currentDelegation.endDate).toLocaleDateString()}</p>
+          <CardContent className="text-gray-700 dark:text-gray-300 space-y-2">
+            <p><strong className="font-semibold">Name:</strong> {currentDelegation.delegateName}</p>
+            <p><strong className="font-semibold">Start:</strong> {new Date(currentDelegation.startDate).toLocaleDateString()}</p>
+            <p><strong className="font-semibold">End:</strong> {new Date(currentDelegation.endDate).toLocaleDateString()}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Assign Delegate Form */}
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Assign New Delegate</CardTitle>
+          <CardTitle className="text-gray-900 dark:text-white">Assign New Delegate</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label>Delegate</Label>
+          <div className="space-y-2">
+            <Label className="text-gray-700 dark:text-gray-300">Delegate</Label>
             <Select
               options={team.map(emp => ({ value: emp._id, label: emp.fullName }))}
               value={selectedDelegate ? { value: selectedDelegate._id, label: selectedDelegate.fullName } : null}
@@ -141,21 +178,38 @@ export default function ManagerDelegationPage() {
                 const emp = team.find(e => e._id === option.value) || null;
                 setSelectedDelegate(emp);
               }}
+              styles={customSelectStyles}
+              className="dark:select-dark"
+              classNamePrefix="react-select"
             />
           </div>
 
-          <div>
-            <Label>Start Date</Label>
-            <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          <div className="space-y-2">
+            <Label className="text-gray-700 dark:text-gray-300">Start Date</Label>
+            <Input 
+              type="date" 
+              value={startDate} 
+              onChange={e => setStartDate(e.target.value)}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            />
           </div>
 
-          <div>
-            <Label>End Date</Label>
-            <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+          <div className="space-y-2">
+            <Label className="text-gray-700 dark:text-gray-300">End Date</Label>
+            <Input 
+              type="date" 
+              value={endDate} 
+              onChange={e => setEndDate(e.target.value)}
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+            />
           </div>
 
-          <Button onClick={handleAssignDelegate} disabled={saving}>
-            Assign Delegate
+          <Button 
+            onClick={handleAssignDelegate} 
+            disabled={saving}
+            className="w-full sm:w-auto"
+          >
+            {saving ? 'Assigning...' : 'Assign Delegate'}
           </Button>
         </CardContent>
       </Card>

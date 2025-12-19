@@ -37,23 +37,22 @@ export default function EmployeeLeavesLayout({ children }: { children: ReactNode
     }
 
     if (!isEmployee) {
-      // better send them to your real main page, not a non-existing /dashboard
       router.replace('/home');
     }
   }, [user, isEmployee, loading, router]);
 
   if (loading || !user || !isEmployee) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-gray-500">
+      <div className="flex min-h-screen items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
         Checking permissions...
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardSidebar currentRole="employee" />
-      <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+      <main className="flex-1 p-6 overflow-y-auto dark:bg-gray-900">{children}</main>
     </div>
   );
 }

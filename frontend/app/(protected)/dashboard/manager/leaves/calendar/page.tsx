@@ -48,7 +48,6 @@ export default function ManagerTeamCalendarPage() {
     fetchCalendar();
   }, []);
 
-  // When currentMonth changes OR requests change, recompute the days list
   useEffect(() => {
     buildCalendar(currentMonth, requests);
   }, [currentMonth, requests]);
@@ -70,17 +69,13 @@ export default function ManagerTeamCalendarPage() {
     const month = monthStart.getMonth();
     const year = monthStart.getFullYear();
 
-    // Filter APPROVED requests only
     const approved = allRequests.filter(r => r.status === 'APPROVED');
-
-    // Map of dateKey -> DayEntry
     const map = new Map<string, DayEntry>();
 
     approved.forEach(r => {
       const from = new Date(r.dates.from);
       const to = new Date(r.dates.to);
 
-      // iterate each day in the range
       const cur = new Date(from);
       cur.setHours(0, 0, 0, 0);
       const end = new Date(to);
@@ -123,8 +118,8 @@ export default function ManagerTeamCalendarPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-gray-500">Loading team calendar...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto" />
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Loading team calendar...</p>
         </div>
       </div>
     );
@@ -135,17 +130,17 @@ export default function ManagerTeamCalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <CalendarIcon className="h-7 w-7 text-blue-600" />
+          <CalendarIcon className="h-7 w-7 text-blue-600 dark:text-blue-400" />
           <div>
-            <h1 className="text-3xl font-bold">Team Calendar</h1>
-            <p className="text-gray-500">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Team Calendar</h1>
+            <p className="text-gray-500 dark:text-gray-400">
               See which team members are on leave each day.
             </p>
           </div>
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
+          <Button variant="outline" asChild className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
             <Link href="/dashboard/manager/leaves">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Manager Dashboard
@@ -155,21 +150,31 @@ export default function ManagerTeamCalendarPage() {
       </div>
 
       {/* Month selector */}
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{formatMonthYear(currentMonth)}</CardTitle>
+          <CardTitle className="text-gray-900 dark:text-white">{formatMonthYear(currentMonth)}</CardTitle>
           <div className="flex items-center gap-2">
-            <Button size="icon" variant="outline" onClick={goPrevMonth}>
+            <Button 
+              size="icon" 
+              variant="outline" 
+              onClick={goPrevMonth}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="outline" onClick={goNextMonth}>
+            <Button 
+              size="icon" 
+              variant="outline" 
+              onClick={goNextMonth}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {days.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
               No approved leaves for this month.
             </p>
           ) : (
@@ -177,21 +182,21 @@ export default function ManagerTeamCalendarPage() {
               {days.map(day => (
                 <div
                   key={day.date.toISOString()}
-                  className="flex items-start justify-between border rounded-lg p-3 hover:bg-gray-50"
+                  className="flex items-start justify-between border dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
                   <div>
-                    <p className="font-semibold">{formatDateLabel(day.date)}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="font-semibold text-gray-900 dark:text-white">{formatDateLabel(day.date)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">
                       {day.date.toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="flex flex-wrap gap-2 justify-end max-w-xl">
                     {day.employees.map((emp, idx) => (
-                      <Badge key={idx} variant="outline" className="px-2 py-1">
-                        <span className="font-medium">{emp.name}</span>
-                        <span className="mx-1 text-gray-300">•</span>
-                        <span className="text-xs text-gray-600">
+                      <Badge key={idx} variant="outline" className="px-2 py-1 dark:border-gray-600">
+                        <span className="font-medium text-gray-900 dark:text-white">{emp.name}</span>
+                        <span className="mx-1 text-gray-300 dark:text-gray-500">•</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
                           {emp.leaveType}
                         </span>
                       </Badge>

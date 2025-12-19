@@ -74,21 +74,29 @@ export default function LeavesOverviewPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-gray-800">Leave Management</h1>
-      <p className="text-gray-500">
-        Select a section below to manage your organization’s leave system.
-      </p>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+          Leave Management
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          Select a section below to manage your organization’s leave system.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map(({ title, description, icon: Icon, href }) => (
           <Link key={href} href={href}>
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-green-500 dark:hover:border-green-400">
               <CardHeader className="flex flex-row items-center space-x-3">
-                <Icon className="h-6 w-6 text-green-600" />
-                <CardTitle>{title}</CardTitle>
+                <Icon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <CardTitle className="text-gray-800 dark:text-gray-100">
+                  {title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500 text-sm">{description}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  {description}
+                </p>
               </CardContent>
             </Card>
           </Link>

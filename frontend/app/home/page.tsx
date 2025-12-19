@@ -31,10 +31,10 @@ export default function HomePage() {
   const isHRAdmin =
     roles.includes("hr admin") || roles.includes("system admin");
 
-  // ✅ pure employees only
+  //  pure employees only
   const isEmployee = roles.includes("department employee");
 
-  // ✅ department heads / managers
+  //  department heads / managers
   const isManager =
     roles.includes("department head") ||
     roles.includes("department_head") ||

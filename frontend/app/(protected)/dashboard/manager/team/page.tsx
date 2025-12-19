@@ -45,7 +45,6 @@ export default function ManagerTeamPage() {
   const loadTeam = async () => {
     setLoading(true);
     try {
-      // Backend to implement: GET /leaves/manager/team
       const res = await axiosInstance.get<TeamMember[]>('/leaves/manager/team');
       setTeam(res.data);
     } catch (err) {
@@ -60,8 +59,8 @@ export default function ManagerTeamPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-2 text-gray-500">Loading team overview...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto" />
+          <p className="mt-2 text-gray-500 dark:text-gray-400">Loading team overview...</p>
         </div>
       </div>
     );
@@ -79,8 +78,8 @@ export default function ManagerTeamPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Team</h1>
-          <p className="text-gray-500">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Team</h1>
+          <p className="text-gray-500 dark:text-gray-400">
             Overview of your direct reports and their leave status
           </p>
         </div>
@@ -88,41 +87,41 @@ export default function ManagerTeamPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Team Members</p>
-                <p className="text-2xl font-bold">{totalMembers}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Team Members</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalMembers}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">On Leave Today</p>
-                <p className="text-2xl font-bold text-red-600">{onLeaveCount}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">On Leave Today</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{onLeaveCount}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-red-600" />
+              <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Pending Requests</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pending Requests</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{pendingCount}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <div className="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </CardContent>
@@ -130,99 +129,104 @@ export default function ManagerTeamPage() {
       </div>
 
       {/* Team table */}
-      <Card>
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardHeader className="flex items-center justify-between">
-          <CardTitle>Team Leave Status</CardTitle>
-          <Button size="sm" variant="outline" onClick={loadTeam}>
+          <CardTitle className="text-gray-900 dark:text-white">Team Leave Status</CardTitle>
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={loadTeam}
+            className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
             Refresh
           </Button>
         </CardHeader>
         <CardContent>
           {team.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
               No team members found.
             </p>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Department / Position</TableHead>
-                  <TableHead>Status Today</TableHead>
-                  <TableHead>Current / Upcoming Leave</TableHead>
-                  <TableHead>Pending Requests</TableHead>
-                  <TableHead>Annual Balance</TableHead>
+                <TableRow className="dark:hover:bg-gray-700">
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Employee</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Department / Position</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Status Today</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Current / Upcoming Leave</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Pending Requests</TableHead>
+                  <TableHead className="dark:bg-gray-700/50 dark:text-gray-300">Annual Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {team.map((m) => (
-                  <TableRow key={m._id}>
-                    <TableCell>
-                      <div className="font-medium">{m.fullName}</div>
+                  <TableRow key={m._id} className="dark:hover:bg-gray-700/50">
+                    <TableCell className="dark:border-gray-700">
+                      <div className="font-medium text-gray-900 dark:text-white">{m.fullName}</div>
                       {m.workEmail && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {m.workEmail}
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
+                    <TableCell className="dark:border-gray-700">
+                      <div className="text-sm text-gray-900 dark:text-gray-300">
                         {m.departmentName || '-'}
                       </div>
                       {m.positionTitle && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {m.positionTitle}
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="dark:border-gray-700">
                       {m.onLeaveToday ? (
-                        <Badge variant="destructive" className="flex items-center gap-1">
+                        <Badge variant="destructive" className="flex items-center gap-1 dark:bg-red-900/30 dark:text-red-300">
                           <Calendar className="h-3 w-3" />
                           On Leave
                         </Badge>
                       ) : (
                         <Badge
                           variant="outline"
-                          className="flex items-center gap-1 text-green-700 border-green-300"
+                          className="flex items-center gap-1 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700"
                         >
                           <CheckCircle2 className="h-3 w-3" />
                           Available
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="dark:border-gray-700">
                       {m.currentLeave ? (
                         <div className="text-sm">
-                          <div className="font-medium">
+                          <div className="font-medium text-gray-900 dark:text-white">
                             {m.currentLeave.leaveTypeName}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {new Date(m.currentLeave.from).toLocaleDateString()}{' '}
                             –{' '}
                             {new Date(m.currentLeave.to).toLocaleDateString()}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">—</span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="dark:border-gray-700">
                       {m.pendingRequestsCount > 0 ? (
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
                           {m.pendingRequestsCount} pending
                         </Badge>
                       ) : (
-                        <span className="text-sm text-gray-400">None</span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500">None</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="dark:border-gray-700">
                       {m.remainingAnnualDays != null ? (
-                        <span className="text-sm">
+                        <span className="text-sm text-gray-900 dark:text-gray-300">
                           {m.remainingAnnualDays} days
                         </span>
                       ) : (
-                        <span className="text-sm text-gray-400">N/A</span>
+                        <span className="text-sm text-gray-400 dark:text-gray-500">N/A</span>
                       )}
                     </TableCell>
                   </TableRow>
