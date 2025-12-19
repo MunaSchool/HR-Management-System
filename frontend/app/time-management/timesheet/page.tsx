@@ -19,6 +19,11 @@ export default function TimesheetPage() {
     ['hr admin', 'system admin'].includes(role)
   );
 
+    const isEmployee = user?.roles?.some((role: string) => {
+    const normalizedRole = role.toLowerCase().trim();
+    return normalizedRole.includes('employee') || normalizedRole === 'hr employee' || normalizedRole === 'department employee';
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -51,7 +56,7 @@ export default function TimesheetPage() {
                   icon="⏱️"
                 />            
               </Link>
-            ) : (
+            ) : isEmployee &&(
               <Link href={'./timesheet/shift'}>
                 <DashboardCard
                   title="Current Shift"

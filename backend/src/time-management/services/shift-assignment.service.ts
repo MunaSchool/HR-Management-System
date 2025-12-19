@@ -132,6 +132,7 @@ export class ShiftAssignmentService{
             const diffDays = (s.endDate!.getTime() - now) / (1000*60*60*24)
             
         })
+        
         return{
             success:true,
             message: "Shift Assignments nearing expiry returned!",

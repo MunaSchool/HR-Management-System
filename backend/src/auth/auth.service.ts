@@ -94,7 +94,9 @@ export class AuthService {
 
     console.log('✅ Registration completed successfully for:', registerDto.employeeNumber);
 
-    return 'Registered successfully';
+    //return 'Registered successfully';
+      return newEmployee._id.toString(); //need the employee id returned for a functionality
+
   }
 
   async signIn(
@@ -177,8 +179,9 @@ export class AuthService {
     }
 
     const payload = {
-      userid: candidate._id,
+      userid: candidate._id, //to match decorator interface in current user decorator
       userType: 'candidate',
+      roles: ['candidate'], // mismatch caused candidate gaurds to mullfunction -change to match decorator interface in current user decorator so that gaurds work
       candidateNumber: candidate.candidateNumber,
       email: candidate.personalEmail,
       status: candidate.status,
