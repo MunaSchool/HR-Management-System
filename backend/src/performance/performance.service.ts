@@ -818,8 +818,8 @@ export class PerformanceService {
 
         const record = await this.appraisalRecordModel
             .findByIdAndUpdate(
-            recordId, 
-            { status }, 
+            recordId,
+            { status },
             { new: true }
             )
             .exec();
@@ -828,6 +828,73 @@ export class PerformanceService {
             throw new NotFoundException('Appraisal record not found');
         }
         return record;
+    }
+
+    async updateAppraisalRecord(recordId: string, updateDto: any) {
+        if (!Types.ObjectId.isValid(recordId)) {
+            throw new NotFoundException('Invalid record ID');
+        }
+
+        // Get the current record to access template
+        const currentRecord = await this.appraisalRecordModel
+            .findById(recordId)
+            .populate('templateId')
+            .exec();
+
+        if (!currentRecord) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+
+        const template = currentRecord.templateId as any;
+
+        // Build update object
+        const updateData: any = {};
+
+        // Update ratings if provided
+        if (updateDto.ratings && Array.isArray(updateDto.ratings)) {
+            updateData.ratings = updateDto.ratings;
+
+            // Recalculate total score based on template weights
+            let totalScore = 0;
+            updateDto.ratings.forEach((rating: any) => {
+                const templateCriterion = template.criteria.find((c: any) => c.key === rating.key);
+                if (templateCriterion) {
+                    const weight = templateCriterion.weight / 100;
+                    const weightedScore = rating.ratingValue * weight;
+                    rating.weightedScore = weightedScore;
+                    totalScore += weightedScore;
+                }
+            });
+
+            updateData.totalScore = totalScore;
+
+            // Determine overall rating label based on total score
+            if (totalScore >= 90) updateData.overallRatingLabel = 'Exceptional';
+            else if (totalScore >= 80) updateData.overallRatingLabel = 'Exceeds Expectations';
+            else if (totalScore >= 70) updateData.overallRatingLabel = 'Meets Expectations';
+            else if (totalScore >= 60) updateData.overallRatingLabel = 'Below Expectations';
+            else updateData.overallRatingLabel = 'Unsatisfactory';
+        }
+
+        // Update other fields if provided
+        if (updateDto.managerSummary !== undefined) {
+            updateData.managerSummary = updateDto.managerSummary;
+        }
+        if (updateDto.strengths !== undefined) {
+            updateData.strengths = updateDto.strengths;
+        }
+        if (updateDto.improvementAreas !== undefined) {
+            updateData.improvementAreas = updateDto.improvementAreas;
+        }
+
+        // Update the record
+        const updatedRecord = await this.appraisalRecordModel
+            .findByIdAndUpdate(recordId, updateData, { new: true })
+            .populate('employeeProfileId', 'firstName lastName')
+            .populate('managerProfileId', 'firstName lastName')
+            .exec();
+
+        return updatedRecord;
     }
 
     // Appraisal Dispute Methods
@@ -923,14 +990,12 @@ export class PerformanceService {
     }
 
     async getEmployeeDisputes(employeeId: string) {
-        // Find employee by userid
-        const employee = await this.employeeProfileModel.findOne({ userid: employeeId }).exec();
-        if (!employee) {
-            throw new NotFoundException('Employee not found');
-        }
+        // employeeId is actually the employee's _id from the JWT token
+        // Convert string to ObjectId for proper querying
+        const employeeObjectId = new Types.ObjectId(employeeId);
 
-        return await this.appraisalDisputeModel
-        .find({ raisedByEmployeeId: employee._id })
+        const disputes = await this.appraisalDisputeModel
+        .find({ raisedByEmployeeId: employeeObjectId })
         .populate('appraisalId')
         .populate('assignmentId')
         .populate('cycleId', 'name cycleType')
@@ -939,6 +1004,8 @@ export class PerformanceService {
         .populate('resolvedByEmployeeId', 'firstName lastName')
         .sort({ submittedAt: -1 })
         .exec();
+
+        return disputes;
     }
 
     async updateDisputeStatus(
@@ -989,8 +1056,11 @@ export class PerformanceService {
 
     // Send notification to employee about dispute resolution
     if (status === AppraisalDisputeStatus.ADJUSTED || status === AppraisalDisputeStatus.REJECTED) {
+        // Get the employee ID - raisedByEmployeeId is populated so we need to extract _id
+        const employeeId = dispute.raisedByEmployeeId._id || dispute.raisedByEmployeeId;
+
         await this.notificationLogService.sendNotification({
-            to: new Types.ObjectId(dispute.raisedByEmployeeId.toString()),
+            to: new Types.ObjectId(employeeId.toString()),
             type: 'Performance Appraisal Dispute Resolved',
             message: `Your performance appraisal dispute has been ${status.toLowerCase()}. ${resolutionData?.resolutionSummary || ''}`,
         });

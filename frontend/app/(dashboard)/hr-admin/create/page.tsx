@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/app/utils/ApiClient";
 import { isHRAdmin } from "@/app/utils/roleCheck";
+import { isHRManager } from "@/app/utils/roleCheck";
+
 import toast from "react-hot-toast";
 
 interface Department {
@@ -79,7 +81,7 @@ export default function CreateEmployeePage() {
       const response = await axiosInstance.get("/employee-profile/me");
 
       // Use flexible role checking
-      if (!isHRAdmin(response.data)) {
+      if (!isHRAdmin(response.data) && !isHRManager(response.data)) {
         toast.error("Access Denied: You don't have permission to access this page", {
           duration: 4000,
           icon: '🚫',

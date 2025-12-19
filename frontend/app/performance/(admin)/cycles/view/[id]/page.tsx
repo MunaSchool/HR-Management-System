@@ -458,12 +458,7 @@ export default function ViewCyclePage() {
                 </button>
               )}
 
-              <Link href={`/performance/cycles/view/${cycle._id}/assignments`}>
-                <button className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center gap-2">
-                  <Users size={14} />
-                  View Assignments
-                </button>
-              </Link>
+              
 
               <Link href={`/performance/analytics?cycleId=${cycle._id}`}>
                 <button className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center gap-2">

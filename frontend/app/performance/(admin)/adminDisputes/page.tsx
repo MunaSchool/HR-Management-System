@@ -379,13 +379,7 @@ export default function AdminDisputesPage() {
 
                 {/* Right Section - Actions */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href={`/performance/disputes/${dispute._id}`}>
-                    <button className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-600 flex items-center gap-2">
-                      <Eye size={14} />
-                      View Details
-                    </button>
-                  </Link>
-
+                 
                   {(dispute.status === AppraisalDisputeStatus.OPEN ||
                     dispute.status === AppraisalDisputeStatus.UNDER_REVIEW) && (
                     <div className="flex space-x-2">

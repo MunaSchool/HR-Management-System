@@ -26,8 +26,8 @@ import {
   Home,
   ChevronDown,
   Menu,
-  X,
-  LogOut
+  X
+  
 } from 'lucide-react';
 
 export default function ManagerDashboardPage() {
@@ -163,10 +163,7 @@ export default function ManagerDashboardPage() {
       .slice(0, 3);
   };
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
+  
   const navigation = [
     { name: 'Dashboard', href: '/performance', icon: Home },
     { name: 'Team Evaluations', href: '/performance/assignments', icon: Users },
@@ -309,12 +306,7 @@ export default function ManagerDashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <Link href={`/performance/assignments/view/${assignment._id}`}>
-                        <button className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">
-                          View Details
-                          <ArrowRight className="h-4 w-4" />
-                        </button>
-                      </Link>
+                      
                     </div>
                   ))}
                

@@ -145,7 +145,7 @@ export class PerformanceController {
   @Get('my-disputes')
   @UseGuards(AuthGuard)
   async getMyDisputes(@CurrentUser() user: CurrentUserData) {
-    return this.performanceService.getEmployeeDisputes(user.userid);
+    return this.performanceService.getEmployeeDisputes(user.employeeId);
   }
 
   @Put('disputes/:disputeId/status')
@@ -204,6 +204,15 @@ export class PerformanceController {
     @Body('status') status: string,
   ) {
     return this.performanceService.updateAppraisalRecordStatus(recordId, status);
+  }
+
+  @Put('records/:recordId')
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  async updateAppraisalRecord(
+    @Param('recordId') recordId: string,
+    @Body() updateDto: any,
+  ) {
+    return this.performanceService.updateAppraisalRecord(recordId, updateDto);
   }
 
   @Put('disputes/:disputeId/assign-reviewer')

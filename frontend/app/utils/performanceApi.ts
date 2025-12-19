@@ -75,9 +75,9 @@ export interface CreateAppraisalRecordDto {
 
 export interface CreateAppraisalDisputeDto {
   appraisalId: string;
-  assignmentId: string;
-  cycleId: string;
-  raisedByEmployeeId: string;
+  assignmentId?: string;
+  cycleId?: string;
+  raisedByEmployeeId?: string;
   reason: string;
   details?: string;
   status?: AppraisalDisputeStatus;
@@ -205,6 +205,22 @@ class PerformanceApi {
     return response.data;
   }
 
+  async updateAppraisalRecord(recordId: string, updateData: {
+    ratings?: Array<{
+      key: string;
+      title: string;
+      ratingValue: number;
+      ratingLabel?: string;
+      comments?: string;
+    }>;
+    managerSummary?: string;
+    strengths?: string;
+    improvementAreas?: string;
+  }): Promise<AppraisalRecord> {
+    const response = await axiosInstance.put(`/performance/records/${recordId}`, updateData);
+    return response.data;
+  }
+
   // ========== DISPUTE ENDPOINTS ==========
   async createAppraisalDispute(data: CreateAppraisalDisputeDto): Promise<AppraisalDispute> {
     const response = await axiosInstance.post('/performance/disputes', data);
@@ -229,6 +245,11 @@ class PerformanceApi {
 
   async assignDisputeReviewer(disputeId: string, reviewerId: string): Promise<AppraisalDispute> {
     const response = await axiosInstance.put(`/performance/disputes/${disputeId}/assign-reviewer`, { reviewerId });
+    return response.data;
+  }
+
+  async getMyDisputes(): Promise<AppraisalDispute[]> {
+    const response = await axiosInstance.get('/performance/my-disputes');
     return response.data;
   }
 

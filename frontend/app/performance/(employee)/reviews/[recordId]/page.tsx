@@ -73,7 +73,7 @@ export default function ViewAppraisalRecordPage() {
   const cycle = record.cycleId;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-950">
       <div className="max-w-5xl mx-auto px-4 lg:px-8 py-6 space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
@@ -81,20 +81,20 @@ export default function ViewAppraisalRecordPage() {
             <div className="flex items-center gap-3 mb-2">
               <Link
                 href="/performance/reviews"
-                className="text-gray-600 hover:text-gray-900"
+                className="text-slate-400 hover:text-slate-200"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Link>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-slate-100">
                 Performance Appraisal Results
               </h1>
             </div>
-            <p className="text-gray-600">
+            <p className="text-slate-400">
               Review your performance evaluation and feedback
             </p>
           </div>
           <Link href={`/performance/employeeDisputes?recordId=${recordId}`}>
-            <button className="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">
+            <button className="inline-flex items-center px-4 py-2 border border-red-600 rounded-lg text-sm font-medium text-red-400 hover:bg-red-950">
               <Flag className="h-4 w-4 mr-2" />
               Raise Concern
             </button>
@@ -102,20 +102,20 @@ export default function ViewAppraisalRecordPage() {
         </div>
 
         {/* Employee & Cycle Info Card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
             Appraisal Details
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex items-start gap-3">
-              <User className="h-5 w-5 text-blue-500 mt-0.5" />
+              <User className="h-5 w-5 text-blue-400 mt-0.5" />
               <div>
-                <p className="text-sm text-gray-500">Employee</p>
-                <p className="font-medium text-gray-900">
+                <p className="text-sm text-slate-400">Employee</p>
+                <p className="font-medium text-slate-100">
                   {employee?.firstName} {employee?.lastName}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-slate-400">
                   {employee?.employeeNumber && `ID: ${employee.employeeNumber}`}
                   {employee?.position && employee?.employeeNumber ? ' • ' : ''}
                   {employee?.position}
@@ -124,30 +124,30 @@ export default function ViewAppraisalRecordPage() {
             </div>
 
             <div className="flex items-start gap-3">
-              <User className="h-5 w-5 text-purple-500 mt-0.5" />
+              <User className="h-5 w-5 text-purple-400 mt-0.5" />
               <div>
-                <p className="text-sm text-gray-500">Evaluated By</p>
-                <p className="font-medium text-gray-900">
+                <p className="text-sm text-slate-400">Evaluated By</p>
+                <p className="font-medium text-slate-100">
                   {manager?.firstName} {manager?.lastName}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <Calendar className="h-5 w-5 text-green-500 mt-0.5" />
+              <Calendar className="h-5 w-5 text-green-400 mt-0.5" />
               <div>
-                <p className="text-sm text-gray-500">Appraisal Cycle</p>
-                <p className="font-medium text-gray-900">
+                <p className="text-sm text-slate-400">Appraisal Cycle</p>
+                <p className="font-medium text-slate-100">
                   {cycle?.name || 'N/A'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <FileText className="h-5 w-5 text-orange-500 mt-0.5" />
+              <FileText className="h-5 w-5 text-orange-400 mt-0.5" />
               <div>
-                <p className="text-sm text-gray-500">Template</p>
-                <p className="font-medium text-gray-900">
+                <p className="text-sm text-slate-400">Template</p>
+                <p className="font-medium text-slate-100">
                   {template.name}
                 </p>
               </div>
@@ -155,9 +155,9 @@ export default function ViewAppraisalRecordPage() {
           </div>
 
           {record.managerSubmittedAt && (
-            <div className="mt-4 p-3 bg-green-50 rounded-lg flex items-center gap-2">
-              <Award className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-green-800">
+            <div className="mt-4 p-3 bg-green-950 rounded-lg flex items-center gap-2 border border-green-800">
+              <Award className="h-5 w-5 text-green-400" />
+              <p className="text-sm text-green-300">
                 Submitted: {new Date(record.managerSubmittedAt).toLocaleDateString()}
               </p>
             </div>
@@ -165,48 +165,48 @@ export default function ViewAppraisalRecordPage() {
         </div>
 
         {/* Overall Score */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 shadow-sm">
+        <div className="bg-gradient-to-r from-blue-950 to-indigo-950 border border-blue-800 rounded-lg p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-900">Overall Score</p>
-              <p className="text-4xl font-bold text-blue-600 mt-1">
+              <p className="text-sm font-medium text-blue-300">Overall Score</p>
+              <p className="text-4xl font-bold text-blue-400 mt-1">
                 {record.totalScore?.toFixed(1) || 'N/A'}
               </p>
               {record.overallRatingLabel && (
-                <p className="text-sm text-blue-700 mt-1">{record.overallRatingLabel}</p>
+                <p className="text-sm text-blue-300 mt-1">{record.overallRatingLabel}</p>
               )}
             </div>
-            <TrendingUp className="h-16 w-16 text-blue-300" />
+            <TrendingUp className="h-16 w-16 text-blue-700" />
           </div>
         </div>
 
         {/* Ratings */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-100 mb-4">
             Performance Ratings
           </h2>
 
           <div className="space-y-6">
             {record.ratings && record.ratings.map((rating: any, index: number) => (
-              <div key={index} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+              <div key={index} className="border-b border-slate-800 pb-4 last:border-0 last:pb-0">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-gray-900">{rating.title}</h3>
+                  <h3 className="font-medium text-slate-100">{rating.title}</h3>
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-blue-600">{rating.ratingValue}/{template.ratingScale?.max || 5}</p>
+                    <p className="text-lg font-semibold text-blue-400">{rating.ratingValue}/{template.ratingScale?.max || 5}</p>
                     {rating.ratingLabel && (
-                      <p className="text-xs text-gray-500">{rating.ratingLabel}</p>
+                      <p className="text-xs text-slate-400">{rating.ratingLabel}</p>
                     )}
                   </div>
                 </div>
 
                 {rating.comments && (
-                  <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-700">{rating.comments}</p>
+                  <div className="mt-2 p-3 bg-slate-800 rounded-lg">
+                    <p className="text-sm text-slate-300">{rating.comments}</p>
                   </div>
                 )}
 
                 {rating.weightedScore !== undefined && (
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-slate-400 mt-2">
                     Weighted Score: {rating.weightedScore.toFixed(2)}
                   </p>
                 )}
@@ -217,67 +217,29 @@ export default function ViewAppraisalRecordPage() {
 
         {/* Manager Feedback */}
         {(record.managerSummary || record.strengths || record.improvementAreas) && (
-          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-100 mb-4">
               Manager Feedback
             </h2>
 
             {record.managerSummary && (
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Overall Summary</h3>
-                <p className="text-gray-900">{record.managerSummary}</p>
+                <h3 className="text-sm font-medium text-slate-300 mb-2">Overall Summary</h3>
+                <p className="text-slate-100">{record.managerSummary}</p>
               </div>
             )}
 
             {record.strengths && (
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Strengths</h3>
-                <p className="text-gray-900">{record.strengths}</p>
+                <h3 className="text-sm font-medium text-slate-300 mb-2">Strengths</h3>
+                <p className="text-slate-100">{record.strengths}</p>
               </div>
             )}
 
             {record.improvementAreas && (
               <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Areas for Improvement</h3>
-                <p className="text-gray-900">{record.improvementAreas}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Acknowledgement Section */}
-        {!record.employeeAcknowledgedAt && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="font-medium text-yellow-900 mb-2">Acknowledgement Required</h3>
-                <p className="text-sm text-yellow-800 mb-4">
-                  Please acknowledge that you have reviewed this appraisal.
-                </p>
-                <Link href={`/performance/acknowledge/${recordId}`}>
-                  <button className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-medium hover:bg-yellow-700">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Acknowledge & Provide Feedback
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {record.employeeAcknowledgedAt && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-            <div className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-green-600" />
-              <p className="text-sm text-green-800">
-                Acknowledged on {new Date(record.employeeAcknowledgedAt).toLocaleDateString()}
-              </p>
-            </div>
-            {record.employeeAcknowledgementComment && (
-              <div className="mt-3 p-3 bg-white rounded-lg">
-                <p className="text-sm font-medium text-gray-700 mb-1">Your Comment:</p>
-                <p className="text-gray-900">{record.employeeAcknowledgementComment}</p>
+                <h3 className="text-sm font-medium text-slate-300 mb-2">Areas for Improvement</h3>
+                <p className="text-slate-100">{record.improvementAreas}</p>
               </div>
             )}
           </div>

@@ -63,7 +63,6 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
     if (lineManager) {
       return [
         { href: "/performance/assignments", label: "Evaluations", icon: <FileText size={20} /> },
-        { href: "/performance/team", label: "Team", icon: <Users size={20} /> },
       ];
     }
 
@@ -166,13 +165,10 @@ export default function PerformanceLayout({ children }: { children: ReactNode })
                   <p className="text-gray-400 text-xs">{userRoleLabel}</p>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 text-gray-300 hover:text-red-400 text-sm font-medium px-2 py-1 rounded-full hover:bg-gray-700 transition"
-              >
+              
                 <LogOut size={16} />
                 <span className="hidden md:inline">Logout</span>
-              </button>
+              
             </div>
           </div>
 

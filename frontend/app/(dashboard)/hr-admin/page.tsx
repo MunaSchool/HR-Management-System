@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/app/utils/ApiClient";
 import Link from "next/link";
-import { isHRAdmin, debugRoles } from "@/app/utils/roleCheck";
+import { isHRAdmin,isHRManager, hasRole, debugRoles } from "@/app/utils/roleCheck";
 
 interface Employee {
   _id: string;
@@ -40,12 +40,14 @@ export default function HRAdminPage() {
     try {
       const response = await axiosInstance.get("/employee-profile/me");
 
-      // Debug: Log the role structure
+      // Debug role structure
       debugRoles(response.data);
 
-      // Use flexible role checking
-      if (!isHRAdmin(response.data)) {
-        alert("Access Denied: You don't have permission to access this page. Required role: HR_ADMIN or HR_MANAGER");
+      // ✅ Unified role check (HR_ADMIN OR HR_MANAGER)
+      if (!isHRAdmin(response.data) && !isHRManager(response.data)) {
+        alert(
+          "Access Denied: You don't have permission to access this page. Required role: HR_ADMIN or HR_MANAGER"
+        );
         router.push("/profile");
         return;
       }

@@ -208,12 +208,7 @@ export default function EmployeeDashboard() {
         <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white rounded-t-xl">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Recent Appraisal Cycles</h2>
-            <Link
-              href="/performance/employee/reviews"
-              className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-            >
-              View all <ArrowRight size={14} />
-            </Link>
+            
           </div>
         </div>
        

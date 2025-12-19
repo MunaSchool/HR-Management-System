@@ -65,30 +65,19 @@ export class EmployeeProfileController {
     return this.candidateRegistrationService.updateCandidateProfile(user.employeeId, updateDto);
   }
 
-  @Put('candidate/change-password')
-  @UseGuards(AuthGuard)
-  async changeCandidatePassword(
-    @CurrentUser() user: CurrentUserData,
-    @Body() passwordDto: any,
-  ) {
-    return this.candidateRegistrationService.changePassword(
-      user.employeeId,
-      passwordDto.currentPassword,
-      passwordDto.newPassword,
-    );
-  }
+  
 
   // ==================== SEARCH ROUTES ====================
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getAllEmployees() {
     return this.employeeProfileService.findAll();
   }
 
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async createEmployee(@Body() createDto: CreateEmployeeDto) {
     return this.employeeProfileService.create(createDto);
   }
@@ -244,7 +233,7 @@ export class EmployeeProfileController {
   // ==================== CHANGE REQUEST MANAGEMENT ====================
   @Get('change-requests/all')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
   async getAllChangeRequests() {
     return this.employeeProfileService.getAllChangeRequests();
   }

@@ -330,12 +330,7 @@ export default function CyclesPage() {
                 )}
                 {cycle.status === AppraisalCycleStatus.ACTIVE && (
                   <>
-                    <button
-                      onClick={() => handleCreateAssignments(cycle._id)}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-                    >
-                      Create Assignments
-                    </button>
+                    
                     <button
                       onClick={() => handleUpdateCycleStatus(cycle._id, AppraisalCycleStatus.CLOSED)}
                       className="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700"
