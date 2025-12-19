@@ -61,19 +61,19 @@ export class OffboardingController {
   }
 
   @Get('checklists')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.SYSTEM_ADMIN, SystemRole.FINANCE_STAFF, SystemRole.DEPARTMENT_MANAGER, SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.SYSTEM_ADMIN, SystemRole.FINANCE_STAFF, SystemRole.DEPARTMENT_HEAD)
   async getAllClearanceChecklists(@Query('terminationId') terminationId?: string) {
     return this.offboardingService.getAllClearanceChecklists(terminationId);
   }
 
   @Get('checklists/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.SYSTEM_ADMIN, SystemRole.FINANCE_STAFF, SystemRole.DEPARTMENT_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.SYSTEM_ADMIN, SystemRole.FINANCE_STAFF, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
   async getClearanceChecklist(@Param('id') id: string) {
     return this.offboardingService.getClearanceChecklist(id);
   }
 
   @Patch('checklists/:id')
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.SYSTEM_ADMIN, SystemRole.FINANCE_STAFF, SystemRole.DEPARTMENT_MANAGER, SystemRole.DEPARTMENT_HEAD)
+  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.SYSTEM_ADMIN, SystemRole.FINANCE_STAFF, SystemRole.DEPARTMENT_HEAD)
   async updateClearanceChecklist(
     @Param('id') id: string,
     @Body() updateDto: UpdateClearanceChecklistDto,

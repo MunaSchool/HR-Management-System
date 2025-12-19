@@ -97,4 +97,44 @@ export class CreateEmployeeDto {
   @IsArray()
   @IsString({ each: true })
   permissions?: string[];
+
+  // REQUIRED: Every employee must have a position and department
+  @IsString()
+  primaryPositionId: string;
+
+  @IsString()
+  primaryDepartmentId: string;
+
+  // Auto-resolved from Position.reportsToPositionId, but can be manually set for top-level positions
+  @IsOptional()
+  @IsString()
+  supervisorPositionId?: string;
+
+  @IsOptional()
+  @IsString()
+  contractType?: string;
+
+  @IsOptional()
+  @IsString()
+  workType?: string;
+
+  @IsOptional()
+  @IsDateString()
+  contractStartDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  contractEndDate?: string;
+
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @IsOptional()
+  @IsString()
+  bankAccountNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  payGradeId?: string;
 }

@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/app/utils/ApiClient";
 import Link from "next/link";
+import { useAuth } from "@/app/(system)/context/authContext";
 
 export default function ChangeRequestsPage() {
+  const { user } = useAuth();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -12,49 +14,60 @@ export default function ChangeRequestsPage() {
 
   const fetchRequests = async () => {
     try {
-      // Try to get all requests first (for admins)
-      const res = await axiosInstance.get(
-        "/organization-structure/change-requests"
-      );
-      console.log("Change requests response:", res.data);
-      setRequests(res.data || []);
-      setUserRole("admin");
-      setError(""); // Clear error on success
-    } catch (err: any) {
-      console.error("Error fetching all requests:", err);
-
-      // If 403, user is not admin - try to get their own requests
-      if (err.response?.status === 403) {
-        try {
-          const myRes = await axiosInstance.get(
-            "/organization-structure/change-requests/my-requests"
-          );
-          console.log("My requests response:", myRes.data);
-          setRequests(myRes.data || []);
-          setUserRole("manager");
-          setError("");
-        } catch (myErr: any) {
-          console.error("Error fetching my requests:", myErr);
-          if (myErr.response?.status === 403) {
-            setError("You don't have permission to submit or view change requests. Required role: Manager or System Admin.");
-          } else {
-            setError("Failed to load your change requests.");
-          }
-        }
-      } else if (err.response?.status === 401) {
-        setError("Unauthorized: Please login again.");
-      } else {
-        const errorMsg = err.response?.data?.message || err.message || "Failed to load change requests";
-        setError(`Error: ${errorMsg}`);
+      if (!user?.roles?.length) {
+        setError("Unable to determine user role");
+        setLoading(false);
+        return;
       }
+
+      const roles = user.roles.map((r: string) => r.toUpperCase().replace(/\s+/g, "_"));
+
+      // 🔐 SYSTEM ADMIN
+      if (roles.includes("SYSTEM_ADMIN")) {
+        console.log("🔑 SYSTEM_ADMIN detected — loading ALL change requests");
+        const res = await axiosInstance.get(
+          "/organization-structure/change-requests"
+        );
+        setRequests(res.data || []);
+        setUserRole("admin");
+        return;
+      }
+
+      // 👔 MANAGER / DEPARTMENT HEAD
+      if (
+        roles.includes("HR_MANAGER") ||
+        roles.includes("DEPARTMENT_HEAD")
+      ) {
+        console.log("👔 Manager detected — loading OWN change requests");
+        const res = await axiosInstance.get(
+          "/organization-structure/change-requests/my-requests"
+        );
+        setRequests(res.data || []);
+        setUserRole("manager");
+        return;
+      }
+
+      // 🚫 REGULAR EMPLOYEE
+      console.warn("⛔ User not allowed to view change requests");
+      setError(
+        "You are not authorized to view organizational change requests."
+      );
+    } catch (err: any) {
+      console.error("❌ Failed to load change requests:", err);
+      setError(
+        err.response?.data?.message ||
+        "Failed to load change requests"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    if (user) {
+      fetchRequests();
+    }
+  }, [user]);
 
   if (loading) {
     return (

@@ -1,22 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/(system)/context/authContext";
+import { isSystemAdmin } from "@/app/utils/roleCheck";
 
 export default function CreateDepartmentPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
+  // ===============================
+  // STATE
+  // ===============================
   const [form, setForm] = useState({
     name: "",
     code: "",
     status: "Active",
+    headPositionId: "", // 👈 Head Position (position-based)
   });
 
+  const [positions, setPositions] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // ===============================
-  // 🔥 SUBMIT
+  // ROLE CHECK - System Admin Only
+  // ===============================
+  useEffect(() => {
+    if (!authLoading && user && !isSystemAdmin(user)) {
+      router.push("/organization-structure/departments");
+    }
+  }, [user, authLoading, router]);
+
+  // ===============================
+  // FETCH POSITIONS
+  // ===============================
+  useEffect(() => {
+    const fetchPositions = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:4000/organization-structure/positions",
+          { credentials: "include" }
+        );
+
+        if (!res.ok) throw new Error("Failed to load positions");
+
+        const data = await res.json();
+        console.log("📋 Loaded positions for department head selection:", data);
+        setPositions(data);
+      } catch (err) {
+        console.error("❌ Error loading positions:", err);
+      }
+    };
+
+    fetchPositions();
+  }, []);
+
+  // ===============================
+  // SUBMIT
   // ===============================
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +71,12 @@ export default function CreateDepartmentPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(form),
+          body: JSON.stringify({
+            name: form.name,
+            code: form.code,
+            headPositionId: form.headPositionId || undefined,
+            isActive: form.status === "Active",
+          }),
         }
       );
 
@@ -48,8 +94,24 @@ export default function CreateDepartmentPage() {
   };
 
   // ===============================
-  // 🔥 UI
+  // UI
   // ===============================
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user || !isSystemAdmin(user)) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Access denied. System Admin only.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -105,6 +167,30 @@ export default function CreateDepartmentPage() {
                 }
                 className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
               />
+            </div>
+
+            {/* Head Position */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                Head Position
+              </label>
+              <select
+                value={form.headPositionId}
+                onChange={(e) =>
+                  setForm({ ...form, headPositionId: e.target.value })
+                }
+                className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+              >
+                <option value="">-- No Head Position --</option>
+                {positions.map((pos) => (
+                  <option key={pos._id} value={pos._id}>
+                    {pos.title} ({pos.code})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Select which position is the head of this department
+              </p>
             </div>
 
             {/* Status */}

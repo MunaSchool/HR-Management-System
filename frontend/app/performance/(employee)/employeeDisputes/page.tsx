@@ -2,28 +2,35 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { performanceApi } from '@/app/utils/performanceApi';
 import { useAuth } from '@/app/(system)/context/authContext';
 import { AppraisalDispute, AppraisalDisputeStatus } from '@/app/types/performance';
-import { 
-  Plus,
+import {
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
   FileText,
   Calendar,
-  User,
-  Search,
-  Filter
+  Flag
 } from 'lucide-react';
 
 export default function EmployeeDisputesPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const prefilledRecordId = searchParams.get('recordId');
+
   const [disputes, setDisputes] = useState<AppraisalDispute[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const [formData, setFormData] = useState({
+    appraisalId: prefilledRecordId || '',
+    reason: '',
+    details: ''
+  });
 
   useEffect(() => {
     if (user) {
@@ -31,34 +38,59 @@ export default function EmployeeDisputesPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (prefilledRecordId) {
+      setFormData(prev => ({ ...prev, appraisalId: prefilledRecordId }));
+    }
+  }, [prefilledRecordId]);
+
   const fetchDisputes = async () => {
     try {
       setLoading(true);
-      
-      // First, get all appraisals to find disputes
-      let employeeId = user?.userid || user?.employeeNumber || user?.email;
-      
-      if (!employeeId) {
-        console.error('No employee ID found in user data');
-        return;
-      }
-      
-      // Note: You might need to adjust this API call based on your backend
-      // This is a placeholder - you might need a different endpoint
-      const allDisputes = await performanceApi.getAppraisalDisputes();
-      
-      // Filter disputes raised by this employee
-      const employeeDisputes = allDisputes.filter(dispute => 
-        typeof dispute.raisedByEmployeeId === 'object' && 
-        'userid' in dispute.raisedByEmployeeId &&
-        dispute.raisedByEmployeeId.userid === employeeId
-      );
-      
-      setDisputes(employeeDisputes);
+      const myDisputes = await performanceApi.getMyDisputes();
+      setDisputes(myDisputes);
     } catch (error: any) {
       console.error('Error fetching disputes:', error);
+      alert(error.response?.data?.message || 'Failed to fetch disputes');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateDispute = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.appraisalId) {
+      alert('Please navigate from a specific appraisal to raise a dispute');
+      return;
+    }
+
+    if (!formData.reason.trim()) {
+      alert('Please provide a reason for the dispute');
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      await performanceApi.createAppraisalDispute({
+        appraisalId: formData.appraisalId,
+        reason: formData.reason,
+        details: formData.details
+      });
+
+      // Reset form
+      setFormData({ appraisalId: '', reason: '', details: '' });
+
+      // Refresh disputes list
+      await fetchDisputes();
+
+      alert('Dispute raised successfully!');
+    } catch (error: any) {
+      console.error('Error creating dispute:', error);
+      alert(error.response?.data?.message || 'Failed to create dispute');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -66,51 +98,41 @@ export default function EmployeeDisputesPage() {
     switch (status) {
       case AppraisalDisputeStatus.OPEN:
         return (
-          <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full flex items-center gap-1">
+          <span className="px-2 py-1 text-xs font-medium bg-yellow-50 text-yellow-800 rounded-full flex items-center gap-1 border border-yellow-100">
             <Clock className="h-3 w-3" />
             Open
           </span>
         );
       case AppraisalDisputeStatus.UNDER_REVIEW:
         return (
-          <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full flex items-center gap-1">
+          <span className="px-2 py-1 text-xs font-medium bg-blue-50 text-blue-800 rounded-full flex items-center gap-1 border border-blue-100">
             <AlertCircle className="h-3 w-3" />
             Under Review
           </span>
         );
       case AppraisalDisputeStatus.ADJUSTED:
         return (
-          <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full flex items-center gap-1">
+          <span className="px-2 py-1 text-xs font-medium bg-emerald-50 text-emerald-800 rounded-full flex items-center gap-1 border border-emerald-100">
             <CheckCircle className="h-3 w-3" />
             Adjusted
           </span>
         );
       case AppraisalDisputeStatus.REJECTED:
         return (
-          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full flex items-center gap-1">
+          <span className="px-2 py-1 text-xs font-medium bg-red-50 text-red-800 rounded-full flex items-center gap-1 border border-red-100">
             <XCircle className="h-3 w-3" />
             Rejected
           </span>
         );
       default:
         return (
-          <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+          <span className="px-2 py-1 text-xs font-medium bg-slate-50 text-slate-700 rounded-full border border-slate-200">
             {status}
           </span>
         );
     }
   };
 
-  const filteredDisputes = disputes.filter(dispute => {
-    if (!searchTerm) return true;
-    
-    const term = searchTerm.toLowerCase();
-    const reason = dispute.reason?.toLowerCase() || '';
-    const details = dispute.details?.toLowerCase() || '';
-    const status = dispute.status.toLowerCase();
-    
-    return reason.includes(term) || details.includes(term) || status.includes(term);
-  });
 
   if (loading) {
     return (
@@ -121,113 +143,134 @@ export default function EmployeeDisputesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Performance Disputes</h1>
-          <p className="text-gray-600 mt-1">
-            Track and manage your performance appraisal disputes
+          <h1 className="text-2xl font-bold text-slate-100">Raise a Concern</h1>
+          <p className="text-slate-400 mt-1">
+            Submit and track disputes about your performance appraisals
           </p>
         </div>
         <Link href="/performance/reviews">
-          <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+          <button className="px-4 py-2 border border-slate-700 rounded-full text-sm font-medium text-slate-300 hover:bg-slate-800 flex items-center gap-2 shadow-sm transition">
             <FileText size={16} />
             Back to Reviews
           </button>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900">{disputes.length}</p>
-            <p className="text-sm text-gray-500">Total Disputes</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-yellow-600">
-              {disputes.filter(d => d.status === AppraisalDisputeStatus.OPEN).length}
-            </p>
-            <p className="text-sm text-gray-500">Open</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">
-              {disputes.filter(d => d.status === AppraisalDisputeStatus.ADJUSTED).length}
-            </p>
-            <p className="text-sm text-gray-500">Resolved</p>
-          </div>
-        </div>
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-red-600">
-              {disputes.filter(d => d.status === AppraisalDisputeStatus.REJECTED).length}
-            </p>
-            <p className="text-sm text-gray-500">Rejected</p>
-          </div>
-        </div>
-      </div>
+      {/* Create Dispute Form */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
+          <Flag className="h-5 w-5 text-red-500" />
+          Raise a New Concern
+        </h2>
 
-      {/* Search and Filter */}
-      <div className="bg-white border rounded-lg p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        {prefilledRecordId ? (
+          <div className="p-4 bg-blue-950 border border-blue-800 rounded-lg mb-4">
+            <p className="text-sm text-blue-300">
+              <strong>Disputing appraisal:</strong> You are raising a concern about the appraisal you just viewed.
+            </p>
+          </div>
+        ) : (
+          <div className="p-4 bg-amber-950 border border-amber-800 rounded-lg mb-4">
+            <p className="text-sm text-amber-300 flex items-center gap-2">
+              <AlertCircle size={16} />
+              To raise a dispute, please navigate to the specific appraisal you want to dispute and click "Raise Concern" from there.
+            </p>
+          </div>
+        )}
+
+        <form onSubmit={handleCreateDispute} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Reason for Dispute <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
-              placeholder="Search disputes..."
-              className="w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              required
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-950 disabled:cursor-not-allowed"
+              placeholder="e.g., Unfair rating, Missing achievements, Incorrect criteria"
+              value={formData.reason}
+              onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+              disabled={!prefilledRecordId}
             />
           </div>
-          <div className="flex items-center space-x-4">
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Details (Optional)
+            </label>
+            <textarea
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-950 disabled:cursor-not-allowed"
+              placeholder="Provide additional context and supporting evidence for your dispute..."
+              rows={4}
+              value={formData.details}
+              onChange={(e) => setFormData(prev => ({ ...prev, details: e.target.value }))}
+              disabled={!prefilledRecordId}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3">
             <button
-              onClick={fetchDisputes}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+              type="button"
+              onClick={() => setFormData({ appraisalId: '', reason: '', details: '' })}
+              className="px-4 py-2 border border-slate-700 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800"
+              disabled={creating || !prefilledRecordId}
             >
-              Refresh
+              Clear
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              disabled={creating || !prefilledRecordId}
+            >
+              {creating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Flag className="h-4 w-4" />
+                  Submit Dispute
+                </>
+              )}
             </button>
           </div>
-        </div>
+        </form>
       </div>
 
-      {/* Disputes List */}
-      {filteredDisputes.length === 0 ? (
-        <div className="bg-white border rounded-lg p-12 text-center shadow-sm">
-          <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No disputes found</h3>
-          <p className="text-gray-500 mb-4">
-            {disputes.length === 0 
-              ? "You haven't raised any performance disputes yet."
-              : "No disputes match your search criteria."}
-          </p>
-          <div className="flex justify-center space-x-3">
-            <Link href="/performance/reviews">
-              <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-                View Reviews
-              </button>
-            </Link>
+
+      {/* My Previous Disputes */}
+      <div>
+        <h2 className="text-lg font-bold text-slate-100 mb-4">My Previous Disputes</h2>
+        <p className="text-sm text-slate-400 mb-4">Track the status of your submitted disputes</p>
+
+        {disputes.length === 0 ? (
+          <div className="bg-slate-900 border border-dashed border-slate-700 rounded-2xl p-12 text-center shadow-sm">
+            <AlertCircle className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-100 mb-2">No disputes submitted yet</h3>
+            <p className="text-slate-400 mb-4">Submit your first dispute using the form above</p>
           </div>
-        </div>
-      ) : (
+        ) : (
         <div className="space-y-4">
-          {filteredDisputes.map((dispute) => (
-            <div key={dispute._id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+          {disputes.map((dispute) => (
+            <div
+              key={dispute._id}
+              className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+            >
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 {/* Left Section */}
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900">
+                      <h3 className="font-bold text-lg text-slate-100">
                         {dispute.reason}
                       </h3>
                       {dispute.details && (
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-slate-400 mt-1">
                           {dispute.details}
                         </p>
                       )}
@@ -238,19 +281,19 @@ export default function EmployeeDisputesPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 text-sm">
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                    <div className="flex items-center text-slate-400">
+                      <Calendar className="h-4 w-4 mr-2 text-slate-500" />
                       <span>Submitted: {new Date(dispute.submittedAt).toLocaleDateString()}</span>
                     </div>
                     {dispute.resolvedAt && (
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                      <div className="flex items-center text-slate-400">
+                        <Calendar className="h-4 w-4 mr-2 text-slate-500" />
                         <span>Resolved: {new Date(dispute.resolvedAt).toLocaleDateString()}</span>
                       </div>
                     )}
                     {dispute.resolutionSummary && (
-                      <div className="flex items-center text-gray-600">
-                        <FileText className="h-4 w-4 mr-2 text-gray-400" />
+                      <div className="flex items-center text-slate-400">
+                        <FileText className="h-4 w-4 mr-2 text-slate-500" />
                         <span className="truncate">Resolution: {dispute.resolutionSummary}</span>
                       </div>
                     )}
@@ -259,22 +302,20 @@ export default function EmployeeDisputesPage() {
 
                 {/* Right Section - Actions */}
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href={`/performance/disputes/${dispute._id}`}>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">
-                      View Details
-                    </button>
-                  </Link>
+                  
+                 
                 </div>
               </div>
             </div>
           ))}
         </div>
-      )}
+        )}
+      </div>
 
       {/* Important Information */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="font-medium text-yellow-800 mb-2">Important Information</h3>
-        <ul className="text-sm text-yellow-700 space-y-1">
+      <div className="bg-yellow-950 border border-yellow-800 rounded-2xl p-6">
+        <h3 className="font-medium text-yellow-300 mb-2">Important Information</h3>
+        <ul className="text-sm text-yellow-400 space-y-1">
           <li>• Disputes must be raised within 7 days of appraisal publication</li>
           <li>• HR will review your dispute and provide a resolution</li>
           <li>• You will be notified when your dispute status changes</li>

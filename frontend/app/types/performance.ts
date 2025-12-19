@@ -135,7 +135,7 @@ export interface AppraisalAssignment {
   cycleId: string | AppraisalCycle;
   templateId: string | AppraisalTemplate;
   employeeProfileId: string | any;
-  managerProfileId: string | any;
+  managerProfileId?: string | any; // Optional - can be assigned later by HR
   departmentId: string | any;
   positionId?: string;
   status: AppraisalAssignmentStatus;
@@ -163,7 +163,7 @@ export interface AppraisalRecord {
   cycleId: string | AppraisalCycle;
   templateId: string | AppraisalTemplate;
   employeeProfileId: string | any;
-  managerProfileId: string | any;
+  managerProfileId?: string | any; // Optional - may not be assigned yet
   ratings: RatingEntry[];
   totalScore?: number;
   overallRatingLabel?: string;

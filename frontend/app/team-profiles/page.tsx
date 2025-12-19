@@ -34,7 +34,10 @@ export default function TeamProfilesPage() {
       setTeamMembers(response.data);
     } catch (err: any) {
       console.error("Error fetching team members:", err);
-      setError(err.response?.data?.message || "Failed to load team members. You may not have manager permissions.");
+      setError(
+        err.response?.data?.message ||
+          "Failed to load team members. You may not have manager permissions."
+      );
     } finally {
       setLoading(false);
     }
@@ -56,7 +59,7 @@ export default function TeamProfilesPage() {
             <p className="text-red-700 dark:text-red-400">{error}</p>
           </div>
           <button
-            onClick={() => router.push('/employee-profile-management')}
+            onClick={() => router.push("/employee-profile-management")}
             className="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             ← Back
@@ -75,7 +78,8 @@ export default function TeamProfilesPage() {
             My Team Profiles
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            View your direct reports' profiles (US-E4-01, US-E4-02) - Sensitive information is excluded per BR 18b
+            View your direct reports' profiles (US-E4-01, US-E4-02) – Sensitive
+            information is excluded per BR 18b
           </p>
         </div>
 
@@ -85,31 +89,47 @@ export default function TeamProfilesPage() {
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {teamMembers.length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Total Team Members</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Total Team Members
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-              {teamMembers.filter(m => m.status === 'ACTIVE').length}
+              {teamMembers.filter((m) => m.status === "ACTIVE").length}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Active Members</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Active Members
+            </div>
           </div>
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
             <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {new Set(teamMembers.map(m => m.primaryDepartmentId?.name).filter(Boolean)).size}
+              {
+                new Set(
+                  teamMembers
+                    .map((m) => m.primaryDepartmentId?.name)
+                    .filter(Boolean)
+                ).size
+              }
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Departments</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Departments
+            </div>
           </div>
         </div>
 
         {/* Team Members Table */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Team Members
+            </h2>
           </div>
 
           {teamMembers.length === 0 ? (
             <div className="px-6 py-8 text-center">
-              <p className="text-gray-500 dark:text-gray-400">No team members found</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                No team members found
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -131,24 +151,27 @@ export default function TeamProfilesPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
                   </tr>
                 </thead>
+
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {teamMembers.map((member) => (
-                    <tr key={member._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <tr
+                      key={member._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold">
-                              {member.firstName[0]}{member.lastName[0]}
+                              {member.firstName[0]}
+                              {member.lastName[0]}
                             </span>
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {member.fullName || `${member.firstName} ${member.lastName}`}
+                              {member.fullName ||
+                                `${member.firstName} ${member.lastName}`}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {member.employeeNumber}
@@ -156,16 +179,15 @@ export default function TeamProfilesPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {member.primaryPositionId?.title || "—"}
-                        </div>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {member.primaryPositionId?.title || "—"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">
-                          {member.primaryDepartmentId?.name || "—"}
-                        </div>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        {member.primaryDepartmentId?.name || "—"}
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 dark:text-white">
                           {member.workEmail || "—"}
@@ -174,22 +196,17 @@ export default function TeamProfilesPage() {
                           {member.mobilePhone || "—"}
                         </div>
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          member.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
-                        }`}>
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            member.status === "ACTIVE"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400"
+                          }`}
+                        >
                           {member.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => router.push(`/team-profiles/${member._id}`)}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
-                        >
-                          View Details
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -201,24 +218,17 @@ export default function TeamProfilesPage() {
 
         {/* Privacy Notice */}
         <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-4 rounded">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700 dark:text-yellow-400">
-                <strong>Privacy Note (BR 18b):</strong> Sensitive information such as salary, national ID, and personal financial data is excluded from this view per privacy policies.
-              </p>
-            </div>
-          </div>
+          <p className="text-sm text-yellow-700 dark:text-yellow-400">
+            <strong>Privacy Note (BR 18b):</strong> Sensitive information such as
+            salary, national ID, and personal financial data is excluded from
+            this view per privacy policies.
+          </p>
         </div>
 
         {/* Back Button */}
         <div className="mt-8">
           <button
-            onClick={() => router.push('/employee-profile-management')}
+            onClick={() => router.push("/employee-profile-management")}
             className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
           >
             ← Back to Profile Management

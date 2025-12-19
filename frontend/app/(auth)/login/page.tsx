@@ -10,7 +10,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [loginType, setLoginType] = useState<"employee" | "candidate">("employee");
-  const [identifier, setIdentifier] = useState(""); // Employee number or email
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,14 @@ export default function LoginPage() {
           password,
         });
       }
-      router.push("/home");
+
+      // 🔁 Redirect based on login type
+      if (loginType === "candidate") {
+        router.push("/recruitment/candidate/dashboard");
+      } else {
+        router.push("/home");
+      }
+
     } catch (err: any) {
       setError(err?.response?.data?.message || "Login failed. Please check your credentials.");
     } finally {
