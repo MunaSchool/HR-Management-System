@@ -77,10 +77,7 @@ export default function TeamProfilesPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             My Team Profiles
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            View your direct reports' profiles (US-E4-01, US-E4-02) – Sensitive
-            information is excluded per BR 18b
-          </p>
+          
         </div>
 
         {/* Team Summary */}
