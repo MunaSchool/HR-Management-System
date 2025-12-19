@@ -3,11 +3,26 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/app/utils/ApiClient";
 import Link from "next/link";
+import { useAuth } from "@/app/(system)/context/authContext";
+import { isSystemAdmin } from "@/app/utils/roleCheck";
+import { useRouter } from "next/navigation";
 
 export default function PositionsPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+
   const [positions, setPositions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // ============================
+  // ACCESS CONTROL — SYSTEM ADMIN ONLY
+  // ============================
+  useEffect(() => {
+    if (user && !isSystemAdmin(user)) {
+      router.replace("/home");
+    }
+  }, [user, router]);
 
   // ============================
   // FETCH POSITIONS
@@ -51,8 +66,21 @@ export default function PositionsPage() {
   };
 
   useEffect(() => {
-    fetchPositions();
-  }, []);
+    if (user && isSystemAdmin(user)) {
+      fetchPositions();
+    }
+  }, [user]);
+
+  // ============================
+  // BLOCK NON ADMINS
+  // ============================
+  if (!user || !isSystemAdmin(user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Access denied
+      </div>
+    );
+  }
 
   if (loading) {
     return (

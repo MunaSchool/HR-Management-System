@@ -36,26 +36,26 @@ export class OrganizationStructureController {
   // ======================
 
   @Post('departments')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) //aded the HRAdmin engy
+  @Roles(SystemRole.SYSTEM_ADMIN) //aded the HRAdmin engy
   createDepartment(@Body() dto: CreateDepartmentDto) {
     return this.organizationStructureService.createDepartment(dto);
   }
 
   @Get('departments')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
   getAllDepartments(@Query('includeInactive') includeInactive?: string) {
     const showInactive = includeInactive === 'true';
     return this.organizationStructureService.getAllDepartments(showInactive);
   }
 
   @Get('departments/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
   getDepartmentById(@Param('id') id: string) {
     return this.organizationStructureService.getDepartmentById(id);
   }
 
   @Put('departments/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN) // added HRaddmin by engy
+  @Roles(SystemRole.SYSTEM_ADMIN) // added HRaddmin by engy
   updateDepartment(
     @Param('id') id: string,
     @Body() dto: UpdateDepartmentDto,
@@ -135,7 +135,7 @@ activatePosition(@Param('id') id: string) {
   // ======================
 
   @Post('change-requests')
-  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // hradmon added by engy
+  @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // hradmon added by engy
   submitChangeRequest(@Body() dto: any, @CurrentUser() user: CurrentUserData) {
     return this.organizationStructureService.submitChangeRequest(dto, user.employeeId);
   }
@@ -145,19 +145,31 @@ activatePosition(@Param('id') id: string) {
   @Get('change-requests/my-requests')
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // Managers can view their own requests
   getMyChangeRequests(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: change-requests/my-requests");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+    console.log("📋 Fetching change requests submitted by this user");
     return this.organizationStructureService.getMyChangeRequests(user.employeeId);
   }
 
   @Get('change-requests')
-  @Roles(SystemRole.SYSTEM_ADMIN) // Only System Admin can view all organizational structure change requests (REQ-OSM-04)
-  getAllChangeRequests() {
+  @Roles(SystemRole.SYSTEM_ADMIN) // ONLY System Admin can view all organizational structure change requests
+  getAllChangeRequests(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: change-requests (GET ALL)");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+    console.log("⚠️ ONLY SYSTEM_ADMIN can view all change requests");
     return this.organizationStructureService.getAllChangeRequests();
   }
 
   @Get('change-requests/:id')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.DEPARTMENT_HEAD)
-  getChangeRequestById(@Param('id') id: string) {
-    return this.organizationStructureService.getChangeRequestById(id);
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER) // System Admin can view all, managers can view their own
+  getChangeRequestById(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: change-requests/:id");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("📋 Request ID:", id);
+    console.log("🎭 User roles:", user.roles);
+    return this.organizationStructureService.getChangeRequestById(id, user.employeeId, user.roles);
   }
 
   @Put('change-requests/:id/approve')
@@ -177,25 +189,51 @@ activatePosition(@Param('id') id: string) {
   // ======================
 
   @Get('hierarchy/organization')
-  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_EMPLOYEE) // needed to add employee
-  getOrganizationHierarchy() {
+  @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD, SystemRole.DEPARTMENT_EMPLOYEE)
+  getOrganizationHierarchy(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/organization");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles (raw):", user.roles);
+
+    const normalizedRoles = user.roles?.map(r =>
+      r.toUpperCase().replace(/\s+/g, "_")
+    );
+    console.log("🎭 Normalized roles:", normalizedRoles);
+
     return this.organizationStructureService.getOrganizationHierarchy();
   }
 
   @Get('hierarchy/department/:departmentId')
   @Roles(SystemRole.SYSTEM_ADMIN, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_HEAD)
-  getDepartmentHierarchy(@Param('departmentId') departmentId: string) {
+  getDepartmentHierarchy(@Param('departmentId') departmentId: string, @CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/department/:departmentId");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles:", user.roles);
+    console.log("📁 Department ID:", departmentId);
     return this.organizationStructureService.getDepartmentHierarchy(departmentId);
   }
 
   @Get('hierarchy/my-team')
   @Roles(SystemRole.DEPARTMENT_HEAD, SystemRole.HR_MANAGER, SystemRole.HR_ADMIN) // added hr amanager THE FRADMIN IS A TEMP FOR TESTING BY ENGY
   getMyTeamHierarchy(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/my-team");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User roles:", user.roles);
     return this.organizationStructureService.getMyTeamHierarchy(user.employeeId);
   }
 
   @Get('hierarchy/my-structure')
+  @Roles(
+  SystemRole.DEPARTMENT_EMPLOYEE,
+  SystemRole.DEPARTMENT_HEAD,
+  SystemRole.HR_MANAGER,
+  SystemRole.HR_ADMIN,
+  SystemRole.SYSTEM_ADMIN
+)
   getMyStructure(@CurrentUser() user: CurrentUserData) {
+    console.log("➡️ Endpoint called: hierarchy/my-structure");
+    console.log("👤 Current user:", user.employeeId);
+    console.log("🎭 User role(s):", user.roles);
     return this.organizationStructureService.getMyStructure(user.employeeId);
   }
 }

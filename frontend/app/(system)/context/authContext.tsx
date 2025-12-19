@@ -19,7 +19,7 @@ type User = {
   name?: string;
   email: string;
   age?:number;
-  userType?:string;
+  userType?:"candidate";
   status?: string;
   candidateNumber?: string;
   employeeNumber?: string;

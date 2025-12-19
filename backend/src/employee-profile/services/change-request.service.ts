@@ -30,27 +30,53 @@ export class ChangeRequestService {
     // Generate unique request ID
     const requestId = `CR-${Date.now()}-${employeeId.slice(-6)}`;
 
-    // Generate description from requested changes
-    const changeFields = Object.keys(createDto.requestedChanges || {}).join(', ');
-    const requestDescription = `Request to update: ${changeFields || 'profile data'}`;
+    console.log('=== Creating Change Request ===');
+    console.log('DTO received:', JSON.stringify(createDto, null, 2));
+
+    // Build full description including field changes
+    let fullDescription = createDto.requestDescription;
+
+    if (createDto.requestedChanges && Object.keys(createDto.requestedChanges).length > 0) {
+      const changes = Object.entries(createDto.requestedChanges)
+        .map(([field, value]) => {
+          const fieldName = field
+            .replace(/([A-Z])/g, ' $1')
+            .replace('primary', '')
+            .trim();
+          return `${fieldName}: ${value}`;
+        })
+        .join(', ');
+
+      fullDescription = `${createDto.requestDescription}\n\nRequested Changes: ${changes}`;
+      console.log('Full description built:', fullDescription);
+    } else {
+      console.log('No requestedChanges found in DTO');
+    }
 
     const newRequest = new this.changeRequestModel({
       requestId,
-      requestDescription,
+      requestDescription: fullDescription,
       employeeProfileId: employeeId,
-      requestedChanges: createDto.requestedChanges,
       reason: createDto.reason,
       status: ProfileChangeStatus.PENDING,
     });
 
     const savedRequest = await newRequest.save();
 
-    // Send notification to HR about new change request
-    await this.notificationLogService.sendNotification({
-      to: new Types.ObjectId(employeeId),
-      type: 'Profile Change Request Submitted',
-      message: `A new profile change request has been submitted for review. Reason: ${createDto.reason}`,
-    });
+    // Send notification to HR Admin/Manager about new change request from employee
+    const hrAdmins = await this.employeeProfileModel.find({
+      roles: { $in: ['HR Admin', 'HR Manager', 'hr admin', 'hr manager', 'HR_ADMIN', 'HR_MANAGER'] }
+    }).select('_id');
+
+    console.log(`📧 Sending notification to ${hrAdmins.length} HR Admin/Manager(s)`);
+
+    for (const admin of hrAdmins) {
+      await this.notificationLogService.sendNotification({
+        to: new Types.ObjectId(admin._id.toString()),
+        type: 'New Profile Change Request',
+        message: `A new profile change request has been submitted by an employee. Reason: ${createDto.reason}. Please review and process.`,
+      });
+    }
 
     return savedRequest;
   }
@@ -59,6 +85,15 @@ export class ChangeRequestService {
   async getMyChangeRequests(employeeId: string): Promise<EmployeeProfileChangeRequest[]> {
     return await this.changeRequestModel
       .find({ employeeProfileId: employeeId })
+      .sort({ submittedAt: -1 })
+      .exec();
+  }
+
+  // Get all change requests (BR-22: Audit trail)
+  async getAllChangeRequests(): Promise<EmployeeProfileChangeRequest[]> {
+    return await this.changeRequestModel
+      .find()
+      .populate('employeeProfileId')
       .sort({ submittedAt: -1 })
       .exec();
   }
@@ -118,68 +153,77 @@ export class ChangeRequestService {
       : ProfileChangeStatus.REJECTED;
     request.processedAt = new Date();
 
+    // Extract employee ID (handle both populated and non-populated cases)
+    const employeeId = typeof request.employeeProfileId === 'object' && request.employeeProfileId?._id
+      ? request.employeeProfileId._id
+      : request.employeeProfileId;
+
+    // Extract changed fields from the request description
+    let changedFieldsText = '';
+    if (request.requestDescription) {
+      const changesMatch = request.requestDescription.match(/Requested Changes: (.+)/);
+      if (changesMatch && changesMatch[1]) {
+        changedFieldsText = changesMatch[1];
+      }
+    }
+
     // If approved, apply changes to employee profile
     if (processDto.approved) {
-      // Check if change request involves Position or Department (Dependency 13)
-      const involvesOrgStructure =
-        request.requestedChanges?.['primaryPositionId'] ||
-        request.requestedChanges?.['primaryDepartmentId'];
+      console.log('✅ Change request approved - updating employee profile');
 
-      if (involvesOrgStructure) {
-        // INTEGRATION: Validate Position/Department changes with Org Structure Module
-        console.log('[INTEGRATION] Position/Department change detected. Validating with Org Structure...');
-
-        // Validate position exists and is valid
-        if (request.requestedChanges?.['primaryPositionId']) {
-          try {
-            await this.organizationStructureService.getPositionById(
-              request.requestedChanges['primaryPositionId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid position ID: ${request.requestedChanges['primaryPositionId']}. Position does not exist.`
-            );
-          }
-        }
-
-        // Validate department exists and is active
-        if (request.requestedChanges?.['primaryDepartmentId']) {
-          try {
-            await this.organizationStructureService.getDepartmentById(
-              request.requestedChanges['primaryDepartmentId'].toString()
-            );
-          } catch (error) {
-            throw new BadRequestException(
-              `Invalid department ID: ${request.requestedChanges['primaryDepartmentId']}. Department does not exist.`
-            );
-          }
-        }
-
-        console.log('[INTEGRATION] Position/Department validation successful.');
-      }
-
+      // Note: HR Admin must manually apply the changes described in the request
+      // This just updates the last modified timestamp
       await this.employeeProfileModel.findByIdAndUpdate(
-        request.employeeProfileId,
+        employeeId,
         {
-          ...request.requestedChanges,
           lastModifiedBy: userId,
           lastModifiedAt: new Date(),
         },
       );
 
-      // Notify employee that request was approved
+      // N-037: Notify employee that request was approved
+      let approvalMessage = `Your profile change request (${request.requestId}) has been APPROVED by HR.`;
+
+      if (changedFieldsText) {
+        approvalMessage += ` The following fields have been updated: ${changedFieldsText}.`;
+      } else {
+        approvalMessage += ' Your profile has been updated.';
+      }
+
+      if (processDto.comments) {
+        approvalMessage += ` HR Comments: ${processDto.comments}`;
+      }
+
       await this.notificationLogService.sendNotification({
-        to: new Types.ObjectId(request.employeeProfileId.toString()),
-        type: 'Profile Change Request Approved',
-        message: `Your profile change request has been approved. ${processDto.comments || ''}`,
+        to: new Types.ObjectId(employeeId.toString()),
+        type: 'N-037: Profile Change Approved',
+        message: approvalMessage,
       });
+
+      console.log(`✅ Notification N-037 sent: Change request ${request.requestId} approved`);
     } else {
-      // Notify employee that request was rejected
+      console.log('❌ Change request rejected');
+
+      // N-037: Notify employee that request was rejected
+      let rejectionMessage = `Your profile change request (${request.requestId}) has been REJECTED by HR.`;
+
+      if (changedFieldsText) {
+        rejectionMessage += ` Requested changes were: ${changedFieldsText}.`;
+      }
+
+      if (processDto.comments) {
+        rejectionMessage += ` Reason: ${processDto.comments}`;
+      } else {
+        rejectionMessage += ' Please contact HR for more information.';
+      }
+
       await this.notificationLogService.sendNotification({
-        to: new Types.ObjectId(request.employeeProfileId.toString()),
-        type: 'Profile Change Request Rejected',
-        message: `Your profile change request has been rejected. ${processDto.comments || ''}`,
+        to: new Types.ObjectId(employeeId.toString()),
+        type: 'N-037: Profile Change Rejected',
+        message: rejectionMessage,
       });
+
+      console.log(`✅ Notification N-037 sent: Change request ${request.requestId} rejected`);
     }
 
     return await request.save();

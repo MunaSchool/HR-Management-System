@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axiosInstance from "@/app/utils/ApiClient";
+import toast from "react-hot-toast";
 
 interface EmployeeProfile {
   _id: string;
@@ -26,16 +27,53 @@ interface EmployeeProfile {
   dateOfHire?: string;
   status: string;
   profilePictureUrl?: string;
-  primaryDepartmentId?: any;
-  primaryPositionId?: any;
+  primaryDepartmentId?: {
+    _id: string;
+    name: string;
+  };
+  primaryPositionId?: {
+    _id: string;
+    title: string;
+  };
   payGradeId?: any;
   roles?: any[];
   biography?: string;
+  lastAppraisalDate?: string;
+  lastAppraisalScore?: number;
+  lastAppraisalRatingLabel?: string;
+  contractType?: string;
+  workType?: string;
+  contractStartDate?: string;
+  contractEndDate?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+}
+
+interface Appraisal {
+  _id: string;
+  cycleId: {
+    _id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  };
+  appraisalRecordId?: {
+    _id: string;
+    totalScore?: number;
+    overallRatingLabel?: string;
+    strengths?: string;
+    improvementAreas?: string;
+    managerSummary?: string;
+    hrPublishedAt?: string;
+  };
+  status: string;
 }
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
+  const [appraisals, setAppraisals] = useState<Appraisal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAppraisals, setLoadingAppraisals] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [editBioMode, setEditBioMode] = useState(false);
   const [biography, setBiography] = useState("");
@@ -71,6 +109,11 @@ export default function ProfilePage() {
           country: response.data.address?.country || "",
         },
       });
+
+      // Fetch appraisals after profile is loaded
+      if (response.data._id) {
+        fetchAppraisals(response.data._id);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
@@ -78,25 +121,62 @@ export default function ProfilePage() {
     }
   };
 
+  const fetchAppraisals = async (employeeProfileId: string) => {
+    try {
+      setLoadingAppraisals(true);
+      const response = await axiosInstance.get(`/performance/employees/${employeeProfileId}/appraisals`);
+      console.log("📊 Appraisals response:", response.data);
+
+      // Filter for appraisals with records (regardless of status for now)
+      const appraisalsWithRecords = response.data.filter(
+        (appraisal: Appraisal) => appraisal.appraisalRecordId
+      );
+      console.log("✅ Appraisals with records:", appraisalsWithRecords);
+      setAppraisals(appraisalsWithRecords);
+    } catch (error) {
+      console.error("Error fetching appraisals:", error);
+    } finally {
+      setLoadingAppraisals(false);
+    }
+  };
+
   const handleUpdateContactInfo = async () => {
     try {
       await axiosInstance.patch("/employee-profile/me/contact-info", contactInfo);
-      alert("Contact information updated successfully");
+      toast.success("Contact information updated successfully! ✅", {
+        duration: 3000,
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
       setEditMode(false);
       fetchProfile();
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to update contact information");
+      toast.error(error?.response?.data?.message || "Failed to update contact information", {
+        duration: 4000,
+        icon: '❌',
+      });
     }
   };
 
   const handleUpdateBiography = async () => {
     try {
-      await axiosInstance.patch("/employee-profile/me", { biography });
-      alert("Biography updated successfully");
+      await axiosInstance.patch("/employee-profile/me/profile", { biography });
+      toast.success("Biography updated successfully! 📝", {
+        duration: 3000,
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
       setEditBioMode(false);
       fetchProfile();
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to update biography");
+      toast.error(error?.response?.data?.message || "Failed to update biography", {
+        duration: 4000,
+        icon: '❌',
+      });
     }
   };
 
@@ -114,11 +194,20 @@ export default function ProfilePage() {
         },
       });
 
-      alert("Profile picture uploaded successfully");
+      toast.success("Profile picture uploaded successfully! 📸", {
+        duration: 3000,
+        style: {
+          background: '#10B981',
+          color: '#fff',
+        },
+      });
       setProfilePic(null);
       fetchProfile();
     } catch (error: any) {
-      alert(error?.response?.data?.message || "Failed to upload profile picture");
+      toast.error(error?.response?.data?.message || "Failed to upload profile picture", {
+        duration: 4000,
+        icon: '❌',
+      });
     } finally {
       setUploadingPic(false);
     }
@@ -221,12 +310,176 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Employment Information */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Employment Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-neutral-400">Department</label>
+            <p className="text-white">
+              {profile.primaryDepartmentId?.name || "Not Assigned"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Position</label>
+            <p className="text-white">
+              {profile.primaryPositionId?.title || "Not Assigned"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Date of Hire</label>
+            <p className="text-white">
+              {profile.dateOfHire
+                ? new Date(profile.dateOfHire).toLocaleDateString()
+                : "N/A"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Employment Status</label>
+            <p className="text-white">
+              <span
+                className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                  profile.status === "ACTIVE"
+                    ? "bg-green-900 text-green-300"
+                    : profile.status === "ON_LEAVE"
+                    ? "bg-yellow-900 text-yellow-300"
+                    : "bg-red-900 text-red-300"
+                }`}
+              >
+                {profile.status}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Performance Appraisal */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Performance Appraisal</h2>
+        {loadingAppraisals ? (
+          <p className="text-neutral-400">Loading appraisals...</p>
+        ) : appraisals.length > 0 ? (
+          <div className="space-y-6">
+            {appraisals.map((appraisal) => (
+              <div key={appraisal._id} className="border border-neutral-700 rounded-lg p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {appraisal.cycleId.name}
+                    </h3>
+                    <p className="text-sm text-neutral-400">
+                      {new Date(appraisal.cycleId.startDate).toLocaleDateString()} - {new Date(appraisal.cycleId.endDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className="inline-block px-3 py-1 rounded bg-green-900 text-green-300 text-sm font-medium">
+                    {appraisal.status}
+                  </span>
+                </div>
+
+                {appraisal.appraisalRecordId && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {appraisal.appraisalRecordId.totalScore !== undefined && (
+                      <div>
+                        <label className="text-sm text-neutral-400">Total Score</label>
+                        <p className="text-white text-2xl font-bold">
+                          {appraisal.appraisalRecordId.totalScore.toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                    {appraisal.appraisalRecordId.overallRatingLabel && (
+                      <div>
+                        <label className="text-sm text-neutral-400">Rating</label>
+                        <p className="text-white">
+                          <span className="inline-block px-3 py-1 rounded bg-blue-900 text-blue-300 font-medium">
+                            {appraisal.appraisalRecordId.overallRatingLabel}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.strengths && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Strengths</label>
+                        <p className="text-white mt-1">{appraisal.appraisalRecordId.strengths}</p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.improvementAreas && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Areas for Improvement</label>
+                        <p className="text-white mt-1">{appraisal.appraisalRecordId.improvementAreas}</p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.managerSummary && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Manager Summary</label>
+                        <p className="text-white mt-1">{appraisal.appraisalRecordId.managerSummary}</p>
+                      </div>
+                    )}
+
+                    {appraisal.appraisalRecordId.hrPublishedAt && (
+                      <div className="md:col-span-2">
+                        <label className="text-sm text-neutral-400">Published On</label>
+                        <p className="text-white">
+                          {new Date(appraisal.appraisalRecordId.hrPublishedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-neutral-400">No appraisal history available yet.</p>
+        )}
+      </div>
+
       {/* Biography */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Biography</h2>
-        <p className="text-neutral-300 whitespace-pre-wrap">
-          {profile.biography || "No biography added yet."}
-        </p>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Biography</h2>
+          {!editBioMode && (
+            <button
+              onClick={() => setEditBioMode(true)}
+              className="px-3 py-1 bg-neutral-800 text-white text-sm rounded hover:bg-neutral-700"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+        {editBioMode ? (
+          <div className="space-y-4">
+            <textarea
+              value={biography}
+              onChange={(e) => setBiography(e.target.value)}
+              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white min-h-[150px]"
+              placeholder="Tell us about yourself..."
+            />
+            <div className="flex space-x-3">
+              <button
+                onClick={handleUpdateBiography}
+                className="px-4 py-2 bg-white text-black rounded-lg hover:bg-neutral-200"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setEditBioMode(false);
+                  setBiography(profile.biography || "");
+                }}
+                className="px-4 py-2 bg-neutral-800 text-white rounded-lg hover:bg-neutral-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-neutral-300 whitespace-pre-wrap">
+            {profile.biography || "No biography added yet."}
+          </p>
+        )}
       </div>
 
       {/* Contact Information (Editable) */}
@@ -378,16 +631,55 @@ export default function ProfilePage() {
             <p className="text-white">{profile.status}</p>
           </div>
           <div>
+            <label className="text-sm text-neutral-400">Contract Type</label>
+            <p className="text-white">{profile.contractType || "N/A"}</p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Work Type</label>
+            <p className="text-white">{profile.workType || "N/A"}</p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Contract Start Date</label>
+            <p className="text-white">
+              {profile.contractStartDate
+                ? new Date(profile.contractStartDate).toLocaleDateString()
+                : "N/A"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Contract End Date</label>
+            <p className="text-white">
+              {profile.contractEndDate
+                ? new Date(profile.contractEndDate).toLocaleDateString()
+                : "N/A"}
+            </p>
+          </div>
+          <div>
             <label className="text-sm text-neutral-400">Pay Grade</label>
             <p className="text-white">{profile.payGradeId?.name || profile.payGradeId || "N/A"}</p>
           </div>
           <div>
-            <label className="text-sm text-neutral-400"> Roles</label>
+            <label className="text-sm text-neutral-400">System Roles</label>
             <p className="text-white">
               {profile.roles && profile.roles.length > 0
                 ? profile.roles.map((r: any) => r.roleName || r).join(", ")
                 : "N/A"}
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Banking Information */}
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4">Banking Information</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-neutral-400">Bank Name</label>
+            <p className="text-white">{profile.bankName || "N/A"}</p>
+          </div>
+          <div>
+            <label className="text-sm text-neutral-400">Bank Account Number</label>
+            <p className="text-white">{profile.bankAccountNumber || "N/A"}</p>
           </div>
         </div>
       </div>

@@ -75,9 +75,9 @@ export interface CreateAppraisalRecordDto {
 
 export interface CreateAppraisalDisputeDto {
   appraisalId: string;
-  assignmentId: string;
-  cycleId: string;
-  raisedByEmployeeId: string;
+  assignmentId?: string;
+  cycleId?: string;
+  raisedByEmployeeId?: string;
   reason: string;
   details?: string;
   status?: AppraisalDisputeStatus;
@@ -167,6 +167,11 @@ class PerformanceApi {
     return response.data;
   }
 
+  async getSubmittedAssignments(): Promise<AppraisalAssignment[]> {
+    const response = await axiosInstance.get(`/performance/assignments/submitted`);
+    return response.data;
+  }
+
   async updateAssignmentStatus(assignmentId: string, status: string): Promise<AppraisalAssignment> {
     const response = await axiosInstance.put(`/performance/assignments/${assignmentId}/status`, { status });
     return response.data;
@@ -183,6 +188,11 @@ class PerformanceApi {
     return response.data;
   }
 
+  async getAppraisalRecordById(recordId: string): Promise<AppraisalRecord> {
+    const response = await axiosInstance.get(`/performance/records/${recordId}`);
+    return response.data;
+  }
+
   async publishAppraisalRecord(assignmentId: string, publishedByEmployeeId: string): Promise<AppraisalRecord> {
     const response = await axiosInstance.put(`/performance/assignments/${assignmentId}/publish`, {
       publishedByEmployeeId,
@@ -190,13 +200,24 @@ class PerformanceApi {
     return response.data;
   }
 
-  async getAppraisalRecordById(recordId: string): Promise<AppraisalRecord> {
-    const response = await axiosInstance.get(`/performance/records/${recordId}`);
+  async updateRecordStatus(recordId: string, status: string): Promise<AppraisalRecord> {
+    const response = await axiosInstance.put(`/performance/records/${recordId}/status`, { status });
     return response.data;
   }
 
-  async updateRecordStatus(recordId: string, status: string): Promise<AppraisalRecord> {
-    const response = await axiosInstance.put(`/performance/records/${recordId}/status`, { status });
+  async updateAppraisalRecord(recordId: string, updateData: {
+    ratings?: Array<{
+      key: string;
+      title: string;
+      ratingValue: number;
+      ratingLabel?: string;
+      comments?: string;
+    }>;
+    managerSummary?: string;
+    strengths?: string;
+    improvementAreas?: string;
+  }): Promise<AppraisalRecord> {
+    const response = await axiosInstance.put(`/performance/records/${recordId}`, updateData);
     return response.data;
   }
 
@@ -224,6 +245,11 @@ class PerformanceApi {
 
   async assignDisputeReviewer(disputeId: string, reviewerId: string): Promise<AppraisalDispute> {
     const response = await axiosInstance.put(`/performance/disputes/${disputeId}/assign-reviewer`, { reviewerId });
+    return response.data;
+  }
+
+  async getMyDisputes(): Promise<AppraisalDispute[]> {
+    const response = await axiosInstance.get('/performance/my-disputes');
     return response.data;
   }
 

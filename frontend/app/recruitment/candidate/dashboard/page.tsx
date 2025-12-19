@@ -4,6 +4,7 @@ import axiosInstance from "@/app/utils/ApiClient";
 import styles from '@/app/recruitment/component/shared-hr-styles.module.css';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/(system)/context/authContext";
 
 export default function CandidateDashboard() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function CandidateDashboard() {
 
   // Offer response states
   const [offerResponses, setOfferResponses] = useState<Record<string, string>>({});
+  const {user} = useAuth()
 
   useEffect(() => {
     loadDashboard();
@@ -177,6 +179,7 @@ export default function CandidateDashboard() {
       const notifData = Array.isArray(response.data) 
         ? response.data 
         : response.data?.data || [];
+        console.log(response.data.data)
       setNotifications(notifData);
     } catch (err: any) {
       console.error('❌ Error loading notifications:', err);

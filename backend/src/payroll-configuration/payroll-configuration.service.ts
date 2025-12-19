@@ -122,6 +122,8 @@ export class PayrollConfigurationService
 
 
     //////2- config pay grades
+
+
     async getPayGrade(id: string): Promise<payGradeDocument|null> {
       return await this.payGradeModel.findById(id);
     }
