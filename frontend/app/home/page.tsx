@@ -128,20 +128,16 @@ export default function HomePage() {
 
           </div>
 
-        <div className="mt-8 bg-slate-900 border border-slate-800 shadow-sm rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-slate-100 mb-3">Your Information</h3>
-          <div className="space-y-2 text-slate-200 text-sm">
-            <p>
-              <span className="text-slate-400">Role:</span> {user.roles?.join(", ") || user.role || "N/A"}
-            </p>
-            <p>
-              <span className="text-slate-400">Email:</span> {user.email}
-            </p>
-            {user.age && (
-              <p>
-                <span className="text-slate-400">Age:</span> {user.age}
-              </p>
-            )}
+          {/* User Info */}
+          <div className="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Your Information
+            </h3>
+            <div className="space-y-2 text-gray-700 dark:text-gray-300">
+              <p><strong>Role:</strong> {user.roles}</p>
+              <p><strong>Email:</strong> {user.email}</p>
+              {user.age && <p><strong>Age:</strong> {user.age}</p>}
+            </div>
           </div>
         </div>
       </main>
@@ -153,13 +149,12 @@ function DashboardCard({ title, description, icon }: { title: string; descriptio
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
       <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold text-slate-100 mb-2">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
         {title}
       </h3>
-      <p className="text-slate-300 text-sm">
+      <p className="text-gray-600 dark:text-gray-400">
         {description}
       </p>
     </div>
   );
 }
-
