@@ -97,9 +97,7 @@ import {SystemRole} from'../employee-profile/enums/employee-profile.enums';
     PayrollPhase4Service,
     SalaryCalculationService,
   ],
-  exports: [PayrollExecutionService, 
-            MongooseModule // Export MongooseModule so other modules can access the models
-  ],
+  exports: [PayrollExecutionService , MongooseModule],
 })
 export class PayrollExecutionModule {}
 

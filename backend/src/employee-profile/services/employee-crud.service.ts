@@ -17,7 +17,7 @@ export class EmployeeCrudService {
 
   // Create a new employee profile with role assignment
   async create(employeeData: CreateEmployeeDto): Promise<EmployeeProfileDocument> {
-    const { roles, permissions, password, ...profileData } = employeeData;
+    const { systemRoles, permissions, password, ...profileData } = employeeData;
 
     // Check if employee number already exists
     const existingEmployeeNumber = await this.employeeProfileModel.findOne({
@@ -50,15 +50,30 @@ export class EmployeeCrudService {
     // Hash password if provided
     const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
 
+    console.log('📝 Creating employee with data:', {
+      ...profileData,
+      hasPassword: !!hashedPassword,
+    });
+
     // Create employee profile
+    const fullName = `${profileData.firstName}${profileData.middleName ? ' ' + profileData.middleName : ''} ${profileData.lastName}`;
     const newEmployee = await this.employeeProfileModel.create({
       ...profileData,
       ...(hashedPassword && { password: hashedPassword }),
-      fullName: `${profileData.firstName} ${profileData.lastName}`,
+      fullName,
+    });
+
+    console.log('✅ Employee created:', {
+      _id: newEmployee._id,
+      fullName: newEmployee.fullName,
+      workEmail: newEmployee.workEmail,
+      personalEmail: newEmployee.personalEmail,
+      mobilePhone: newEmployee.mobilePhone,
+      homePhone: newEmployee.homePhone,
     });
 
     // Always create role assignment (default to department employee if no roles provided)
-    const assignedRoles = roles && roles.length > 0 ? roles : ['department employee'];
+    const assignedRoles = systemRoles && systemRoles.length > 0 ? systemRoles : ['department employee'];
 
     try {
       const roleAssignment = await this.employeeRoleModel.create({
@@ -88,18 +103,85 @@ export class EmployeeCrudService {
   }
 
   // Get all employee profiles
-  async findAll(): Promise<EmployeeProfileDocument[]> {
-    const employees = await this.employeeProfileModel.find();
-    return employees;
+  async findAll(): Promise<any[]> {
+    const employees = await this.employeeProfileModel
+      .find()
+      .populate('accessProfileId')
+      .populate('primaryDepartmentId')
+      .populate('primaryPositionId')
+      .exec();
+
+    // Manually populate payGradeId only for valid ObjectIds
+    const populatedEmployees = await Promise.all(
+      employees.map(async (emp) => {
+        const empObj = emp.toObject();
+
+        // Only populate payGradeId if it's a valid ObjectId
+        if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
+          const populated = await this.employeeProfileModel
+            .findById(emp._id)
+            .populate('payGradeId')
+            .exec();
+          return populated || emp;
+        }
+        return emp;
+      })
+    );
+
+    // Map employees to include roles and properly formatted data
+    return populatedEmployees.map(emp => {
+      const empObj = emp.toObject();
+      const roles = (empObj.accessProfileId as any)?.roles || [];
+      const payGrade = (empObj.payGradeId as any)?.grade || null;
+
+      return {
+        ...empObj,
+        email: empObj.workEmail, // Add email field for frontend compatibility
+        roles, // Add roles at top level
+        payGrade, // Add payGrade name for display
+      };
+    });
   }
 
   // Get an employee profile by ID
-  async findById(id: string): Promise<EmployeeProfileDocument> {
-    const employee = await this.employeeProfileModel.findById(id);
+  async findById(id: string): Promise<any> {
+    let employee = await this.employeeProfileModel
+      .findById(id)
+      .populate('accessProfileId')
+      .populate('primaryDepartmentId')
+      .populate('primaryPositionId')
+      .exec();
+
     if (!employee) {
       throw new NotFoundException('Employee profile not found');
     }
-    return employee;
+
+    // Only populate payGradeId if it's a valid ObjectId
+    const empObj = employee.toObject();
+    if (empObj.payGradeId && Types.ObjectId.isValid(empObj.payGradeId)) {
+      const populatedEmployee = await this.employeeProfileModel
+        .findById(id)
+        .populate('accessProfileId')
+        .populate('primaryDepartmentId')
+        .populate('primaryPositionId')
+        .populate('payGradeId')
+        .exec();
+
+      if (populatedEmployee) {
+        employee = populatedEmployee;
+      }
+    }
+
+    const finalEmpObj = employee.toObject();
+    const roles = (finalEmpObj.accessProfileId as any)?.roles || [];
+    const payGrade = (finalEmpObj.payGradeId as any)?.grade || null;
+
+    return {
+      ...finalEmpObj,
+      email: finalEmpObj.workEmail, // Add email field for frontend compatibility
+      roles, // Add roles at top level
+      payGrade, // Add payGrade name for display
+    };
   }
 
   // Update an employee profile by ID

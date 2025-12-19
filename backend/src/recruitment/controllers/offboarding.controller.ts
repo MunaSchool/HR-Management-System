@@ -18,11 +18,17 @@ export class OffboardingController {
   // termination request endpoints
 
   @Post('requests')
-  @HttpCode(HttpStatus.CREATED)
   @Roles(SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_EMPLOYEE)
   async createTerminationRequest(@Body() createDto: CreateTerminationRequestDto) {
     return this.offboardingService.createTerminationRequest(createDto);
   }
+
+  @Get('requests/employee/:employeeId')
+  @Roles(SystemRole.HR_MANAGER, SystemRole.DEPARTMENT_EMPLOYEE)
+  getByEmployee(@Param('employeeId') employeeId: string) {
+    return this.offboardingService.getTerminationRequestByEmployeeId(employeeId);
+  }
+
 
   @Get('requests')
   @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE, SystemRole.DEPARTMENT_EMPLOYEE)
@@ -49,7 +55,7 @@ export class OffboardingController {
 
   @Post('checklists')
   @HttpCode(HttpStatus.CREATED)
-  @Roles(SystemRole.HR_MANAGER, SystemRole.HR_EMPLOYEE)
+  @Roles(SystemRole.HR_MANAGER)
   async createClearanceChecklist(@Body() createDto: CreateClearanceChecklistDto) {
     return this.offboardingService.createClearanceChecklist(createDto);
   }

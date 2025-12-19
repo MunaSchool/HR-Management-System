@@ -18,7 +18,7 @@ export default function TimeManagementPage() {
 
   // A simple check for manager/admin roles for demonstration
   const isManagerOrAdmin = user?.roles?.some(role =>
-    ['hr admin', 'system admin', 'manager'].includes(role.toLowerCase())
+    [ 'system admin', 'manager'].includes(role.toLowerCase())
   );
 
   const isManagerOrAdminOrPayroll = user?.roles?.some(role =>
@@ -27,6 +27,9 @@ export default function TimeManagementPage() {
   const isEmployee = user?.roles?.some(role => ['department employee', 'hr employee'].includes(role.toLowerCase()))
   const isHRManager = user?.roles?.some(role =>
     ['hr manager'].includes(role.toLowerCase())
+  );
+    const isSystemAdmin = user?.roles?.some(role =>
+    ['system admin'].includes(role.toLowerCase())
   );
 
   return (
@@ -91,23 +94,12 @@ export default function TimeManagementPage() {
             </Link>
 
             {/* Rules - only for managers/admins */}
-            {isManagerOrAdmin || isHRManager && (
+            {(isManagerOrAdmin || isHRManager || isEmployee) && (
               <Link href={'/time-management/rules'}>
                 <DashboardCard
                   title="Rules"
-                  description="Manage lateness, overtime, schedule & exceptions"
+                  description="View lateness, overtime, schedule & exceptions"
                   icon="⚙️"
-                />
-              </Link>
-            )}
-
-            {/* Reports - only for payroll and hr */}
-            {isManagerOrAdminOrPayroll && (
-              <Link href={'/time-management/reports'}>
-                <DashboardCard
-                  title="Reports"
-                  description="Generate and view time management reports"
-                  icon="📊"
                 />
               </Link>
             )}
