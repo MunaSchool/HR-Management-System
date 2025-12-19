@@ -285,11 +285,11 @@ export default function TimeExceptionPage() {
         <div className="flex items-center justify-between">
           <div>
             <Link 
-              href="/time-management/attendance" 
+              href="/time-management/" 
               className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-300 group mb-4"
             >
               <FaArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" />
-              Back to Attendance Records
+              Back to Dashboard
             </Link>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
               <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg">
