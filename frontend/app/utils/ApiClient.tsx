@@ -41,26 +41,20 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-    
-    console.log('API Error Status:', status);
-    
-    if (status === 403 && !currentPath.includes('/unauthorized')) {
-      redirect('/unauthorized');
+    console.log('error status', status);
+    if (status === 403 && !window.location.href.includes('/login')
+      && !window.location.href.includes('/register')) {
+      window.location.href = '/unauthorized';
     }
-    
-    if (status === 401 && 
-        !currentPath.includes('/login') && 
-        !currentPath.includes('/register')) {
-      if (onUnAuthenticated) {
-        onUnAuthenticated();
+    if ((status === 401) && !window.location.href.includes('/login')
+       && !window.location.href.includes('/register')) {
+      if (typeof onUnAuthenticated === 'function') {
+        try { onUnAuthenticated(); } catch (e) { console.error('onUnAuthenticated handler error', e); }
       } else {
-        // Fallback: redirect to login
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('hr_token');
-          window.location.href = '/login';
-        }
+        // Fallback: navigate to login if no handler registered
+        window.location.href = '/login';
       }
+
     }
     
     return Promise.reject(error);

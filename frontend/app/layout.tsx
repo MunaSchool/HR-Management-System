@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./(system)/context/authContext";
-import { Toaster } from "@/components/ui/sonner";  // ✅ IMPORTANT
+import Navbar from "./components/navbar";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,11 +31,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
+          <Navbar></Navbar>
           {children}
-        </AuthProvider>
-
-        {/* ⭐ REQUIRED FOR ALL NOTIFICATIONS */}
-        <Toaster />
+          <Toaster position="top-right" reverseOrder={false}></Toaster>
+          </AuthProvider>
       </body>
     </html>
   );

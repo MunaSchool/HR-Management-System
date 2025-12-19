@@ -18,11 +18,13 @@ type User = {
   roles?: string[];
   name?: string;
   email: string;
-  age?: number;
-  userType?: string;
+  age?:number;
+  userType?:string;
+  status?: string;
   candidateNumber?: string;
   employeeNumber?: string;
 };
+
 
 type AuthContextType = {
   user: User | null;

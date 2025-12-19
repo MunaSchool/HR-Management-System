@@ -181,13 +181,19 @@ export class PerformanceService {
             throw new NotFoundException('Invalid cycle ID');
         }
 
-        return await this.appraisalAssignmentModel
-            .find({ cycleId })
+        // Filter out invalid templateIds before populating
+        const assignments = await this.appraisalAssignmentModel
+            .find({
+                cycleId,
+                templateId: { $ne: '<templateId>' } // Exclude placeholder values
+            })
             .populate('employeeProfileId', 'firstName lastName position')
             .populate('managerProfileId', 'firstName lastName')
             .populate('templateId', 'name templateType')
             .populate('departmentId', 'name')
             .exec();
+
+        return assignments;
     }
     
 

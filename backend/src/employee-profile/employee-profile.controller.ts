@@ -80,7 +80,7 @@ export class EmployeeProfileController {
   // ==================== SEARCH ROUTES ====================
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER)
+  @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async getAllEmployees() {
     return this.employeeProfileService.findAll();
   }
