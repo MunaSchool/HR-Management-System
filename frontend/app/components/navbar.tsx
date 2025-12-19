@@ -178,16 +178,6 @@ export default function Navbar(){
                                                     <FaUser className="text-slate-400" />
                                                     View Profile
                                                 </button>
-                                                <button 
-                                                    onClick={() => {
-                                                        router.push('/settings')
-                                                        setShowProfileMenu(false)
-                                                    }}
-                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-colors duration-300 text-sm"
-                                                >
-                                                    <FaCog className="text-slate-400" />
-                                                    Account Settings
-                                                </button>
                                             </div>
 
                                             {/* Logout Button */}
