@@ -402,8 +402,18 @@ async activatePosition(id: string) {
     console.log('👤 Requesting user:', requestingUserId);
     console.log('🎭 User roles:', userRoles);
 
+    // Try to convert to ObjectId if it's a valid hex string
+    let objectId: Types.ObjectId;
+    try {
+      objectId = new Types.ObjectId(id);
+      console.log('✅ Converted to ObjectId:', objectId);
+    } catch (error) {
+      console.error('❌ ERROR: Invalid ObjectId format');
+      throw new BadRequestException("Invalid change request ID format");
+    }
+
     const req = await this.changeRequestModel
-      .findById(id)
+      .findOne({ _id: objectId })
       .populate('requestedByEmployeeId', 'firstName lastName fullName employeeNumber')
       .exec();
 
@@ -462,7 +472,16 @@ async activatePosition(id: string) {
     console.log('📋 Request ID:', id);
     console.log('👤 Approved by:', approvedBy);
 
-    const request = await this.changeRequestModel.findById(id).exec();
+    // Convert to ObjectId
+    let objectId: Types.ObjectId;
+    try {
+      objectId = new Types.ObjectId(id);
+    } catch (error) {
+      console.error('❌ ERROR: Invalid ObjectId format');
+      throw new BadRequestException("Invalid change request ID format");
+    }
+
+    const request = await this.changeRequestModel.findOne({ _id: objectId }).exec();
     if (!request) {
       console.error('❌ ERROR: Change request not found');
       throw new NotFoundException("Change request not found");
@@ -473,8 +492,8 @@ async activatePosition(id: string) {
     console.log('⚠️ Only SYSTEM_ADMIN can approve — enforced by controller @Roles guard');
 
     // Update request status
-    const updated = await this.changeRequestModel.findByIdAndUpdate(
-      id,
+    const updated = await this.changeRequestModel.findOneAndUpdate(
+      { _id: objectId },
       {
         status: 'APPROVED', //fixed
         approvedAt: new Date(),
@@ -500,11 +519,19 @@ async activatePosition(id: string) {
   // 📌 REJECT CHANGE REQUEST
   // ======================
   async rejectChangeRequest(id: string, reason: string, rejectedBy: string) {
-    const request = await this.changeRequestModel.findById(id).exec();
+    // Convert to ObjectId
+    let objectId: Types.ObjectId;
+    try {
+      objectId = new Types.ObjectId(id);
+    } catch (error) {
+      throw new BadRequestException("Invalid change request ID format");
+    }
+
+    const request = await this.changeRequestModel.findOne({ _id: objectId }).exec();
     if (!request) throw new NotFoundException("Change request not found");
 
-    const updated = await this.changeRequestModel.findByIdAndUpdate(
-      id,
+    const updated = await this.changeRequestModel.findOneAndUpdate(
+      { _id: objectId },
       {
         status: 'REJECTED',
         rejectedAt: new Date(),
@@ -675,11 +702,42 @@ async activatePosition(id: string) {
     console.log("🏷️ Position:", position?.title);
     console.log("🔗 Reports to:", position?.reportsToPositionId);
 
+    // Find the employee who holds the head position (reportsTo position)
+    let headEmployee = null;
+    if (position?.reportsToPositionId) {
+      const headPositionId = (position.reportsToPositionId as any)._id || position.reportsToPositionId;
+      headEmployee = await this.employeeProfileModel.findOne({
+        primaryPositionId: headPositionId
+      }).exec();
+      console.log("👔 Head position employee:", headEmployee?.fullName);
+    }
+
+    // Find colleagues who report to the same head position
+    let colleagues = [];
+    if (position?.reportsToPositionId) {
+      const headPositionId = (position.reportsToPositionId as any)._id || position.reportsToPositionId;
+      // Find all positions that report to the same head position
+      const peerPositions = await this.positionModel.find({
+        reportsToPositionId: headPositionId,
+        _id: { $ne: employee.primaryPositionId } // Exclude the current employee's position
+      }).exec();
+
+      // Find employees in those peer positions
+      const peerPositionIds = peerPositions.map(p => p._id);
+      colleagues = await this.employeeProfileModel.find({
+        primaryPositionId: { $in: peerPositionIds }
+      }).populate('primaryPositionId').exec();
+
+      console.log("👥 Found colleagues:", colleagues.length);
+    }
+
     return {
       employee,
       position,
       department: employee.primaryDepartmentId,
       reportsTo: position?.reportsToPositionId,
+      headEmployee, // Employee who holds the head position
+      colleagues, // Colleagues under the same head position
     };
   }
 }

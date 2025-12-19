@@ -25,6 +25,8 @@ export default function OrganizationHierarchyPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
+  const [headEmployee, setHeadEmployee] = useState<any>(null);
+  const [colleagues, setColleagues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -53,6 +55,8 @@ export default function OrganizationHierarchyPage() {
         if (res.data.employee) setEmployees([res.data.employee]);
         if (res.data.position) setPositions([res.data.position]);
         if (res.data.department) setDepartments([res.data.department]);
+        if (res.data.headEmployee) setHeadEmployee(res.data.headEmployee);
+        if (res.data.colleagues) setColleagues(res.data.colleagues);
       }
     } catch (err) {
       console.error(err);
@@ -186,11 +190,29 @@ export default function OrganizationHierarchyPage() {
       <h2 className="text-2xl font-bold">📁 {department.name}</h2>
 
       {/* Department Head */}
-      {hasHead && (
+      {hasHead && headEmployee && (
+        <div className="bg-blue-600 text-white p-6 rounded-lg min-w-[280px] text-center relative">
+          <h3 className="font-bold mb-1">
+            {(position.reportsToPositionId as any)?.title || "Department Head"}
+          </h3>
+          <p className="text-sm">
+            {headEmployee.firstName} {headEmployee.lastName}
+          </p>
+          <p className="text-xs italic opacity-80">
+            {headEmployee.employeeNumber}
+          </p>
+
+          <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
+            HEAD
+          </span>
+        </div>
+      )}
+
+      {hasHead && !headEmployee && (
         <div className="bg-blue-600 text-white p-6 rounded-lg min-w-[280px] text-center relative">
           <h3 className="font-bold mb-1">Department Head</h3>
           <p className="text-sm italic opacity-80">
-            (Assigned Position)
+            (Position not yet assigned)
           </p>
 
           <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
@@ -203,15 +225,37 @@ export default function OrganizationHierarchyPage() {
       <div className="w-0.5 h-10 bg-gray-400"></div>
 
       {/* Logged-in Employee */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[240px]">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[240px] border-2 border-green-500">
         <h4 className="font-semibold">{position.title}</h4>
         <p className="text-sm">
-          {employee.firstName} {employee.lastName}
+          {employee.firstName} {employee.lastName} <span className="text-green-600 font-bold">(You)</span>
         </p>
         <p className="text-xs text-gray-500">
           {employee.employeeNumber}
         </p>
       </div>
+
+      {/* Colleagues */}
+      {colleagues && colleagues.length > 0 && (
+        <>
+          <div className="text-center">
+            <h3 className="font-semibold text-lg mb-4">Your Colleagues</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {colleagues.map((colleague: any) => (
+                <div key={colleague._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[200px]">
+                  <h4 className="font-semibold">{colleague.primaryPositionId?.title || "Position"}</h4>
+                  <p className="text-sm">
+                    {colleague.firstName} {colleague.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {colleague.employeeNumber}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

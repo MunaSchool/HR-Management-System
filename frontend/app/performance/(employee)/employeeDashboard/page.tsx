@@ -154,7 +154,7 @@ export default function EmployeeDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-black border border-neutral-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Appraisals</p>
@@ -166,7 +166,7 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-black border border-neutral-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Published</p>
@@ -178,7 +178,7 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-black border border-neutral-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">In Progress</p>
@@ -190,7 +190,7 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-black border border-neutral-700 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Not Started</p>
@@ -204,7 +204,7 @@ export default function EmployeeDashboard() {
       </div>
 
       {/* Recent Appraisals */}
-      <div className="bg-white border border-gray-100 rounded-xl shadow-sm">
+      <div className="bg-black border border-neutral-700 rounded-xl shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white rounded-t-xl">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Recent Appraisal Cycles</h2>

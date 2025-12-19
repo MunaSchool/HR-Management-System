@@ -172,7 +172,7 @@ export default function CyclesPage() {
 
       {/* Cycle Stats */}
       {cycles.length > 0 && (
-        <div className="bg-white border rounded-lg p-6 shadow-sm">
+        <div className="bg-black border-neutral-700 rounded-lg p-6 shadow-sm">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900">{cycles.length}</p>
@@ -201,7 +201,7 @@ export default function CyclesPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-white border rounded-lg p-6 shadow-sm">
+      <div className="bg-black border-neutral-700 rounded-lg p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -234,7 +234,7 @@ export default function CyclesPage() {
 
       {/* Cycles List */}
       {filteredCycles.length === 0 ? (
-        <div className="bg-white border rounded-lg p-12 text-center shadow-sm">
+        <div className="bg-black border-neutral-700 rounded-lg p-12 text-center shadow-sm">
           <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No cycles found</h3>
           <p className="text-gray-500 mb-4">
@@ -252,7 +252,7 @@ export default function CyclesPage() {
       ) : (
         <div className="space-y-4">
           {filteredCycles.map((cycle) => (
-            <div key={cycle._id} className="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div key={cycle._id} className="bg-black border-neutral-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 {/* Left Section */}
                 <div className="flex-1">

@@ -54,7 +54,7 @@ export default function CreateEmployeePage() {
     nationalId: "",
     dateOfHire: "",
     status: "ACTIVE",
-    payGrade: "",
+    payGradeId: "",
     password: "",
     role: "department employee", // Single role
     primaryDepartmentId: "",
@@ -153,6 +153,9 @@ export default function CreateEmployeePage() {
       }
       if (!payload.supervisorPositionId || payload.supervisorPositionId === "") {
         delete (payload as any).supervisorPositionId;
+      }
+      if (!payload.payGradeId || payload.payGradeId === "") {
+        delete (payload as any).payGradeId;
       }
 
       await axiosInstance.post("/employee-profile", payload);
@@ -549,9 +552,9 @@ export default function CreateEmployeePage() {
                 Pay Grade *
               </label>
               <select
-                value={formData.payGrade}
+                value={formData.payGradeId}
                 onChange={(e) =>
-                  setFormData({ ...formData, payGrade: e.target.value })
+                  setFormData({ ...formData, payGradeId: e.target.value })
                 }
                 required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
