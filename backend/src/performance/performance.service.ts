@@ -832,25 +832,33 @@ export class PerformanceService {
 
     // Appraisal Dispute Methods
     async createAppraisalDispute(createDisputeDto: any) {
-        const requiredIds = [
-            "appraisalId",
-            "assignmentId",
-            "cycleId",
-            "raisedByEmployeeId"
-        ];
-
-        for (const field of requiredIds) {
-            if (!createDisputeDto[field]) {
-            throw new BadRequestException(`${field} is required`);
-            }
-            if (!Types.ObjectId.isValid(createDisputeDto[field])) {
-            throw new BadRequestException(`${field} is not a valid ObjectId`);
-            }
+        // Validate appraisalId is provided
+        if (!createDisputeDto.appraisalId) {
+            throw new BadRequestException('appraisalId is required');
+        }
+        if (!Types.ObjectId.isValid(createDisputeDto.appraisalId)) {
+            throw new BadRequestException('appraisalId is not a valid ObjectId');
         }
 
+        // Fetch the appraisal record to auto-resolve other fields
+        const appraisal = await this.appraisalRecordModel
+            .findById(createDisputeDto.appraisalId)
+            .populate('assignmentId')
+            .exec();
+
+        if (!appraisal) {
+            throw new NotFoundException('Appraisal record not found');
+        }
+
+        // Auto-resolve required fields from the appraisal record
+        const assignmentId = appraisal.assignmentId instanceof Types.ObjectId
+            ? appraisal.assignmentId
+            : (appraisal.assignmentId as any)._id;
+        const cycleId = appraisal.cycleId;
+        const raisedByEmployeeId = appraisal.employeeProfileId;
+
         // Check if dispute is within 7-day window (BR 31)
-        const appraisal = await this.appraisalRecordModel.findById(createDisputeDto.appraisalId).exec();
-        if (appraisal && appraisal.hrPublishedAt) {
+        if (appraisal.hrPublishedAt) {
             const daysSincePublished = Math.floor(
                 (new Date().getTime() - appraisal.hrPublishedAt.getTime()) / (1000 * 60 * 60 * 24)
             );
@@ -862,13 +870,13 @@ export class PerformanceService {
         // ⭐ FIX #1 — MANUALLY GENERATE _id BECAUSE SCHEMA OVERRIDES IT
         const _id = new Types.ObjectId();
 
-        // ⭐ FIX #2 — Convert all IDs to ObjectId
+        // ⭐ FIX #2 — Convert all IDs to ObjectId (auto-resolved from appraisal)
         const dto = {
             _id,
             appraisalId: new Types.ObjectId(createDisputeDto.appraisalId),
-            assignmentId: new Types.ObjectId(createDisputeDto.assignmentId),
-            cycleId: new Types.ObjectId(createDisputeDto.cycleId),
-            raisedByEmployeeId: new Types.ObjectId(createDisputeDto.raisedByEmployeeId),
+            assignmentId: new Types.ObjectId(assignmentId),
+            cycleId: new Types.ObjectId(cycleId),
+            raisedByEmployeeId: new Types.ObjectId(raisedByEmployeeId),
             reason: createDisputeDto.reason,
             details: createDisputeDto.details,
             status: AppraisalDisputeStatus.OPEN,
@@ -904,6 +912,25 @@ export class PerformanceService {
 
         return await this.appraisalDisputeModel
         .find(query)
+        .populate('appraisalId')
+        .populate('assignmentId')
+        .populate('cycleId', 'name cycleType')
+        .populate('raisedByEmployeeId', 'firstName lastName')
+        .populate('assignedReviewerEmployeeId', 'firstName lastName')
+        .populate('resolvedByEmployeeId', 'firstName lastName')
+        .sort({ submittedAt: -1 })
+        .exec();
+    }
+
+    async getEmployeeDisputes(employeeId: string) {
+        // Find employee by userid
+        const employee = await this.employeeProfileModel.findOne({ userid: employeeId }).exec();
+        if (!employee) {
+            throw new NotFoundException('Employee not found');
+        }
+
+        return await this.appraisalDisputeModel
+        .find({ raisedByEmployeeId: employee._id })
         .populate('appraisalId')
         .populate('assignmentId')
         .populate('cycleId', 'name cycleType')

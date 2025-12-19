@@ -77,7 +77,7 @@ export default function MyTeamPage() {
             My Team Members
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            View and manage your direct reports (US-E4-01 / US-E4-02)
+            View and manage your direct reports 
           </p>
         </div>
 
@@ -90,7 +90,7 @@ export default function MyTeamPage() {
         {/* Info Note */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 mb-6 rounded">
           <p className="text-sm text-blue-700 dark:text-blue-400">
-            <strong>US-E4-01 / US-E4-02:</strong> This page shows only employees who directly report to you (where employee.supervisorPositionId matches your primaryPositionId).
+            <strong>Note:</strong> This page shows only employees who directly report to you (where employee.supervisorPositionId matches your primaryPositionId).
           </p>
         </div>
 
@@ -110,8 +110,6 @@ export default function MyTeamPage() {
               </p>
               <ul className="text-sm text-gray-600 dark:text-gray-500 mt-4 space-y-2">
                 <li>• No employees have been assigned to report to your position</li>
-                <li>• Check that employees have supervisorPositionId set correctly</li>
-                <li>• Verify organizational structure is configured properly</li>
               </ul>
             </div>
           ) : (

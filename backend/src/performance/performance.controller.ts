@@ -142,6 +142,12 @@ export class PerformanceController {
     return this.performanceService.getAppraisalDisputes(cycleId);
   }
 
+  @Get('my-disputes')
+  @UseGuards(AuthGuard)
+  async getMyDisputes(@CurrentUser() user: CurrentUserData) {
+    return this.performanceService.getEmployeeDisputes(user.userid);
+  }
+
   @Put('disputes/:disputeId/status')
   @Roles(SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async updateDisputeStatus(

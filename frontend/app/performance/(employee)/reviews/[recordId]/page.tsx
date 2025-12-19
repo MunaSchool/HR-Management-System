@@ -26,7 +26,6 @@ export default function ViewAppraisalRecordPage() {
   const [record, setRecord] = useState<any>(null);
   const [template, setTemplate] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [showDisputeModal, setShowDisputeModal] = useState(false);
 
   useEffect(() => {
     if (!recordId) return;
@@ -52,9 +51,6 @@ export default function ViewAppraisalRecordPage() {
     }
   };
 
-  const handleRaiseDispute = () => {
-    setShowDisputeModal(true);
-  };
 
   if (loading) {
     return (
@@ -97,13 +93,12 @@ export default function ViewAppraisalRecordPage() {
               Review your performance evaluation and feedback
             </p>
           </div>
-          <button
-            onClick={handleRaiseDispute}
-            className="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50"
-          >
-            <Flag className="h-4 w-4 mr-2" />
-            Raise Concern
-          </button>
+          <Link href={`/performance/employeeDisputes?recordId=${recordId}`}>
+            <button className="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">
+              <Flag className="h-4 w-4 mr-2" />
+              Raise Concern
+            </button>
+          </Link>
         </div>
 
         {/* Employee & Cycle Info Card */}
@@ -288,24 +283,6 @@ export default function ViewAppraisalRecordPage() {
           </div>
         )}
       </div>
-
-      {/* Dispute Modal (placeholder) */}
-      {showDisputeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Raise a Concern</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              This feature is under development. Please contact HR directly to raise concerns about your appraisal.
-            </p>
-            <button
-              onClick={() => setShowDisputeModal(false)}
-              className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

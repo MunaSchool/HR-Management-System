@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/app/utils/ApiClient";
+import { useAuth } from "@/app/(system)/context/authContext";
+import { isSystemAdmin } from "@/app/utils/roleCheck";
 
 export default function CreatePositionPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   const [departments, setDepartments] = useState<any[]>([]);
   const [form, setForm] = useState({
@@ -18,6 +21,15 @@ export default function CreatePositionPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ============================
+  // ROLE CHECK - System Admin Only
+  // ============================
+  useEffect(() => {
+    if (!authLoading && user && !isSystemAdmin(user)) {
+      router.push("/organization-structure/positions");
+    }
+  }, [user, authLoading, router]);
 
   // ============================
   // LOAD DEPARTMENTS
@@ -67,6 +79,22 @@ export default function CreatePositionPage() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user || !isSystemAdmin(user)) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Access denied. System Admin only.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

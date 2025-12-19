@@ -132,12 +132,6 @@ export default function EmployeeDashboard() {
               View All Reviews
             </button>
           </Link>
-          <Link href="/performance/employeeDisputes">
-            <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-indigo-700 flex items-center gap-2 shadow-sm">
-              <AlertCircle size={16} />
-              Raise Dispute
-            </button>
-          </Link>
         </div>
       </div>
 
@@ -292,19 +286,6 @@ export default function EmployeeDashboard() {
                   <div>
                     <p className="font-medium text-gray-900">View All Reviews</p>
                     <p className="text-sm text-gray-500">Complete performance history</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-gray-400" />
-              </button>
-            </Link>
-           
-            <Link href="/performance/employeeDisputes">
-              <button className="w-full text-left p-3 border border-gray-100 rounded-lg hover:bg-slate-50 hover:border-gray-200 flex items-center justify-between transition-colors">
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-500" />
-                  <div>
-                    <p className="font-medium text-gray-900">Raise a Dispute</p>
-                    <p className="text-sm text-gray-500">Object to appraisal results</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400" />

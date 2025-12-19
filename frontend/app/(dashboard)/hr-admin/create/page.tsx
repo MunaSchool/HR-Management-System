@@ -291,7 +291,7 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Date of Birth
+                Date of Birth *
               </label>
               <input
                 type="date"
@@ -299,16 +299,18 @@ export default function CreateEmployeePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, dateOfBirth: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />
             </div>
             <div>
-              <label className="text-sm text-neutral-400 block mb-1">Gender</label>
+              <label className="text-sm text-neutral-400 block mb-1">Gender *</label>
               <select
                 value={formData.gender}
                 onChange={(e) =>
                   setFormData({ ...formData, gender: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select</option>
@@ -318,13 +320,14 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Marital Status
+                Marital Status *
               </label>
               <select
                 value={formData.maritalStatus}
                 onChange={(e) =>
                   setFormData({ ...formData, maritalStatus: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select</option>
@@ -336,7 +339,7 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                National ID
+                National ID *
               </label>
               <input
                 type="text"
@@ -344,6 +347,7 @@ export default function CreateEmployeePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, nationalId: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />
             </div>
@@ -452,13 +456,14 @@ export default function CreateEmployeePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Department
+                Department *
               </label>
               <select
                 value={formData.primaryDepartmentId}
                 onChange={(e) =>
                   setFormData({ ...formData, primaryDepartmentId: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select Department</option>
@@ -471,13 +476,14 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Position
+                Position *
               </label>
               <select
                 value={formData.primaryPositionId}
                 onChange={(e) =>
                   setFormData({ ...formData, primaryPositionId: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select Position</option>
@@ -490,13 +496,14 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Reports To (Supervisor Position)
+                Reports To (Supervisor Position) *
               </label>
               <select
                 value={formData.supervisorPositionId}
                 onChange={(e) =>
                   setFormData({ ...formData, supervisorPositionId: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">No Supervisor (Top Level)</option>
@@ -537,13 +544,14 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Pay Grade
+                Pay Grade *
               </label>
               <select
                 value={formData.payGrade}
                 onChange={(e) =>
                   setFormData({ ...formData, payGrade: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select Pay Grade</option>
@@ -556,13 +564,14 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Contract Type
+                Contract Type *
               </label>
               <select
                 value={formData.contractType}
                 onChange={(e) =>
                   setFormData({ ...formData, contractType: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select Contract Type</option>
@@ -572,13 +581,14 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Work Type
+                Work Type *
               </label>
               <select
                 value={formData.workType}
                 onChange={(e) =>
                   setFormData({ ...formData, workType: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               >
                 <option value="">Select Work Type</option>
@@ -588,7 +598,7 @@ export default function CreateEmployeePage() {
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Contract Start Date
+                Contract Start Date *
               </label>
               <input
                 type="date"
@@ -596,12 +606,13 @@ export default function CreateEmployeePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, contractStartDate: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Contract End Date
+                Contract End Date *
               </label>
               <input
                 type="date"
@@ -609,6 +620,7 @@ export default function CreateEmployeePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, contractEndDate: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
               />
             </div>
@@ -621,7 +633,7 @@ export default function CreateEmployeePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Bank Name
+                Bank Name *
               </label>
               <input
                 type="text"
@@ -629,13 +641,14 @@ export default function CreateEmployeePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, bankName: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
                 placeholder="e.g., Bank of America"
               />
             </div>
             <div>
               <label className="text-sm text-neutral-400 block mb-1">
-                Bank Account Number
+                Bank Account Number *
               </label>
               <input
                 type="text"
@@ -643,6 +656,7 @@ export default function CreateEmployeePage() {
                 onChange={(e) =>
                   setFormData({ ...formData, bankAccountNumber: e.target.value })
                 }
+                required
                 className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-white"
                 placeholder="Account number"
               />

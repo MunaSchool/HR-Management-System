@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/(system)/context/authContext";
+import { isSystemAdmin } from "@/app/utils/roleCheck";
 
 export default function CreateDepartmentPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   // ===============================
   // STATE
@@ -19,6 +22,15 @@ export default function CreateDepartmentPage() {
   const [positions, setPositions] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ===============================
+  // ROLE CHECK - System Admin Only
+  // ===============================
+  useEffect(() => {
+    if (!authLoading && user && !isSystemAdmin(user)) {
+      router.push("/organization-structure/departments");
+    }
+  }, [user, authLoading, router]);
 
   // ===============================
   // FETCH POSITIONS
@@ -84,6 +96,22 @@ export default function CreateDepartmentPage() {
   // ===============================
   // UI
   // ===============================
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user || !isSystemAdmin(user)) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Access denied. System Admin only.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-6 py-8">
