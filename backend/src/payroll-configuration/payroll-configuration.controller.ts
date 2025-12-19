@@ -110,7 +110,7 @@ export class PayrollConfigurationController {
 
   @Get('pay-grades')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER)
+  @Roles(SystemRole.PAYROLL_SPECIALIST, SystemRole.PAYROLL_MANAGER, SystemRole.HR_ADMIN, SystemRole.HR_MANAGER, SystemRole.SYSTEM_ADMIN)
   async getAllPayGrades() {
     return this.payrollConfigurationService.getAllPayGrades();
   }
