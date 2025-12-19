@@ -165,49 +165,57 @@ export default function OrganizationHierarchyPage() {
   /* ================= EMPLOYEE VIEW (RESTRICTED) ================= */
 
   const renderEmployeeView = () => {
-    if (
-      employees.length === 0 ||
-      positions.length === 0 ||
-      departments.length === 0
-    ) {
-      return <p className="text-center text-gray-500">No data available.</p>;
-    }
+  if (
+    employees.length === 0 ||
+    positions.length === 0 ||
+    departments.length === 0
+  ) {
+    return <p className="text-center text-gray-500">No data available.</p>;
+  }
 
-    const employee = employees[0];
-    const position = positions[0];
-    const department = departments[0];
+  const employee = employees[0];
+  const position = positions[0];
+  const department = departments[0];
 
-    return (
-      <div className="flex flex-col items-center space-y-10">
-        <h2 className="text-2xl font-bold">📁 {department.name}</h2>
+  // 🔑 Employee reports to department head
+  const hasHead = Boolean(position.reportsToPositionId);
 
-        {department.headPositionId && (
-          <div className="bg-blue-600 text-white p-6 rounded-lg min-w-[280px] text-center relative">
-            <h3 className="font-bold">Department Head</h3>
-            <p className="text-sm">
-              {employee.firstName} {employee.lastName}
-            </p>
-            <p className="text-xs">{employee.employeeNumber}</p>
-            <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
-              HEAD
-            </span>
-          </div>
-        )}
+  return (
+    <div className="flex flex-col items-center space-y-10">
+      {/* Department */}
+      <h2 className="text-2xl font-bold">📁 {department.name}</h2>
 
-        <div className="w-0.5 h-10 bg-gray-400"></div>
-
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[240px]">
-          <h4 className="font-semibold">{position.title}</h4>
-          <p className="text-sm">
-            {employee.firstName} {employee.lastName}
+      {/* Department Head */}
+      {hasHead && (
+        <div className="bg-blue-600 text-white p-6 rounded-lg min-w-[280px] text-center relative">
+          <h3 className="font-bold mb-1">Department Head</h3>
+          <p className="text-sm italic opacity-80">
+            (Assigned Position)
           </p>
-          <p className="text-xs text-gray-500">
-            {employee.employeeNumber}
-          </p>
+
+          <span className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs rounded-full font-bold">
+            HEAD
+          </span>
         </div>
+      )}
+
+      {/* Connection Line */}
+      <div className="w-0.5 h-10 bg-gray-400"></div>
+
+      {/* Logged-in Employee */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center min-w-[240px]">
+        <h4 className="font-semibold">{position.title}</h4>
+        <p className="text-sm">
+          {employee.firstName} {employee.lastName}
+        </p>
+        <p className="text-xs text-gray-500">
+          {employee.employeeNumber}
+        </p>
       </div>
-    );
-  };
+    </div>
+  );
+};
+
 
   if (loading) {
     return (
