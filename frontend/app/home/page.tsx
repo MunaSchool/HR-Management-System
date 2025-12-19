@@ -46,11 +46,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-900">
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-2xl font-semibold text-white mb-6">
             Dashboard
           </h2>
 
@@ -129,14 +129,14 @@ export default function HomePage() {
           </div>
 
           {/* User Info */}
-          <div className="mt-8 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="mt-8 bg-slate-800 border border-slate-700 shadow rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">
               Your Information
             </h3>
-            <div className="space-y-2 text-gray-700 dark:text-gray-300">
-              <p><strong>Role:</strong> {user.roles}</p>
-              <p><strong>Email:</strong> {user.email}</p>
-              {user.age && <p><strong>Age:</strong> {user.age}</p>}
+            <div className="space-y-2 text-slate-200">
+              <p><strong className="text-white">Role:</strong> {user.roles?.join(", ") || user.role || "N/A"}</p>
+              <p><strong className="text-white">Email:</strong> {user.email || "N/A"}</p>
+              {user.age && <p><strong className="text-white">Age:</strong> {user.age}</p>}
             </div>
           </div>
         </div>
@@ -147,12 +147,12 @@ export default function HomePage() {
 
 function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string; }) {
   return (
-    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
+    <div className="bg-slate-800 border border-slate-700 shadow rounded-lg p-6 hover:bg-slate-700 hover:border-slate-600 transition cursor-pointer">
       <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <h3 className="text-lg font-semibold text-white mb-2">
         {title}
       </h3>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-slate-300 text-sm">
         {description}
       </p>
     </div>
