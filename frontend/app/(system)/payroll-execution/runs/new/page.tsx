@@ -17,7 +17,7 @@ export default function CreateRunPage() {
   const [msg, setMsg] = useState<string | null>(null);
 
   async function onSubmit() {
-    const employeeId = (user as any)?.userid || user?.id;
+    const employeeId = user?.userid;
     
     if (!employeeId) {
       setMsg("Error: User not authenticated or employee ID not found");

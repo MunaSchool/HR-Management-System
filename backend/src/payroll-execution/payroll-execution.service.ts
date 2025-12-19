@@ -330,10 +330,28 @@ export class PayrollExecutionService {
       throw new BadRequestException('Invalid payrollPeriod date');
     }
 
+    // Normalize to month-end and ensure not in the past (relative to current month-end)
+    const normalizedPeriod = new Date(
+      periodDate.getFullYear(),
+      periodDate.getMonth() + 1,
+      0
+    );
+    const now = new Date();
+    const currentMonthEnd = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0
+    );
+    if (normalizedPeriod < currentMonthEnd) {
+      throw new BadRequestException(
+        'Payroll period must be the end of the current month or a future month.'
+      );
+    }
+
     const doc = new this.payrollRuns({
       runId,
       entity,
-      payrollPeriod: periodDate,
+      payrollPeriod: normalizedPeriod,
       status: PayRollStatus.DRAFT,
       employees: 0,
       exceptions: 0,
@@ -370,8 +388,29 @@ export class PayrollExecutionService {
       );
     }
 
+    // Normalize to month-end and ensure not in the past (relative to current month-end)
+    const incoming = new Date(payrollPeriod);
+    if (isNaN(incoming.getTime())) {
+      throw new BadRequestException('Invalid payrollPeriod date');
+    }
+    const normalizedPeriod = new Date(
+      incoming.getFullYear(),
+      incoming.getMonth() + 1,
+      0
+    );
+    const now = new Date();
+    const currentMonthEnd = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0
+    );
+    if (normalizedPeriod < currentMonthEnd) {
+      throw new BadRequestException(
+        'Payroll period must be the end of the current month or a future month.'
+      );
+    }
 
-    run.payrollPeriod = new Date(payrollPeriod);
+    run.payrollPeriod = normalizedPeriod;
     await run.save();
 
     return {

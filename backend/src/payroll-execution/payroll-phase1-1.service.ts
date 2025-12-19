@@ -17,6 +17,7 @@ import { taxRules, taxRulesDocument } from '../payroll-configuration/models/taxR
 import { insuranceBrackets, insuranceBracketsDocument } from '../payroll-configuration/models/insuranceBrackets.schema';
 import { allowance, allowanceDocument } from '../payroll-configuration/models/allowance.schema';
 import { ConfigStatus } from '../payroll-configuration/enums/payroll-configuration-enums';
+import { SalaryCalculationService } from './services/salary-calculation.service';
 
 @Injectable()
 export class PayrollPhase1_1Service {
@@ -56,6 +57,8 @@ export class PayrollPhase1_1Service {
 
     @InjectModel(allowance.name)
     private allowanceModel: Model<allowanceDocument>,
+
+    private salaryCalculationService: SalaryCalculationService,
   ) {}
 
   async generatePayrollDraft(dto: GeneratePayrollDraftDto) {
@@ -205,17 +208,15 @@ export class PayrollPhase1_1Service {
       }
 
       // ==============================
-      // A) PENALTIES
-      // ==============================
-      const penaltyDoc = await this.penaltiesModel.findOne({ employeeId: emp._id });
-      const penaltiesTotal = penaltyDoc?.penalties?.reduce((sum, p) => sum + (p.amount || 0), 0) ?? 0;
-
+      // A, B, C) BONUSES AND BENEFITS (fetch for net pay calculation)
+      // Only included if APPROVED in Phase 0
       // ==============================
       // B) SIGNING BONUS (must be APPROVED by Specialist in Phase 0)
       // ==============================
       const bonusDoc = await this.signingBonusModel.findOne({ employeeId: emp._id });
       let bonusAmount = 0;
       if (bonusDoc && bonusDoc.status === BonusStatus.APPROVED) {
+        // Only include if employee has a bonus AND it's approved
         // Read configured amount from signing bonus template
         const config = await this.signingBonusConfigModel.findById(bonusDoc.signingBonusId);
         bonusAmount = config?.amount ?? 0;
@@ -227,42 +228,42 @@ export class PayrollPhase1_1Service {
       const exitDoc = await this.exitBenefitsModel.findOne({ employeeId: emp._id });
       let exitBenefitAmount = 0;
       if (exitDoc && exitDoc.status === BenefitStatus.APPROVED) {
+        // Only include if employee has exit benefits AND they're approved
         // Read configured amount from termination/resignation benefit template
         const config = await this.benefitsConfigModel.findById(exitDoc.benefitId);
         exitBenefitAmount = config?.amount ?? 0;
       }
 
       // ==============================
-      // D) COMPLETE SALARY FORMULA
-      // Formula: Net Salary = Gross Salary (base pay + allowances) – Taxes – Insurance – Other Deductions
+      // D) COMPLETE SALARY FORMULA WITH NETPAY CALCULATION
+      // Uses SalaryCalculationService for comprehensive calculations:
+      // - Time Management inputs (working hours, OT, missing hours)
+      // - Leaves inputs (paid/unpaid leaves)
+      // - Penalties, taxes, insurance
+      // - Refunds (if available)
       // ==============================
-      // Fetch approved tax rules and apply them dynamically
-      const approvedTaxRules = await this.taxRulesModel.find({ status: ConfigStatus.APPROVED }).exec();
-      let totalTaxAmount = 0;
-      for (const taxRule of approvedTaxRules) {
-        const taxAmount = baseSalary * (taxRule.rate / 100);
-        totalTaxAmount += taxAmount;
-      }
-      
-      // Fetch approved insurance brackets and find matching bracket for employee's base salary
-      const approvedInsuranceBrackets = await this.insuranceBracketsModel.find({ status: ConfigStatus.APPROVED }).exec();
-      let totalInsuranceAmount = 0;
-      for (const bracket of approvedInsuranceBrackets) {
-        // Check if employee's base salary falls within this bracket's range
-        if (baseSalary >= bracket.minSalary && baseSalary <= bracket.maxSalary) {
-          const insuranceAmount = baseSalary * (bracket.employeeRate / 100);
-          totalInsuranceAmount += insuranceAmount;
-        }
-      }
-      
-      // Store for detail record
-      const tax = totalTaxAmount;
-      const insurance = totalInsuranceAmount;
-      
-      const gross = baseSalary + allowances + bonusAmount + exitBenefitAmount;
-      const deductions = totalTaxAmount + totalInsuranceAmount + penaltiesTotal;
-      const netSalary = gross - deductions;
-      const netPay = netSalary;
+      const salaryCalcResult = await this.salaryCalculationService.calculateNetPay(
+        emp._id,
+        run.payrollPeriod,
+        baseSalary,
+        allowances,
+        bonusAmount,
+        exitBenefitAmount,
+      );
+
+      const {
+        grossSalary: gross,
+        penalties: penaltiesBreakdown,
+        deductions: deductionsBreakdown,
+        netSalary,
+        netPay,
+      } = salaryCalcResult;
+
+      // Calculate totals from the comprehensive breakdown
+      const penaltiesTotal = penaltiesBreakdown.totalPenalties;
+      const tax = deductionsBreakdown.taxTotal;
+      const insurance = deductionsBreakdown.insuranceTotal;
+      const deductions = deductionsBreakdown.totalDeductions;
 
       totalNetPay += netPay;
 

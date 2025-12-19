@@ -9,19 +9,27 @@ export default function PayrollExecutionLayout({ children }: { children: React.R
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const links = [
-    { href: "/home", label: "Home" },
-    { href: "/payroll-execution/runs", label: "Runs" },
-    { href: "/payroll-execution/runs/new", label: "Create Run" },
-    { href: "/payroll-execution/pre-run", label: "Pre-Run (HR Events)" },
-    { href: "/payroll-execution/payslips", label: "Payslips" },
-  ];
+  // const links = [
+  //   { href: "/home", label: "Home" },
+  //   { href: "/payroll-execution/runs", label: "Runs" },
+  //   { href: "/payroll-execution/runs/new", label: "Create Run" },
+  //   { href: "/payroll-execution/pre-run", label: "Pre-Run (HR Events)" },
+  //   { href: "/payroll-execution/payslips", label: "Payslips" },
+  // ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Payroll Execution</h1>
-
-      <nav
+    //<div style={{ padding: 24 }}>
+      
+      <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#020618",
+        color: "#e2e8f0",
+        padding: 24,
+      }}
+       >
+        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Payroll Execution</h1>
+      {/* <nav
         style={{
           display: "flex",
           gap: 16,
@@ -52,7 +60,7 @@ export default function PayrollExecutionLayout({ children }: { children: React.R
             </Link>
           );
         })}
-      </nav>
+      </nav> */}
 
       <div>{children}</div>
     </div>

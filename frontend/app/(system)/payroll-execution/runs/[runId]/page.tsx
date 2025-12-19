@@ -68,9 +68,18 @@ export default function RunPreviewPage() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [isPeriodApproved, setIsPeriodApproved] = useState(false);
 
   useEffect(() => {
     fetchData();
+  }, [runId]);
+
+  useEffect(() => {
+    // Check if the payroll period has been approved
+    if (runId) {
+      const approved = localStorage.getItem(`payroll-period-approved-${runId}`) === "true";
+      setIsPeriodApproved(approved);
+    }
   }, [runId]);
 
   async function fetchData() {
@@ -106,12 +115,21 @@ export default function RunPreviewPage() {
   if (loading) return <div className="text-gray-700 dark:text-gray-300" style={{ padding: 20 }}>Loading run details...</div>;
   if (!run) return <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg p-4" style={{ padding: 20 }}>Run not found</div>;
 
+  const grossTotal = employees.reduce(
+    (sum, e) => sum + Number(e.baseSalary || 0) + Number(e.allowances || 0),
+    0,
+  );
+  const deductionsTotal = employees.reduce(
+    (sum, e) => sum + Number(e.deductions || 0),
+    0,
+  );
+
   const summary = [
-    { label: "Total Employees", value: String(run.employees || 0) },
+    { label: "Total Employees", value: String(run.employees || employees.length || 0) },
     { label: "Total Net Pay", value: `$${(run.totalnetpay || 0).toLocaleString()}` },
     { label: "Exceptions", value: String(run.exceptions || 0) },
-    { label: "Total Gross", value: `$${(run.totalGross || 0).toLocaleString()}` },
-    { label: "Total Deductions", value: `$${(run.totalDeductions || 0).toLocaleString()}` },
+    { label: "Total Gross", value: `$${grossTotal.toLocaleString()}` },
+    { label: "Total Deductions", value: `$${deductionsTotal.toLocaleString()}` },
   ];
 
   return (
@@ -136,8 +154,9 @@ export default function RunPreviewPage() {
           <RoleGate allow={["Payroll Specialist"]}>
             <button
               onClick={() => runAction("Generate Draft", () => payrollExecutionService.generateDraft({ payrollRunId: runId, payrollSpecialistId: run.payrollSpecialistId?._id || run.payrollSpecialistId }))}
-              disabled={actionLoading !== null}
+              disabled={actionLoading !== null || !isPeriodApproved}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition disabled:opacity-50"
+              title={!isPeriodApproved ? "Please approve the payroll period in Phase 1 first" : "Generate draft payslips"}
             >
               {actionLoading === "Generate Draft" ? "Simulating..." : "Run Simulation"}
             </button>

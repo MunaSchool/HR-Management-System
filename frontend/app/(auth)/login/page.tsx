@@ -99,7 +99,7 @@ export default function LoginPage() {
               onChange={(e) => setIdentifier(e.target.value)}
               type={loginType === "employee" ? "text" : "email"}
               required
-              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
+              className="w-full rounded-lg bg-white border border-neutral-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
               placeholder={loginType === "employee" ? "EMP12345" : "you@example.com"}
             />
           </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               required
-              className="w-full rounded-lg bg-black border border-neutral-700 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-white focus:border-white"
+              className="w-full rounded-lg bg-white border border-neutral-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-gray-400"
               placeholder="••••••••"
             />
           </div>
@@ -143,7 +143,7 @@ export default function LoginPage() {
         {/* Footer */}
         {loginType === "candidate" && (
           <p className="mt-5 text-center text-neutral-400 text-sm">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="text-white underline hover:text-neutral-300"
