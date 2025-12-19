@@ -124,12 +124,14 @@ export default function HomePage() {
               icon="🏖️"
             />
 
-            {/* Payroll */}
+            <Link href={"/payroll"}>
+                        {/* Payroll */}
             <DashboardCard
               title="Payroll"
               description="Process salaries and payroll"
               icon="💰"
             />
+            </Link>
 
             {/* Performance */}
             <Link href="/performance">
@@ -201,7 +203,7 @@ export default function HomePage() {
   );
 }
 
-function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string; }) {
+export function DashboardCard({ title, description, icon }: { title: string; description: string; icon: string; }) {
   return (
     <div className="bg-slate-800 border border-slate-700 shadow rounded-lg p-6 hover:bg-slate-700 hover:border-slate-600 transition cursor-pointer">
       <div className="text-4xl mb-4">{icon}</div>

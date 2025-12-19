@@ -43,7 +43,7 @@ export default function Navbar(){
     // Extract user initials for avatar
     const getUserInitials = () => {
         if (user.name) {
-            return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            return user?.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
         }
         return user.email.slice(0, 2).toUpperCase()
     }
