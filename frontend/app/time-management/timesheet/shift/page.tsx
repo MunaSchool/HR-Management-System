@@ -59,6 +59,9 @@ export default function ShiftPage() {
   const isAdmin = rolesLower.some(role =>
     ["hr admin", "system admin"].includes(role)
   );
+    const isAdminOrDepartmentHead = rolesLower.some(role =>
+    ["department head", "system admin"].includes(role)
+  );
 
   /* =====================================================
      ADMIN VIEW — DASHBOARD ONLY
@@ -110,13 +113,14 @@ export default function ShiftPage() {
                   icon="📋"
                 />
               </Link>
+                {isAdminOrDepartmentHead &&                 
                 <Link href="/time-management/timesheet/shift/shift-types/create">
                 <DashboardCard
                   title="Create Shift Type"
                   description="Create new shift type."
                   icon="📝"
                 />
-              </Link>
+              </Link>}
                 <Link href="/time-management/timesheet/shift/shift-types/view">
                 <DashboardCard
                   title="View Shift Types"

@@ -1,327 +1,444 @@
-"use client";
+  "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { useAuth } from "@/app/(system)/context/authContext";
 
-/* ===================== TYPES ===================== */
+/* ===================== ENUM TYPES (MATCH BACKEND) ===================== */
 
-interface Punch { type: string; time: string; }
+export type TimeExceptionType =
+  | "MISSED_PUNCH"
+  | "LATE"
+  | "EARLY_LEAVE"
+  | "SHORT_TIME"
+  | "OVERTIME_REQUEST"
+  | "MANUAL_ADJUSTMENT";
 
-interface AttendanceRecord {
+export type TimeExceptionStatus =
+  | "OPEN"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "ESCALATED"
+  | "RESOLVED";
+
+/* ===================== MODEL ===================== */
+
+export interface TimeException {
   _id: string;
-  punches: Punch[];
-  totalWorkMinutes: number;
-  hasMissedPunch: boolean;
-  finalisedForPayroll: boolean;
-}
-
-interface TimeException {
-  _id: string;
-  type: string;
+  employeeId: string;
+  attendanceRecordId?: string;
+  assignedTo?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+  } | string;
+  type: TimeExceptionType;
   reason: string;
-  status: string;
-  assignedTo: { firstName: string; lastName: string; workEmail?: string; email?: string };
-  attendanceRecordId: string;
-  employeeId?: { _id: string; firstName: string; lastName: string };
-}
-
-interface TimeExceptionForm {
-  type: string;
-  attendanceRecordId: string;
-  assignedTo: string;
-  reason: string;
+  status: TimeExceptionStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /* ===================== PAGE ===================== */
 
-export default function TimeExceptionsPage() {
+export default function TimeExceptionPage() {
   const { user } = useAuth();
-  const [attendanceRecord, setAttendanceRecord] = useState<AttendanceRecord | null>(null);
-  const [exceptions, setExceptions] = useState<TimeException[]>([]);
+
+  const employeeId = user?.userid; // ✅ ONLY SOURCE OF TRUTH
+
+  const [requests, setRequests] = useState<TimeException[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState<TimeExceptionForm>({
-    type: "", attendanceRecordId: "", assignedTo: "", reason: "",
-  });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<TimeException | null>(null);
+  const [filterStatus, setFilterStatus] = useState<"ALL" | TimeExceptionStatus>("ALL");
 
   /* ===================== ROLES ===================== */
-  const isAdmin = useMemo(() =>
-    !!user?.roles?.some(role =>
-      ["department head", "hr manager", "system admin"].includes(role.toLowerCase())
-    ), [user?.roles]);
 
-  const isSystemAdmin = useMemo(() =>
-    !!user?.roles?.includes("System Admin"), [user?.roles]);
+  const roles = (user?.roles || []).map((r: string) => r.toLowerCase().trim());
 
-  const isHRManager = useMemo(() =>
-    !!user?.roles?.includes("HR Manager"), [user?.roles]);  
+  const isEmployee =
+    roles.includes("hr employee") || roles.includes("department employee");
 
-    const isManagerOrAdmin = user?.roles?.some(role =>
-    ['hr admin', 'system admin',].includes(role.toLowerCase())
-  );
-  /* ===================== FETCH DATA ===================== */
+  const canWrite =
+    roles.includes("hr admin") || roles.includes("department head");
 
-  const fetchAttendanceRecord = async () => {
-    const res = await axios.get(
-      `http://localhost:4000/time-management/attendance-record/${user?.userid}`,
-      { withCredentials: true }
-    );
-    setAttendanceRecord(res.data.data);
-    setForm(prev => ({ ...prev, attendanceRecordId: res.data.data._id }));
-  };
+  const canRead =
+    roles.includes("payroll manager") || roles.includes("payroll specialist");
 
-  const fetchExceptions = async () => {
+  /* ===================== FETCH ===================== */
+
+  const fetchRequests = async () => {
+    if (!employeeId) return;
+
+    setLoading(true);
     try {
-      let res;
-      if (isAdmin) {
-        res = await axios.get("http://localhost:4000/time-management/time-exception/", { withCredentials: true });
-        setExceptions(res.data);
-      } else {
-        res = await axios.get(
-          `http://localhost:4000/time-management/time-exception/my-exceptions/${user?.userid}`,
-          { withCredentials: true }
-        );
-        setExceptions(res.data.data);
-      }
+      const url =
+        canWrite || canRead
+          ? "http://localhost:4000/time-management/time-exception"
+          : `http://localhost:4000/time-management/time-exception/my-exceptions/${employeeId}`;
+
+      const res = await axios.get(url, { withCredentials: true });
+      const data = res.data?.data ?? res.data ?? [];
+
+      setRequests(
+        data.map((r: any) => ({
+          ...r,
+          createdAt: new Date(r.createdAt),
+          updatedAt: new Date(r.updatedAt),
+        }))
+      );
     } catch (err) {
-      console.error(err);
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!user?.userid) return;
-    Promise.all([fetchAttendanceRecord(), fetchExceptions()])
-      .catch(err => console.error(err))
-      .finally(() => setLoading(false));
-  }, [user?.userid, isAdmin]);
+    if (!employeeId) return;
+    fetchRequests();
+  }, [employeeId]);
 
-  /* ===================== SUBMIT ===================== */
+  /* ===================== FILTER ===================== */
 
-  const submitTimeException = async () => {
-    try {
-      const payload = {
-        employeeId: user?.userid,
-        type: form.type,
-        attendanceRecordId: form.attendanceRecordId,
-        assignedTo: form.assignedTo,
-        reason: form.reason,
-      };
-      await axios.post(
-        "http://localhost:4000/time-management/time-exception",
-        payload,
-        { withCredentials: true }
+  const visibleRequests = (() => {
+    if (isEmployee && !canRead && !canWrite) return requests;
+    if (canRead && !canWrite)
+      return requests.filter(
+        r => r.status === "APPROVED" || r.status === "REJECTED"
       );
-      await fetchExceptions();
-      setShowModal(false);
-      setForm(prev => ({ ...prev, type: "", reason: "" }));
-    } catch (err) {
-      console.error(err);
-      alert("Failed to submit exception");
-    }
-  };
+    if (canWrite) return requests;
+    return [];
+  })();
 
-  /* ===================== ADMIN ACTIONS ===================== */
+  const filteredRequests =
+    filterStatus === "ALL"
+      ? visibleRequests
+      : visibleRequests.filter(r => r.status === filterStatus);
 
-  const approveException = async (id: string) => {
-    try {
-      await axios.patch(
-        `http://localhost:4000/time-management/time-exception/${id}/approve`,
-        {},
-        { withCredentials: true }
-      );
-      await fetchExceptions();
-    } catch (err) { console.error(err); }
-  };
+  /* ===================== ACTIONS ===================== */
 
-  const rejectException = async (id: string, reason: string) => {
-    try {
-      await axios.patch(
-        `http://localhost:4000/time-management/time-exception/${id}/reject`,
-        { reason },
-        { withCredentials: true }
-      );
-      await fetchExceptions();
-    } catch (err) { console.error(err); }
-  };
+  const handleApprove = async (id: string) => {
+  await axios.patch(
+    `http://localhost:4000/time-management/time-exception/${id}/approve`,
+    {},
+    { withCredentials: true }
+  );
+  fetchRequests();
+};
+  const handleOpen = async (id: string) => {
+  await axios.patch(
+    `http://localhost:4000/time-management/time-exception/${id}/open`,
+    {},
+    { withCredentials: true }
+  );
+  fetchRequests();
+};
 
-    const openException = async (id: string) => {
-    try {
-      await axios.patch(
-        `http://localhost:4000/time-management/time-exception/${id}/open`,
-        {},
-        { withCredentials: true }
-      );
-      await fetchExceptions();
-    } catch (err) { console.error(err); }
-  };
 
-  const autoEscalate = async () => {
-    try {
-      await axios.post(
-        `http://localhost:4000/time-management/time-exception/auto-escalate`,
-        {},
-        { withCredentials: true }
-      );
-      await fetchExceptions();
-      alert("Auto-escalation completed");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to auto-escalate");
-    }
-  };
 
-  /* ===================== RENDER ===================== */
+   const handleReject = async (id: string) => {
+  const reason = prompt("Reject reason?");
+  if (!reason) return;
 
-  if (!user || loading) {
+  await axios.patch(
+    `http://localhost:4000/time-management/time-exception/${id}/reject`,
+    { reason },
+    { withCredentials: true }
+  );
+  fetchRequests();
+};
+ const handleEscalate = async (id: string) => {
+  await axios.patch(
+    `http://localhost:4000/time-management/time-exception/${id}/escalate`,
+    {},
+    { withCredentials: true }
+  );
+  fetchRequests();
+};
+
+  /* ===================== UI ===================== */
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading exceptions...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
       </div>
     );
   }
+const exportToCSV = () => {
+  if (visibleRequests.length === 0) {
+    alert("No requests to export");
+    return;
+  }
+
+  const csvRows: string[] = [];
+
+  csvRows.push([
+    "Request ID",
+    "Employee ID",
+    "Type",
+    "Reason",
+    "Status",
+    "Created At",
+    "Updated At",
+  ].join(","));
+
+  visibleRequests.forEach(req => {
+    csvRows.push([
+      req._id,
+      req.employeeId,
+      req.type,
+      `"${req.reason.replace(/"/g, '""')}"`,
+      req.status,
+      `"${new Date(req.createdAt).toLocaleString()}"`,
+      `"${new Date(req.updatedAt).toLocaleString()}"`,
+    ].join(","));
+  });
+
+  const blob = new Blob([csvRows.join("\n")], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+
+  link.href = url;
+  link.download = `time-exceptions-${new Date()
+    .toISOString()
+    .split("T")[0]}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <Link href="/time-management" className="text-blue-600 hover:underline dark:text-blue-400">
-          &larr; Back to Dashboard
+    <div className="min-h-screen bg-gray-900 p-6">
+      <div className="max-w-7xl mx-auto">
+        <Link href="/time-management/attendance" className="text-blue-400">
+          ← Back to Attendance Records
         </Link>
+ <div className="flex justify-between items-center mt-4">
+  <h1 className="text-3xl font-bold text-white">
+    Time Exception Requests
+  </h1>
 
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-5">Time Exceptions</h1>
+  <div className="flex gap-2">
+    {canRead && (
+      <button
+        onClick={exportToCSV}
+        className="bg-green-600 px-4 py-2 text-white rounded"
+      >
+        📊 Export CSV
+      </button>
+    )}
 
-        {exceptions.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center border border-gray-200 dark:border-gray-700">
-            <div className="text-6xl mb-4">📋</div>
-            <p className="text-gray-500 dark:text-gray-400 text-lg">
-              No time exceptions submitted yet.
-            </p>
-          </div>
-        )}
-              {isManagerOrAdmin&& (
-                <button
-                  onClick={autoEscalate}
-                  className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-                >
-                  Auto-Escalate Pending
-                </button>
+    {isEmployee && (
+      <button
+        onClick={() => setShowCreateModal(true)}
+        className="bg-blue-600 px-4 py-2 text-white rounded"
+      >
+        ➕ Submit Request
+      </button>
+    )}
+  </div>
+</div>
+
+        <div className="mt-4">
+          <select
+            value={filterStatus}
+            onChange={e => setFilterStatus(e.target.value as any)}
+            className="p-2 rounded bg-gray-800 text-white"
+          >
+            <option value="ALL">All</option>
+            <option value="OPEN">Open</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+            <option value="ESCALATED">Escalated</option>
+            <option value="RESOLVED">Resolved</option>
+          </select>
+        </div>
+
+        <div className="space-y-4 mt-6">
+          {filteredRequests.map(req => (
+            <div key={req._id} className="bg-gray-800 p-5 rounded">
+              <div className="flex justify-between">
+                <span className="text-white font-semibold">
+                  Request #{req._id.slice(-6)}
+                </span>
+                <span className="text-sm text-gray-300">{req.status}</span>
+              </div>
+
+              <p className="text-gray-300 mt-2">
+                <strong>Type:</strong> {req.type}
+              </p>
+
+              <p className="text-gray-300">
+                <strong>Reason:</strong> {req.reason}
+              </p>
+
+              {canWrite && (
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => handleApprove(req._id)}
+                    className="bg-green-600 px-3 py-1 text-white rounded"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(req._id)}
+                    className="bg-red-600 px-3 py-1 text-white rounded"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleEscalate(req._id)}
+                    className="bg-purple-600 px-3 py-1 text-white rounded"
+                  >
+                    Escalate
+                  </button>
+                    <button
+                    onClick={() => handleOpen(req._id)}
+                    className="bg-pink-600 px-3 py-1 text-white rounded"
+                  >
+                    Open
+                  </button>
+                </div>
               )}
-        {exceptions.map((ex) => (
-          <div
-            key={ex._id}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex justify-between items-center mb-2">
-              
-              <div>
-                <h2 className="font-semibold text-lg text-gray-900 dark:text-white">
-                  Employee Name: {ex.employeeId ? `${ex.employeeId.firstName} ${ex.employeeId.lastName}` : "—"}
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Type: {ex.type} • Status: {ex.status}
-                </p>
-              </div>
 
+   
             </div>
-
-            <p className="text-gray-600 dark:text-gray-400 mb-4">Reason: {ex.reason}</p>
-
-            {isAdmin && ex.status !== "APPROVED" && ex.status!=="REJECTED" && (
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => approveException(ex._id)}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => {
-                    const reason = prompt("Enter rejection reason:") || "No reason";
-                    rejectException(ex._id, reason);
-                  }}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                >
-                  Reject
-                </button>
-                                <button
-                  onClick={() => {
-                    openException(ex._id);
-                  }}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-orange-300 transition"
-                >
-                  Open
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {!isAdmin && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Submit Time Exception
-          </button>
-        )}
-
-        {/* ===================== MODAL ===================== */}
-        {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-xl p-6 relative">
-              <button onClick={() => setShowModal(false)} className="absolute top-3 right-3 text-xl">×</button>
-
-              <h3 className="text-lg font-semibold mb-4">Submit Time Exception</h3>
-
-              <div className="space-y-4">
-                <select
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-                  value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value })}
-                >
-                  <option value="">Select type</option>
-                  <option value="LATE">Late Arrival</option>
-                  <option value="EARLY_LEAVE">Early Leave</option>
-                  <option value="MISSED_PUNCH">Missed Punch</option>
-                  <option value="OTHER">Other</option>
-                </select>
-
-                <input
-                  className="w-full p-2 border rounded bg-gray-100 dark:bg-gray-700 dark:text-white"
-                  value={form.attendanceRecordId}
-                  disabled
-                />
-
-                <input
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-                  placeholder="Assigned To (Manager / HR ID)"
-                  value={form.assignedTo}
-                  onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}
-                />
-
-                <textarea
-                  rows={3}
-                  className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
-                  placeholder="Reason"
-                  value={form.reason}
-                  onChange={(e) => setForm({ ...form, reason: e.target.value })}
-                />
-              </div>
-
-              <button
-                onClick={submitTimeException}
-                className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
+
+      {(showCreateModal || selectedRequest) && (
+        <TimeExceptionModal
+          request={selectedRequest}
+          employeeId={employeeId!}
+          onClose={() => {
+            setShowCreateModal(false);
+            setSelectedRequest(null);
+          }}
+          onSuccess={() => {
+            fetchRequests();
+            setShowCreateModal(false);
+            setSelectedRequest(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ===================== MODAL ===================== */
+
+function TimeExceptionModal({
+  request,
+  employeeId,
+  onClose,
+  onSuccess,
+}: {
+  request: TimeException | null;
+  employeeId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [type, setType] = useState<TimeExceptionType>(
+    request?.type || "MISSED_PUNCH"
+  );
+  const [reason, setReason] = useState(request?.reason || "");
+  const [submitting, setSubmitting] = useState(false);
+
+     const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setSubmitting(true);
+
+  try {
+     if (request) {
+  await axios.patch(
+    `http://localhost:4000/time-management/time-exception/${request._id}`,
+    {
+      type,
+      reason,
+    },
+    { withCredentials: true }
+  );
+}
+else {
+      // ✅ CREATE
+      await axios.post(
+        `http://localhost:4000/time-management/time-exception`,
+        { employeeId, type, reason },
+        { withCredentials: true }
+      );
+    }
+
+    onSuccess();
+  } catch (err: any) {
+    console.error("Edit error:", err);
+    alert(err.response?.data?.message || "Failed to submit request");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-gray-800 p-6 rounded w-full max-w-md"
+      >
+        <h2 className="text-white text-xl mb-4">
+          {request ? "Edit Time Exception" : "Submit Time Exception"}
+        </h2>
+
+        <select
+          value={type}
+          onChange={e => setType(e.target.value as TimeExceptionType)}
+          className="w-full p-2 mb-3 bg-gray-700 text-white"
+        >
+          <option value="MISSED_PUNCH">Missed Punch</option>
+          <option value="LATE">Late</option>
+          <option value="EARLY_LEAVE">Early Leave</option>
+          <option value="SHORT_TIME">Short Time</option>
+          <option value="OVERTIME_REQUEST">Overtime</option>
+          <option value="MANUAL_ADJUSTMENT">Manual Adjustment</option>
+        </select>
+
+        <textarea
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          required
+          rows={4}
+          className="w-full p-2 bg-gray-700 text-white mb-4"
+        />
+
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="flex-1 bg-blue-600 text-white py-2 rounded"
+          >
+            {submitting ? "Submitting..." : "Submit"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 bg-gray-600 text-white py-2 rounded"
+          >
+            Cancel
+          </button>
+          
+        </div>
+      </form>
     </div>
   );
 }

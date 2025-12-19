@@ -94,6 +94,26 @@ export class TimeExceptionService {
       data: exception,
     };
   }
+
+  // Escalate a time exception
+  async escalate(id: string) {
+    const exception = await this.timeExceptionModel.findById(id);
+    if (!exception) throw new NotFoundException('Time Exception not found');
+
+    if (exception.status !== TimeExceptionStatus.PENDING && exception.status !== TimeExceptionStatus.OPEN) {
+      throw new BadRequestException('Only pending or open exceptions can be escalated');
+    }
+
+   
+    exception.status = TimeExceptionStatus.ESCALATED;
+    await exception.save();
+
+    return {
+      success: true,
+      message: 'Time Exception escalated successfully!',
+      data: exception,
+    };
+  }
     async open(id: string, approverId: string) {
     const exception = await this.timeExceptionModel.findById(id);
     if (!exception) throw new NotFoundException('Time Exception not found');

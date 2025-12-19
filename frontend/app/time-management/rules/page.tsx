@@ -42,6 +42,11 @@ export default function Rules() {
 
   const { user } = useAuth();
   const isHRManager = user?.roles?.includes("HR Manager");
+  const isHRAdmin = user?.roles?.includes("HR Manager");
+  const isEmployee = user?.roles?.includes("Employee");
+  const isPayroll = user?.roles?.includes("Payroll");
+  const isHR = isHRManager || isHRAdmin 
+  const canRead = isEmployee || isPayroll
 
   // --- Form States ---
   const [newScheduleRule, setNewScheduleRule] = useState<ScheduleRule>({ name: "", pattern: "", active: true });
@@ -158,7 +163,7 @@ export default function Rules() {
 
   // --- Delete Handler ---
   const deleteRule = async (id: string, type: RuleType) => {
-    if (!isHRManager) return;
+    if (!isHR) return;
     if (!confirm("Are you sure?")) return;
     try {
       await axios.delete(`http://localhost:4000/time-management/${type}-rule/${id}`, { withCredentials: true });
@@ -179,7 +184,7 @@ export default function Rules() {
 
   // --- Edit Handler ---
   const editRule = (rule: any, type: RuleType) => {
-    if (!isHRManager) return;
+    if (!isHR) return;
     setEditingRule(rule);
     setActiveTab(type);
     if (type === "schedule") setNewScheduleRule(rule);
@@ -196,7 +201,7 @@ export default function Rules() {
     <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 flex flex-col items-center">
       <div className="w-full max-w-6xl flex justify-between mb-4">
         <Link href="/time-management/" className="text-blue-600 hover:underline">&larr; Back to Dashboard</Link>
-        {isHRManager && (
+        {isHR && (
           <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             Add {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Rule
           </button>
@@ -217,7 +222,7 @@ export default function Rules() {
       </div>
 
       {/* Modal */}
-{showForm && isHRManager && (
+{showForm && isHR && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg w-full max-w-2xl p-6 relative">
       <button onClick={resetForm} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-lg font-bold">&times;</button>
@@ -308,7 +313,7 @@ export default function Rules() {
                 <span className={`px-2 py-1 rounded ${rule.active?'bg-green-100 text-green-800':'bg-red-100 text-red-800'}`}>{rule.active?'Active':'Inactive'}</span>
               </div>
             </div>
-            {isHRManager && (
+            {isHR && (
               <div className="flex space-x-2">
                 <button onClick={()=>editRule(rule, activeTab)} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Edit</button>
                 <button onClick={()=>deleteRule(rule._id!, activeTab)} className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700">Delete</button>
