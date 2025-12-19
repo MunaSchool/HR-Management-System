@@ -10,8 +10,8 @@ export default function Navbar(){
       await logout();
     };
     
-    // Don't show navbar on login/register pages
-    if (pathname === "/login" || pathname === "/register") {
+    // Don't show navbar on login/register pages or home (home has its own header)
+    if (pathname === "/login" || pathname === "/register" || pathname === "/home") {
       return null;
     }
     
