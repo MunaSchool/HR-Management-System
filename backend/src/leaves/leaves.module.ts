@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -41,7 +41,7 @@ import { Delegation, DelegationSchema } from './models/delegation.schema';
       { name: EmployeeProfile.name, schema: EmployeeProfileSchema },
       { name: Delegation.name, schema: DelegationSchema },
     ]),
-    TimeManagementModule, // For NotificationLogService
+    forwardRef(()=>TimeManagementModule), // For NotificationLogService
     ScheduleModule.forRoot(), // For cron jobs
   ],
   controllers: [LeavesController],
