@@ -122,9 +122,7 @@ export class PayrollConfigurationService
 
 
     //////2- config pay grades
-    async getAllPayGrades(): Promise<payGradeDocument[]> {
-        return await this.payGradeModel.find().exec();
-    }
+
 
     async getPayGrade(id: string): Promise<payGradeDocument|null> {
       return await this.payGradeModel.findById(id);

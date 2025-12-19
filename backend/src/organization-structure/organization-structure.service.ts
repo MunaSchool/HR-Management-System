@@ -673,71 +673,80 @@ async activatePosition(id: string) {
   }
 
   // ======================
-  // 📌 GET MY STRUCTURE (BR 41)
-  // ======================
-  async getMyStructure(employeeId: string) {
-    console.log("➡️ getMyStructure called");
-    console.log("👤 Employee ID:", employeeId);
-    console.log("🔒 Employee restricted to own reporting line");
+// 📌 GET MY STRUCTURE (BR 41)
+// ======================
+async getMyStructure(employeeId: string) {
+  console.log("➡️ getMyStructure called");
+  console.log("👤 Employee ID:", employeeId);
+  console.log("🔒 Employee restricted to own reporting line");
 
-    const employee = await this.employeeProfileModel.findById(employeeId)
-      .populate('primaryPositionId')
-      .populate('primaryDepartmentId')
-      .exec();
+  const employee = await this.employeeProfileModel.findById(employeeId)
+    .populate('primaryPositionId')
+    .populate('primaryDepartmentId')
+    .exec();
 
-    if (!employee) {
-      console.error("❌ ERROR: Employee not found");
-      throw new NotFoundException("Employee not found");
-    }
-
-    console.log("👤 Employee:", employee.fullName);
-    console.log("📌 Employee primaryPositionId:", employee.primaryPositionId);
-    console.log("📌 Employee primaryDepartmentId:", employee.primaryDepartmentId);
-
-    const position = await this.positionModel.findById(employee.primaryPositionId)
-      .populate('reportsToPositionId')
-      .populate('departmentId')
-      .exec();
-
-    console.log("🏷️ Position:", position?.title);
-    console.log("🔗 Reports to:", position?.reportsToPositionId);
-
-    // Find the employee who holds the head position (reportsTo position)
-    let headEmployee = null;
-    if (position?.reportsToPositionId) {
-      const headPositionId = (position.reportsToPositionId as any)._id || position.reportsToPositionId;
-      headEmployee = await this.employeeProfileModel.findOne({
-        primaryPositionId: headPositionId
-      }).exec();
-      console.log("👔 Head position employee:", headEmployee?.fullName);
-    }
-
-    // Find colleagues who report to the same head position
-    let colleagues = [];
-    if (position?.reportsToPositionId) {
-      const headPositionId = (position.reportsToPositionId as any)._id || position.reportsToPositionId;
-      // Find all positions that report to the same head position
-      const peerPositions = await this.positionModel.find({
-        reportsToPositionId: headPositionId,
-        _id: { $ne: employee.primaryPositionId } // Exclude the current employee's position
-      }).exec();
-
-      // Find employees in those peer positions
-      const peerPositionIds = peerPositions.map(p => p._id);
-      colleagues = await this.employeeProfileModel.find({
-        primaryPositionId: { $in: peerPositionIds }
-      }).populate('primaryPositionId').exec();
-
-      console.log("👥 Found colleagues:", colleagues.length);
-    }
-
-    return {
-      employee,
-      position,
-      department: employee.primaryDepartmentId,
-      reportsTo: position?.reportsToPositionId,
-      headEmployee, // Employee who holds the head position
-      colleagues, // Colleagues under the same head position
-    };
+  if (!employee) {
+    console.error("❌ ERROR: Employee not found");
+    throw new NotFoundException("Employee not found");
   }
+
+  console.log("👤 Employee:", employee.fullName);
+  console.log("📌 Employee primaryPositionId:", employee.primaryPositionId);
+  console.log("📌 Employee primaryDepartmentId:", employee.primaryDepartmentId);
+
+  // Cast to any to avoid TypeScript errors with populated documents
+  const employeeDoc = employee as any;
+
+  // Find the position with proper type handling
+  const position = await this.positionModel.findById(employeeDoc.primaryPositionId)
+    .populate('reportsToPositionId')
+    .populate('departmentId')
+    .exec();
+
+  console.log("🏷️ Position:", position?.title);
+  console.log("🔗 Reports to:", position?.reportsToPositionId);
+
+  // Find the employee who holds the head position (reportsTo position)
+  let headEmployee: EmployeeProfileDocument | null = null;
+  if (position?.reportsToPositionId) {
+    const reportsTo = position.reportsToPositionId as any;
+    const headPositionId = reportsTo._id || position.reportsToPositionId;
+    
+    headEmployee = await this.employeeProfileModel.findOne({
+      primaryPositionId: headPositionId
+    }).exec();
+    
+    console.log("👔 Head position employee:", headEmployee?.fullName);
+  }
+
+  // Find colleagues who report to the same head position
+  let colleagues: EmployeeProfileDocument[] = [];
+  if (position?.reportsToPositionId) {
+    const reportsTo = position.reportsToPositionId as any;
+    const headPositionId = reportsTo._id || position.reportsToPositionId;
+    
+    // Find all positions that report to the same head position
+    const peerPositions = await this.positionModel.find({
+      reportsToPositionId: headPositionId,
+      _id: { $ne: employeeDoc.primaryPositionId } // Exclude the current employee's position
+    }).exec();
+
+    // Find employees in those peer positions
+    const peerPositionIds = peerPositions.map(p => p._id);
+    colleagues = await this.employeeProfileModel.find({
+      primaryPositionId: { $in: peerPositionIds }
+    }).populate('primaryPositionId').exec();
+
+    console.log("👥 Found colleagues:", colleagues.length);
+  }
+
+  return {
+    employee,
+    position,
+    department: employee.primaryDepartmentId,
+    reportsTo: position?.reportsToPositionId,
+    headEmployee, // Employee who holds the head position
+    colleagues, // Colleagues under the same head position
+  };
+}
 }

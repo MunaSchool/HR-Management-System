@@ -652,7 +652,7 @@ function CorrectionRequestModal({
                 placeholder="Enter attendance record ID"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Prefilled with your current attendance record
+                Provided with your attendance record.
               </p>
             </div>
           )}

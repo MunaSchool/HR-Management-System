@@ -364,7 +364,7 @@ export default function AttendancePage() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                             <FaIdCard className="text-xs" />
-                            ID: {record.employeeId._id.slice(-8)}
+                            ID: {record.employeeId._id}
                           </div>
                         </div>
                       </div>
